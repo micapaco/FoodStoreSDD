@@ -527,6 +527,48 @@ Estas skills se instalaron durante la fase de preparación (antes del apply) y q
 
 > `clean-architecture` y `find-skills` estaban instaladas pero no se invocaron explícitamente durante la verificación del change 01 — el apply ya estaba hecho y el trabajo fue revisar, corregir gaps y cerrar.
 
+### Por qué no se ejecutó `clean-architecture` durante el apply
+
+El apply del change 01 fue generado por un agente que no tenía instrucciones explícitas de invocar la skill `clean-architecture` antes de escribir código. La skill estaba instalada pero no existía una regla en `backend/CLAUDE.md` que obligara a invocarla antes de cualquier apply de backend.
+
+Esto es una **deuda de proceso**: la skill estaba disponible, pero el agente no tenía el disparador correcto para usarla.
+
+**Consecuencia:** dos violations de Clean Architecture pasaron al código sin ser detectadas hasta la sesión de verificación posterior al archive.
+
+**Regla incorporada a partir de este change:** `backend/CLAUDE.md` ya documenta `clean-architecture` como skill preferida para arquitectura, capas y boundaries. A partir del change 02, cualquier apply de backend debe invocar esta skill antes de escribir código nuevo.
+
+---
+
+## Revisión Clean Architecture post-archive
+
+Después de archivar el change 01, se ejecutó la skill `clean-architecture` como revisión retroactiva. Se encontraron dos warnings que se corrigieron en la misma sesión.
+
+### Warning 1 — `dep-no-framework-imports` (dominio importando HTTP)
+
+**Qué se encontró:** Las excepciones de dominio (`AppError` y subclases) vivían en `app/core/errors.py`, el mismo módulo que los handlers HTTP de FastAPI. Eso acoplaba la capa de dominio a infraestructura HTTP.
+
+**Por qué es un problema:** Cualquier capa que necesite importar `NotFoundError` o `ConflictError` también arrastra indirectamente FastAPI. Viola `dep-no-framework-imports`.
+
+**Solución:** Se extrajo la jerarquía de excepciones a un módulo nuevo `app/core/exceptions.py` sin ningún import de FastAPI ni HTTP. `errors.py` ahora importa desde `exceptions.py`, no al revés.
+
+**Archivos afectados:**
+- `backend/app/core/exceptions.py` — creado
+- `backend/app/core/errors.py` — refactorizado para importar desde `exceptions.py`
+
+---
+
+### Warning 2 — `frame-di-container-edge` (settings importadas dentro de un handler)
+
+**Qué se encontró:** El handler de excepciones no controladas (`unhandled_exception_handler`) hacía `from app.core.config import get_settings` dentro del cuerpo de la función, en cada request. Eso es inyección de dependencia disfrazada de import local — el handler no declaraba su dependencia, la resolvía por su cuenta.
+
+**Por qué es un problema:** Los contenedores de DI y la resolución de settings deben vivir en el borde del sistema (`create_app`), no dentro de los handlers. Viola `frame-di-container-edge`.
+
+**Solución:** Se reemplazó el handler por una factory `make_unhandled_handler(settings: Settings)` que recibe `Settings` como parámetro y retorna el handler como closure. `register_exception_handlers` también fue actualizada para recibir `settings`. `create_app()` en `main.py` pasa el settings que ya tiene al momento de construcción.
+
+**Archivos afectados:**
+- `backend/app/core/errors.py` — `make_unhandled_handler(settings)` y nueva firma de `register_exception_handlers`
+- `backend/app/main.py` — `register_exception_handlers(app, settings)`
+
 ### CLI de openspec usado directamente
 | Comando | Para qué |
 |---|---|
