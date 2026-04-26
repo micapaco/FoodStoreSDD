@@ -579,6 +579,54 @@ Después de archivar el change 01, se ejecutó la skill `clean-architecture` com
 
 ---
 
+---
+
+## Corrección del flujo de auto-load de skills
+
+### Problema detectado
+
+El `backend/CLAUDE.md` y el `frontend/CLAUDE.md` tenían una tabla de categorías con "skill preferida" para cada tipo de tarea, pero ese lenguaje era **descriptivo**, no imperativo. El sub-agente de apply podía leer la tabla y no entender que tenía que cargar la skill antes de escribir código — simplemente la leía como información de referencia.
+
+Esto explica por qué el apply del change 01 no invocó `clean-architecture`: la instrucción estaba disponible pero no era una orden.
+
+### Flujo correcto definido
+
+```
+Root CLAUDE.md detecta dominio
+        ↓
+"Leer backend/CLAUDE.md antes de operar"
+        ↓
+backend/CLAUDE.md — sección "Auto-load de skills":
+"Antes de escribir cualquier código, identificá la categoría
+ y cargá la skill. No escribas código sin haberla cargado."
+        ↓
+Sub-agente identifica categoría en la tabla
+        ↓
+Carga e invoca la skill (ej: clean-architecture)
+        ↓
+Recién entonces escribe código
+```
+
+### Cambios aplicados
+
+Se agregó una sección `## Auto-load de skills` con instrucción imperativa explícita en ambos archivos:
+
+- `backend/CLAUDE.md` — instrucción para código Python/FastAPI
+- `frontend/CLAUDE.md` — instrucción para código React/TS
+
+La instrucción diferencia tres casos:
+- Skill preferida disponible → cargarla e invocarla obligatoriamente
+- Solo fallback (`find-skills`) → buscar una skill específica antes de proceder
+- Sin skill → proceder directamente
+
+### También se creó el skill registry
+
+Se creó `.atl/skill-registry.md` con las reglas compactas de todas las skills instaladas. Esto habilita el protocolo de skill-resolver: el orquestador puede leer el registry y pre-inyectar las reglas en el prompt del sub-agente de apply como `## Project Standards (auto-resolved)`, sin que el sub-agente tenga que buscar nada por su cuenta.
+
+El registry también se guardó en engram con `topic_key: "skill-registry"` para sobrevivir entre sesiones.
+
+---
+
 ## Estado al archivar
 
 | Ítem | Estado |
