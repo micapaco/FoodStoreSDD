@@ -40,6 +40,14 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 - Si el change está propuesto pero no archivado → trabajo activo; el frontend puede avanzar solo si el contrato API ya está explicitado y acordado
 - Si el change está archivado → cualquier cambio nuevo requiere evaluar un nuevo change
 
+## Auto-load de skills
+
+**Antes de escribir cualquier código de frontend**, identificá la categoría de la tarea en la tabla de abajo y cargá la skill correspondiente. No escribas código sin haberla cargado primero.
+
+Si la categoría tiene skill preferida → cargala e invocala.
+Si tiene solo fallback (`find-skills`) → buscá una skill específica antes de proceder.
+Si no hay skill → procedé directamente.
+
 ## Tabla de categorías
 
 > Las skills `openspec-*` son skills del **workflow OPSX** (especificación, diseño, tasks, verificación).

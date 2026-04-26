@@ -35,6 +35,14 @@ No asumir que existe código implementado. Verificar el estado del change antes 
 - Si el change está propuesto pero no archivado → trabajo activo; revisar artefactos y estado del código antes de continuar
 - Si el change está archivado → cualquier cambio nuevo requiere evaluar un nuevo change
 
+## Auto-load de skills
+
+**Antes de escribir cualquier código de backend**, identificá la categoría de la tarea en la tabla de abajo y cargá la skill correspondiente. No escribas código sin haberla cargado primero.
+
+Si la categoría tiene skill preferida → cargala e invocala.
+Si tiene solo fallback (`find-skills`) → buscá una skill específica antes de proceder.
+Si no hay skill → procedé directamente.
+
 ## Tabla de categorías
 
 > Las skills `openspec-*` son skills del **workflow OPSX** (especificación, diseño, tasks, verificación).
