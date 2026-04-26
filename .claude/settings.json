@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(backend/.env*)",
+      "Write(backend/.env*)",
+      "Edit(backend/.env*)",
+      "Bash(cat > backend/.env*)"
+    ]
+  }
+}
