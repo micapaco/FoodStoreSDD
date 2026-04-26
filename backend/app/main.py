@@ -96,7 +96,7 @@ def create_app() -> FastAPI:
     app.add_middleware(SlowAPIMiddleware)
 
     # 5. Exception handlers
-    register_exception_handlers(app)
+    register_exception_handlers(app, settings)
     # Handler específico de slowapi para RateLimitExceeded
     app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
 

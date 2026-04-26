@@ -505,6 +505,38 @@ para que queden alineados con todo lo que ya decidimos.
 
 ---
 
+## MCPs y skills utilizados
+
+### MCPs
+| MCP | Herramientas usadas | Para qué |
+|---|---|---|
+| `engram` | `mem_context`, `mem_save`, `mem_session_summary`, `mem_search` | Memoria persistente entre sesiones — guardar decisiones, bugs y descubrimientos del change |
+
+### Skills instaladas antes del apply
+Estas skills se instalaron durante la fase de preparación (antes del apply) y quedaron disponibles para el trabajo del change y los siguientes:
+
+| Skill | Cuándo se instaló | Para qué |
+|---|---|---|
+| `find-skills` | Fase de preparación | Descubrir y resolver skills disponibles para el proyecto |
+| `clean-architecture` | Fase de preparación | Diseñar y revisar capas, dependencias y separación de responsabilidades en el backend |
+
+### Skills invocadas durante el trabajo del change
+| Skill | Estado | Para qué |
+|---|---|---|
+| `openspec-verify` | Cargada por error, no ejecutada | Se disparó al intentar archivar; se fue directo al `openspec archive` porque la verificación ya se había hecho manualmente |
+
+> `clean-architecture` y `find-skills` estaban instaladas pero no se invocaron explícitamente durante la verificación del change 01 — el apply ya estaba hecho y el trabajo fue revisar, corregir gaps y cerrar.
+
+### CLI de openspec usado directamente
+| Comando | Para qué |
+|---|---|
+| `openspec list --json` | Ver el estado de los changes activos |
+| `openspec status --change "infra-backend-core" --json` | Ver artefactos y tareas del change |
+| `openspec validate infra-backend-core` | Validar que los artefactos del change son coherentes |
+| `openspec archive infra-backend-core` | Cerrar el change y sincronizar specs a `openspec/specs/` |
+
+---
+
 ## Estado al archivar
 
 | Ítem | Estado |

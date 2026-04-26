@@ -1,20 +1,19 @@
 """
-Manejo global de errores RFC 7807 (Problem Details for HTTP APIs).
+Handlers HTTP RFC 7807 (Problem Details for HTTP APIs).
 
-Jerarquía de excepciones de dominio:
-    AppError (500, INTERNAL_ERROR)
-    ├── ValidationAppError   → 422, VALIDATION_ERROR
-    ├── UnauthorizedError    → 401, UNAUTHORIZED
-    ├── ForbiddenError       → 403, FORBIDDEN
-    ├── NotFoundError        → 404, NOT_FOUND
-    ├── ConflictError        → 409, CONFLICT
-    └── RateLimitedError     → 429, RATE_LIMITED
+Este módulo es un interface adapter: convierte excepciones de dominio y de
+framework en responses HTTP con formato application/problem+json.
 
-Todos los handlers se registran en create_app() via register_exception_handlers().
+Las excepciones de dominio (AppError y subclases) viven en core/exceptions.py
+para que cualquier capa pueda importarlas sin depender de HTTP ni FastAPI.
+
+Registro:
+    register_exception_handlers(app, settings) en create_app()
 """
 
 import logging
 import traceback
+from collections.abc import Callable
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -22,6 +21,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
+
+from app.core.config import Settings
+from app.core.exceptions import AppError
 
 logger = logging.getLogger(__name__)
 
@@ -48,81 +50,7 @@ class ProblemDetails(BaseModel):
     extensions: dict[str, Any] | None = None
 
 
-# ── Excepciones de dominio ───────────────────────────────────────────────────
-
-
-class AppError(Exception):
-    """Excepción base de dominio. Mapeada a 500 por defecto."""
-
-    status_code: int = 500
-    code: str = "INTERNAL_ERROR"
-    title: str = "Internal Server Error"
-
-    def __init__(
-        self,
-        detail: str = "Ocurrió un error interno.",
-        extensions: dict[str, Any] | None = None,
-    ) -> None:
-        self.detail = detail
-        self.extensions = extensions
-        super().__init__(detail)
-
-
-class ValidationAppError(AppError):
-    status_code = 422
-    code = "VALIDATION_ERROR"
-    title = "Validation Error"
-
-    def __init__(self, detail: str = "La solicitud no pasó validación.", **kwargs: Any) -> None:
-        super().__init__(detail, **kwargs)
-
-
-class UnauthorizedError(AppError):
-    status_code = 401
-    code = "UNAUTHORIZED"
-    title = "Unauthorized"
-
-    def __init__(self, detail: str = "Autenticación requerida.", **kwargs: Any) -> None:
-        super().__init__(detail, **kwargs)
-
-
-class ForbiddenError(AppError):
-    status_code = 403
-    code = "FORBIDDEN"
-    title = "Forbidden"
-
-    def __init__(self, detail: str = "No tenés permiso para realizar esta acción.", **kwargs: Any) -> None:
-        super().__init__(detail, **kwargs)
-
-
-class NotFoundError(AppError):
-    status_code = 404
-    code = "NOT_FOUND"
-    title = "Not Found"
-
-    def __init__(self, detail: str = "Recurso no encontrado.", **kwargs: Any) -> None:
-        super().__init__(detail, **kwargs)
-
-
-class ConflictError(AppError):
-    status_code = 409
-    code = "CONFLICT"
-    title = "Conflict"
-
-    def __init__(self, detail: str = "Conflicto con el estado actual del recurso.", **kwargs: Any) -> None:
-        super().__init__(detail, **kwargs)
-
-
-class RateLimitedError(AppError):
-    status_code = 429
-    code = "RATE_LIMITED"
-    title = "Too Many Requests"
-
-    def __init__(self, detail: str = "Demasiadas solicitudes. Intentá más tarde.", **kwargs: Any) -> None:
-        super().__init__(detail, **kwargs)
-
-
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# ── Helper ───────────────────────────────────────────────────────────────────
 
 
 def _problem_response(
@@ -134,7 +62,6 @@ def _problem_response(
     errors: list[ValidationErrorItem] | None = None,
     extensions: dict[str, Any] | None = None,
 ) -> JSONResponse:
-    """Construye una JSONResponse con Content-Type: application/problem+json."""
     body: dict[str, Any] = {
         "type": f"{BASE_ERROR_URL}/{code.lower().replace('_', '-')}",
         "title": title,
@@ -159,8 +86,8 @@ def _format_validation_field(loc: tuple[Any, ...]) -> str:
     """Convierte la tupla de ubicación de Pydantic en un path legible.
 
     Ejemplos:
-        ('body', 'email')         → 'email'
-        ('body', 'items', 0, 'cantidad') → 'items[0].cantidad'
+        ('body', 'email')              → 'email'
+        ('body', 'items', 0, 'qty')    → 'items[0].qty'
     """
     parts: list[str] = []
     for segment in loc:
@@ -180,7 +107,6 @@ def _format_validation_field(loc: tuple[Any, ...]) -> str:
 
 
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    """Handler para excepciones de dominio (AppError y subclases)."""
     return _problem_response(
         status=exc.status_code,
         code=exc.code,
@@ -194,7 +120,6 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
 async def validation_error_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    """Handler para errores de validación de Pydantic (422)."""
     errors = [
         ValidationErrorItem(
             field=_format_validation_field(error["loc"]),
@@ -214,8 +139,6 @@ async def validation_error_handler(
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    """Handler para HTTPException de FastAPI/Starlette — reformatea a problem+json."""
-    # Mapeo de status a code semántico
     code_map = {
         400: "BAD_REQUEST",
         401: "UNAUTHORIZED",
@@ -255,50 +178,44 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     )
 
 
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Catch-all para excepciones no controladas (500).
+def make_unhandled_handler(settings: Settings) -> Callable:
+    """Factory que cierra sobre settings para evitar re-importar en cada request."""
 
-    En prod: devuelve body genérico sin detalles de implementación.
-    En dev: incluye el tipo de excepción para facilitar debugging.
-    """
-    # Importación local para evitar dependencia circular en el módulo de errors
-    from app.core.config import get_settings
+    async def handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error(
+            "Excepción no controlada: %s %s — %s: %s\n%s",
+            request.method,
+            request.url.path,
+            exc.__class__.__name__,
+            str(exc),
+            traceback.format_exc(),
+        )
+        if settings.ENV == "dev":
+            detail = f"[{exc.__class__.__name__}] {exc}"
+        else:
+            detail = "Ocurrió un error inesperado. Por favor intentá más tarde."
 
-    settings = get_settings()
+        return _problem_response(
+            status=500,
+            code="INTERNAL_ERROR",
+            title="Internal Server Error",
+            detail=detail,
+            instance=str(request.url.path),
+        )
 
-    logger.error(
-        "Excepción no controlada: %s %s — %s: %s\n%s",
-        request.method,
-        request.url.path,
-        exc.__class__.__name__,
-        str(exc),
-        traceback.format_exc(),
-    )
-
-    if settings.ENV == "dev":
-        detail = f"[{exc.__class__.__name__}] {exc}"
-    else:
-        detail = "Ocurrió un error inesperado. Por favor intentá más tarde."
-
-    return _problem_response(
-        status=500,
-        code="INTERNAL_ERROR",
-        title="Internal Server Error",
-        detail=detail,
-        instance=str(request.url.path),
-    )
+    return handler
 
 
 # ── Registro ─────────────────────────────────────────────────────────────────
 
 
-def register_exception_handlers(app: FastAPI) -> None:
+def register_exception_handlers(app: FastAPI, settings: Settings) -> None:
     """Registra los cuatro handlers en la app FastAPI.
 
     El orden importa: los más específicos van primero.
-    AppError va antes de Exception para que las subclases sean capturadas correctamente.
+    AppError va antes de Exception para capturar subclases correctamente.
     """
     app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, validation_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
-    app.add_exception_handler(Exception, unhandled_exception_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(Exception, make_unhandled_handler(settings))  # type: ignore[arg-type]
