@@ -1,629 +1,159 @@
-# Informe de avance — preparación arquitectónica del proyecto
+# Informe de avance — Food Store SDD
 
-## 1. Estado real del proyecto al arrancar
-
-### Qué verificamos
-Revisamos:
-
-- `README.md`
-- `docs/Descripcion.txt`
-- `docs/Integrador.txt`
-- `docs/Historias_de_usuario.txt`
-- `docs/CHANGES.md`
-
-### Conclusión
-El proyecto está en una etapa **spec-first**:
-
-- todavía **no hay implementación real** en `backend/` ni `frontend/`
-- la fuente de verdad actual está en `docs/`
-- el trabajo real por ahora es:
-  - ordenar arquitectura
-  - definir flujo
-  - preparar `CLAUDE.md`
-  - dejar listo el terreno para `propose`
-
-### Decisión
-**Tratar el repo como proyecto pre-implementación.**
-
-### Justificación
-No tenía sentido diseñar reglas como si ya existiera código complejo, porque todavía no arrancó el desarrollo real.
+Este informe documenta las decisiones de arquitectura, el trabajo realizado en el Change 01 y las correcciones aplicadas en la sesión de verificación. Está escrito para que cualquier integrante del equipo pueda entender qué se hizo, por qué, y qué lecciones quedaron.
 
 ---
 
-## 2. Decisión de arquitectura de agentes por dominio
+# Parte 1 — Preparación del proyecto
 
-### Qué definimos
-Se aprobó la idea de trabajar con **agentes separados por dominio**:
+Antes de escribir una sola línea de código, hubo una sesión completa de preparación para definir cómo iba a funcionar el sistema de agentes y el flujo de trabajo.
 
-- backend
-- frontend
+## Estado del proyecto al arrancar
 
-Y con **routing centralizado** desde un `CLAUDE.md` raíz.
-
-### Estructura decidida
-- `CLAUDE.md` → router global
-- `backend/CLAUDE.md` → reglas backend
-- `frontend/CLAUDE.md` → reglas frontend
-
-### Justificación
-Esto encaja con la arquitectura del proyecto:
-
-- backend con FastAPI, SQLModel, Alembic, UoW, FSM, auth, MercadoPago
-- frontend con React, TypeScript, Vite, Zustand, TanStack Query/Form, Tailwind
-
-Separar dominios evita mezclar responsabilidades y mejora el foco del agente.
+Al revisar el repo, confirmamos que el proyecto estaba en etapa **spec-first**: no había implementación real en `backend/` ni en `frontend/`. La fuente de verdad era `docs/`. Por eso tratamos el repo como **pre-implementación** — no tenía sentido diseñar reglas para código que no existía.
 
 ---
 
-## 3. Decisión sobre cross-domain
+## Decisiones de arquitectura tomadas
 
-### Qué definimos
-`cross-domain` **no es un dominio aparte** ni una carpeta propia.
+### 1. Agentes separados por dominio
 
-Vive en el **`CLAUDE.md` raíz** como lógica de coordinación.
+Se definió trabajar con agentes especializados por dominio, con routing centralizado:
 
-### Qué significa
-Un cambio es cross-domain cuando afecta backend y frontend al mismo tiempo, por ejemplo:
+| Archivo | Rol |
+|---|---|
+| `CLAUDE.md` | Router global — detecta si la tarea es backend, frontend o cross-domain |
+| `backend/CLAUDE.md` | Reglas, stack y skills del dominio backend |
+| `frontend/CLAUDE.md` | Reglas, stack y skills del dominio frontend |
 
-- falta un campo en la API
-- cambia un payload
-- una feature requiere contrato nuevo
-- cambia un flujo end-to-end
+Separar dominios evita que un agente de backend tome decisiones de UI, y viceversa.
 
-### Justificación
-No queríamos sobreingeniería.
+### 2. Cross-domain no es un dominio
 
-Crear un `cross-domain/CLAUDE.md` hubiera tratado a cross-domain como otro dominio técnico, cuando en realidad es una **política de orquestación**.
+Un cambio es **cross-domain** cuando afecta backend y frontend al mismo tiempo (por ejemplo: cambia un payload, falta un campo en la API, o se agrega un endpoint nuevo). En esos casos el `CLAUDE.md` raíz coordina — no implementa.
 
----
+No se creó una carpeta `cross-domain/` porque eso hubiera convertido una política de orquestación en un dominio técnico más, lo cual era sobreingeniería.
 
-## 4. Decisión sobre contrato API
+### 3. Regla del contrato API
 
-### Qué definimos
 Regla central del sistema:
 
-- **backend define el contrato API**
-- **frontend lo consume**
-- **frontend no inventa endpoints**
-- **backend no asume UI**
+- **Backend define el contrato API** — es la fuente de verdad
+- **Frontend lo consume** — nunca lo inventa
+- Si frontend necesita un dato que no existe → coordinar desde el root, no improvisar
 
-### Justificación
-Esta fue una de las decisiones más importantes porque protege la integración del proyecto.
+Sin esta regla pasa lo clásico: frontend inventa payloads, backend responde otra cosa, la integración se rompe.
 
-Sin esa regla pasa lo clásico:
+### 4. Flujo de trabajo OPSX
 
-- frontend inventa payloads
-- backend responde otra cosa
-- se rompe la coordinación
+El proyecto usa el flujo **OPSX / SDD**:
 
----
+```
+explore → propose → apply → archive
+```
 
-## 5. Decisión sobre workflow OPSX / SDD
+Regla obligatoria: **sin `proposal.md` y `design.md` aprobados, no hay `apply`**. El flujo es fluido (se puede volver a cualquier paso), pero no se implementa sin artefactos previos.
 
-### Qué verificamos
-Del `README.md` y `docs/CHANGES.md` confirmamos que el flujo esperado del proyecto es:
+Cada change puede estar en uno de tres estados:
 
-- `explore`
-- `propose`
-- `apply`
-- `archive`
-
-Y además hay una regla explícita:
-
-> sin `proposal.md` y `design.md` aprobados, no hay `apply`
-
-### Decisión
-**Antes de `apply`, tiene que existir `propose`.**
-
-### Justificación
-Aunque OPSX se describa como “fluido”, este repo tiene una guardia concreta: no se implementa sin artefactos previos.
-
----
-
-## 6. Refinamiento del significado de “estado del change”
-
-### Problema encontrado
-Había ambigüedad en esta regla:
-
-> “si no pasó por propose, priorizar especificación antes que código”
-
-Eso no alcanzaba para explicar qué pasa si:
-
-- ya existe código
-- ya pasó por `propose`
-- pero todavía no está archivado
-
-### Solución conceptual
-Definimos tres estados:
-
-#### A. No propuesto
-- no se implementa
-- primero specs
-
-#### B. Propuesto pero no archivado
-- el change sigue activo
-- hay que revisar artefactos + revisar código + continuar/corregir
-
-#### C. Archivado
-- ese change ya se considera cerrado
-- cualquier cambio nuevo debe evaluarse como otro change
-
-### Justificación
-Esto aclara el flujo real y evita una lectura binaria demasiado simplista.
-
----
-
-## 7. Problema con skills: confusión entre categorías y skills reales
-
-### Problema encontrado
-Aparecieron ideas como:
-
-- `api_design`
-- `service_layer`
-- `db_models`
-- `ui_components`
-- `forms`
-
-Pero esas no eran skills instaladas reales.
-
-### Decisión
-Separar dos cosas:
-
-#### Categorías de routing
-Ejemplos:
-- endpoints
-- auth
-- ui
-- forms
-- state
-
-#### Skills reales
-Solo las que de verdad existen instaladas.
-
-### Justificación
-No queríamos escribir `CLAUDE.md` “de cartón”, con nombres lindos pero inexistentes.
-
----
-
-## 8. Instalación y verificación de `find-skills`
-
-### Qué pasó
-Primero hubo dudas sobre si instalarla:
-
-- en backend
-- en frontend
-- o en raíz
-
-### Decisión
-**Una sola instalación a nivel proyecto, desde la raíz.**
-
-### Justificación
-Es un monorepo. No tiene sentido duplicar la instalación por carpeta si el root va a orquestar.
-
----
-
-## 9. Problema con la instalación de skills
-
-### Problema encontrado
-Cuando instalaste `find-skills`, el sistema creó:
-
-- `.claude/`
-- `.agents/`
-- `skills-lock.json`
-
-Vos querías algo más “CLAUDE-only”.
-
-### Qué verificamos
-Vimos que:
-
-- `.agents/skills/find-skills` tenía el contenido real
-- `.claude/skills/find-skills` era un enlace/junction
-
-### Decisión
-**No borrar solo `.agents` ni solo `.claude`.**
-Dejar la instalación como está.
-
-### Justificación
-Borrar una sola parte dejaba la instalación inconsistente:
-
-- si borrabas `.agents`, rompías la fuente real
-- si borrabas `.claude`, Claude dejaba de verla
-
-### Problema resuelto
-Se estabilizó la instalación actual en lugar de romperla por limpieza parcial.
-
----
-
-## 10. Decisión sobre skills globales
-
-### Problema encontrado
-Apareció la duda:
-
-- ¿conviene borrar las skills globales?
-
-### Decisión
-**No borrarlas por ahora.**
-
-### Justificación
-Todavía no están ejecutando trabajo real de código.
-El problema urgente no era limpiar el entorno global, sino ordenar el sistema de coordinación del proyecto.
-
----
-
-## 11. Instalación de `clean-architecture`
-
-### Qué pasó
-Se pidió una skill tipo “clean architecture”.
-Primero hubo duda sobre si era:
-
-- un MCP
-- o una skill
-
-### Qué verificamos
-Confirmamos que **no es un MCP**, sino una **skill**.
-
-Además encontramos varias opciones y recomendamos:
-
-- `pproenca/dot-skills/clean-architecture`
-
-### Justificación
-Era la más general, más orientada a reglas arquitectónicas limpias y más útil para este proyecto que una opción sesgada a stacks específicos.
-
-### Resultado
-La skill quedó instalada correctamente y verificamos que aparece en:
-
-- `.claude/skills/clean-architecture`
-- `.agents/skills/clean-architecture`
-- `skills-lock.json`
-
----
-
-## 12. Decisión sobre cuándo actualizar los `CLAUDE.md`
-
-### Problema encontrado
-Surgió la duda:
-
-> “¿hay que cambiar los `CLAUDE.md` cada vez que instalo una skill?”
-
-### Decisión
-**No.**
-Solo cuando una skill nueva cambia de verdad:
-
-- el routing
-- la prioridad
-- el comportamiento esperado del agente
-- o se vuelve skill preferida para una categoría importante
-
-### Justificación
-No queríamos que `CLAUDE.md` se convierta en un catálogo infinito de skills instaladas.
-
----
-
-## 13. Revisión de los tres `CLAUDE.md`
-
-### Qué revisamos
-Leímos:
-
-- `CLAUDE.md`
-- `backend/CLAUDE.md`
-- `frontend/CLAUDE.md`
-
-### Conclusión
-La base está **bien**, pero detectamos ajustes pendientes.
-
-### Problemas detectados
-1. El root quedó desactualizado diciendo:
-   - `Pre-código. Pre-propose.`
-2. La regla:
-   - “frontend no empieza hasta que backend archive”
-   era demasiado rígida
-3. Faltaba formalizar mejor el estado:
-   - propuesto pero no archivado
-
-### Solución conceptual
-Quedó claro que hay que ajustar esos archivos, especialmente el root.
-
----
-
-## 14. Reescritura de `docs/CHANGES.md`
-
-### Qué hicimos
-Reescribí `docs/CHANGES.md` completo.
-
-### Problema encontrado
-El mapa anterior tenía buena dirección general, pero:
-
-- mezclaba demasiadas responsabilidades
-- ocultaba épicas reales
-- tenía megachanges poco prácticos para OPSX
-
-### Cambios clave
-Pasamos a un mapa de **19 changes** más finos y mejor alineados con las historias reales.
-
-#### Nuevos bloques explícitos
-- `frontend-shell`
-- `profile`
-- `checkout-validation`
-- `order-feedback`
-- `admin-users`
-- `admin-metrics`
-- `system-config`
-
-#### También se separó
-- `infra-backend-core`
-- `infra-database`
-
-### Justificación
-Esto hace el trabajo más:
-
-- proponible
-- diseñable
-- revisable
-- aplicable
-
-sin monstruos innecesarios.
-
----
-
-## 15. Estado actual después de todo esto
-
-### Qué ya está resuelto
-- contexto real del proyecto entendido
-- flujo OPSX entendido
-- regla del contrato API definida
-- separación backend/frontend definida
-- cross-domain ubicado correctamente
-- `find-skills` instalada y estabilizada
-- `clean-architecture` instalada y verificada
-- mapa de changes reescrito
-- base de los 3 `CLAUDE.md` creada
-
-### Qué todavía falta
-- ajustar los `CLAUDE.md` para reflejar:
-  - fase real del proyecto
-  - estado intermedio “propuesto pero no archivado”
-  - uso de `clean-architecture` como skill real relevante
-  - una regla cross-domain menos rígida
-
----
-
-# Problemas que enfrentamos y cómo los resolvimos
-
-## Problema 1
-Confusión entre estado del proyecto y estado de los changes.
-
-### Solución
-Definimos:
-- no propuesto
-- propuesto no archivado
-- archivado
-
----
-
-## Problema 2
-Confusión entre categorías de skills y skills reales.
-
-### Solución
-Separar:
-- etiquetas de routing
-- skills instaladas reales
-
----
-
-## Problema 3
-Instalación de skills dejó `.claude` y `.agents`.
-
-### Solución
-Verificamos dependencias y decidimos no romper la instalación parcial.
-
----
-
-## Problema 4
-No estaba claro dónde vive cross-domain.
-
-### Solución
-Lo ubicamos en el `CLAUDE.md` raíz.
-
----
-
-## Problema 5
-El mapa de changes no estaba suficientemente alineado con las historias.
-
-### Solución
-Reescritura completa de `docs/CHANGES.md`.
-
----
-
-# Próximo paso recomendado
-
-El próximo paso más lógico es:
-
-## ajustar los 3 `CLAUDE.md`
-especialmente:
-- root
-- backend
-- frontend
-
-para que queden alineados con todo lo que ya decidimos.
-
----
-
-# Change 01 — `infra-backend-core`
-
-## ¿El apply fue el esperado?
-
-**Sí, con matices.** El código estaba todo implementado al momento de verificar. Todos los módulos existían y el comportamiento era el correcto. Sin embargo, al momento de intentar levantar el servidor por primera vez aparecieron tres problemas que no estaban previstos.
-
----
-
-## Qué se hizo
-
-- Verificamos el apply contra el propose y el tasks.md — 44 tareas, todas cubiertas por el código.
-- Levantamos el servidor y ejecutamos los smoke tests (9.1, 9.2, 9.3).
-- Recorrimos los 6 specs (10.1–10.6) y ejecutamos `openspec validate`.
-- Corregimos dos gaps entre la spec y la implementación.
-- Creamos `backend/README.md`.
-- Archivamos el change — specs sincronizadas a `openspec/specs/`.
-
----
-
-## Complicaciones
-
-### Complicación 1 — `CORS_ORIGINS` y pydantic-settings v2
-
-**Qué pasó:** Al levantar el servidor, `uvicorn` caía con `SettingsError: error parsing value for field "CORS_ORIGINS"`.
-
-**Causa raíz:** `pydantic-settings` v2 intenta JSON-decodificar los campos declarados como `list[str]` antes de que corran los `field_validator`. El valor `http://localhost:5173` (CSV) no es JSON válido, así que el error ocurría antes de llegar al validador custom que sí sabía parsearlo.
-
-**Solución:** Se declaró `CORS_ORIGINS` como `str` para evitar el pre-parseo, y se expuso el valor ya parseado como `list[str]` vía un `@computed_field` llamado `cors_origins`. Se actualizó `main.py` para usar `settings.cors_origins` y se corrigió el scenario correspondiente en el spec.
-
-**Lección:** En pydantic-settings v2, para campos complejos (`list`, `dict`) que necesitan parsing custom desde variables de entorno, declarar el campo como `str` y parsear con un `@computed_field`.
-
----
-
-### Complicación 2 — `RATE_LIMIT_DEFAULT` y `RATE_LIMIT_STORAGE_URI` no cableados
-
-**Qué pasó:** Al recorrer los specs de `backend-rate-limiting`, se detectó que ambas variables existían en `Settings` pero no estaban conectadas al `Limiter` de slowapi. El Limiter se creaba sin `default_limits` ni `storage_uri`, por lo que esas settings eran decorativas.
-
-**Causa raíz:** El tasks.md decía explícitamente "sin `default_limits`" (para evitar 429 durante el desarrollo), pero la spec sí exigía que el default fuera aplicable. Además nadie cableó el `storage_uri`.
-
-**Solución:** Se reescribió la inicialización del Limiter en `rate_limit.py` con una función `_create_limiter()` que lee `get_settings()` al importar el módulo y pasa `default_limits=[settings.RATE_LIMIT_DEFAULT]` y `storage_uri=settings.RATE_LIMIT_STORAGE_URI` (si está definido).
-
-**Lección:** Cuando una setting existe pero no se usa en ningún lado, es un gap. Conviene hacer un check explícito al final del apply: "¿cada campo de Settings está siendo consumido por alguien?"
-
----
-
-### Complicación 3 — Puerto ocupado al levantar el servidor en background
-
-**Qué pasó:** Al correr `uvicorn` en procesos de background desde el agente, varios intentos consecutivos dejaban el puerto 8000 o 8001 ocupado, lo que impedía arrancar una nueva instancia.
-
-**Causa raíz:** Los procesos de bash en background no liberan el puerto automáticamente al terminar en entornos Windows con Git Bash.
-
-**Solución:** Se mató el proceso ocupando el puerto con `taskkill` antes de cada intento nuevo, o se cambió de puerto. Los smoke tests finales se corrieron todos en un solo comando bash para evitar el problema.
-
-**Lección:** Para smoke tests en Windows desde el agente, agrupar todos los curls en un único comando junto con el arranque del servidor, en lugar de levantar en background y testear por separado.
-
----
-
-## MCPs y skills utilizados
-
-### MCPs
-| MCP | Herramientas usadas | Para qué |
+| Estado | Qué significa | Qué hacer |
 |---|---|---|
-| `engram` | `mem_context`, `mem_save`, `mem_session_summary`, `mem_search` | Memoria persistente entre sesiones — guardar decisiones, bugs y descubrimientos del change |
+| No propuesto | No hay artefactos todavía | Ir a `/opsx:propose` antes de cualquier otra cosa |
+| Propuesto, no archivado | Trabajo activo en curso | Revisar artefactos + código + continuar |
+| Archivado | Change cerrado | Cualquier cambio nuevo requiere un change nuevo |
 
-### Skills instaladas antes del apply
-Estas skills se instalaron durante la fase de preparación (antes del apply) y quedaron disponibles para el trabajo del change y los siguientes:
+### 5. Skills instaladas
 
-| Skill | Cuándo se instaló | Para qué |
-|---|---|---|
-| `find-skills` | Fase de preparación | Descubrir y resolver skills disponibles para el proyecto |
-| `clean-architecture` | Fase de preparación | Diseñar y revisar capas, dependencias y separación de responsabilidades en el backend |
+Se instalaron dos skills a nivel proyecto durante la preparación:
 
-### Skills invocadas durante el trabajo del change
-| Skill | Estado | Para qué |
-|---|---|---|
-| `openspec-verify` | Cargada por error, no ejecutada | Se disparó al intentar archivar; se fue directo al `openspec archive` porque la verificación ya se había hecho manualmente |
+| Skill | Para qué |
+|---|---|
+| `find-skills` | Descubrir e instalar nuevas skills desde el ecosistema |
+| `clean-architecture` | Revisar capas, dirección de dependencias y separación de responsabilidades |
 
-> `clean-architecture` y `find-skills` estaban instaladas pero no se invocaron explícitamente durante la verificación del change 01 — el apply ya estaba hecho y el trabajo fue revisar, corregir gaps y cerrar.
+**Nota sobre la instalación:** al instalar skills con `npx skills`, el sistema crea dos carpetas: `.agents/skills/` (fuente real) y `.claude/skills/` (enlace). No hay que tocar ninguna de las dos por separado — borrar una rompe la instalación.
 
-### Por qué no se ejecutó `clean-architecture` durante el apply
+**Regla sobre cuándo actualizar `CLAUDE.md`:** no hace falta actualizar el CLAUDE.md cada vez que se instala una skill. Solo cuando esa skill cambia el routing, la prioridad o el comportamiento esperado del agente.
 
-El apply del change 01 fue generado por un agente que no tenía instrucciones explícitas de invocar la skill `clean-architecture` antes de escribir código. La skill estaba instalada pero no existía una regla en `backend/CLAUDE.md` que obligara a invocarla antes de cualquier apply de backend.
+### 6. Mapa de changes
 
-Esto es una **deuda de proceso**: la skill estaba disponible, pero el agente no tenía el disparador correcto para usarla.
-
-**Consecuencia:** dos violations de Clean Architecture pasaron al código sin ser detectadas hasta la sesión de verificación posterior al archive.
-
-**Regla incorporada a partir de este change:** `backend/CLAUDE.md` ya documenta `clean-architecture` como skill preferida para arquitectura, capas y boundaries. A partir del change 02, cualquier apply de backend debe invocar esta skill antes de escribir código nuevo.
+Se reescribió `docs/CHANGES.md` completo. El mapa anterior tenía megachanges poco prácticos. El nuevo mapa tiene **19 changes** más finos, mejor alineados con las historias de usuario y más fáciles de proponer, diseñar y aplicar.
 
 ---
 
-## Revisión Clean Architecture post-archive
+# Parte 2 — Change 01: `infra-backend-core`
 
-Después de archivar el change 01, se ejecutó la skill `clean-architecture` como revisión retroactiva. Se encontraron dos warnings que se corrigieron en la misma sesión.
+## Qué incluía este change
 
-### Warning 1 — `dep-no-framework-imports` (dominio importando HTTP)
+El change 01 implementó la infraestructura base del backend:
 
-**Qué se encontró:** Las excepciones de dominio (`AppError` y subclases) vivían en `app/core/errors.py`, el mismo módulo que los handlers HTTP de FastAPI. Eso acoplaba la capa de dominio a infraestructura HTTP.
+- Configuración de la app (`Settings`, variables de entorno)
+- Logging estructurado
+- CORS
+- Rate limiting (slowapi)
+- Middleware de límite de tamaño de payload
+- Manejo de errores RFC 7807 (`application/problem+json`)
+- Health check endpoint
+- Estructura de routers
 
-**Por qué es un problema:** Cualquier capa que necesite importar `NotFoundError` o `ConflictError` también arrastra indirectamente FastAPI. Viola `dep-no-framework-imports`.
+## Resultado del apply
 
-**Solución:** Se extrajo la jerarquía de excepciones a un módulo nuevo `app/core/exceptions.py` sin ningún import de FastAPI ni HTTP. `errors.py` ahora importa desde `exceptions.py`, no al revés.
-
-**Archivos afectados:**
-- `backend/app/core/exceptions.py` — creado
-- `backend/app/core/errors.py` — refactorizado para importar desde `exceptions.py`
+**El apply fue exitoso**, pero con matices. Cuando fuimos a verificar y levantar el servidor por primera vez, aparecieron tres problemas que no estaban previstos.
 
 ---
 
-### Warning 2 — `frame-di-container-edge` (settings importadas dentro de un handler)
+## Complicaciones y cómo se resolvieron
 
-**Qué se encontró:** El handler de excepciones no controladas (`unhandled_exception_handler`) hacía `from app.core.config import get_settings` dentro del cuerpo de la función, en cada request. Eso es inyección de dependencia disfrazada de import local — el handler no declaraba su dependencia, la resolvía por su cuenta.
+### Complicación 1 — `CORS_ORIGINS` no arrancaba
 
-**Por qué es un problema:** Los contenedores de DI y la resolución de settings deben vivir en el borde del sistema (`create_app`), no dentro de los handlers. Viola `frame-di-container-edge`.
+**Qué pasó:** Al levantar el servidor, caía con `SettingsError: error parsing value for field "CORS_ORIGINS"`.
 
-**Solución:** Se reemplazó el handler por una factory `make_unhandled_handler(settings: Settings)` que recibe `Settings` como parámetro y retorna el handler como closure. `register_exception_handlers` también fue actualizada para recibir `settings`. `create_app()` en `main.py` pasa el settings que ya tiene al momento de construcción.
+**Por qué:** `pydantic-settings` v2 intenta parsear los campos `list[str]` como JSON antes de que corran los validadores custom. El valor `http://localhost:5173` (formato CSV) no es JSON válido, así que el error ocurría antes de llegar al validador.
 
-**Archivos afectados:**
-- `backend/app/core/errors.py` — `make_unhandled_handler(settings)` y nueva firma de `register_exception_handlers`
-- `backend/app/main.py` — `register_exception_handlers(app, settings)`
+**Solución:** Declarar `CORS_ORIGINS` como `str` en Settings y exponer el valor ya parseado como `list[str]` mediante un `@computed_field`. `main.py` pasó a usar `settings.cors_origins` en vez de `settings.CORS_ORIGINS`.
 
-### CLI de openspec usado directamente
+**Lección:** En pydantic-settings v2, si un campo necesita parsing custom desde una variable de entorno, declararlo como `str` y parsear con `@computed_field`.
+
+---
+
+### Complicación 2 — Rate limiting no estaba cableado
+
+**Qué pasó:** Las variables `RATE_LIMIT_DEFAULT` y `RATE_LIMIT_STORAGE_URI` existían en `Settings` pero no se usaban en ningún lado. El Limiter de slowapi se creaba sin esas configuraciones — eran decorativas.
+
+**Por qué:** El tasks.md decía "sin `default_limits`" para evitar 429 en desarrollo, pero la spec sí exigía que el default fuera aplicable.
+
+**Solución:** Se reescribió la inicialización del Limiter con una función `_create_limiter()` que lee `get_settings()` al importar el módulo y pasa `default_limits` y `storage_uri` correctamente.
+
+**Lección:** Al terminar un apply, conviene verificar que cada campo de `Settings` esté siendo consumido por alguien. Un campo que no se usa es un gap.
+
+---
+
+### Complicación 3 — Puerto ocupado en Windows
+
+**Qué pasó:** Al correr el servidor en background desde el agente, intentos consecutivos dejaban el puerto 8000 ocupado y la siguiente instancia no podía arrancar.
+
+**Por qué:** En Windows con Git Bash, los procesos de bash en background no liberan el puerto automáticamente al terminar.
+
+**Solución:** Matar el proceso ocupando el puerto con `taskkill` antes de cada intento, o cambiar de puerto. Los smoke tests finales se corrieron todos en un único comando bash junto con el arranque del servidor.
+
+**Lección:** Para smoke tests en Windows desde el agente, agrupar el arranque y todos los curls en un solo comando en lugar de levantar en background y testear por separado.
+
+---
+
+## Herramientas utilizadas
+
+### MCP
+| MCP | Herramientas | Para qué |
+|---|---|---|
+| `engram` | `mem_context`, `mem_save`, `mem_session_summary`, `mem_search` | Memoria persistente entre sesiones — guardar decisiones, bugs y descubrimientos |
+
+### CLI de openspec
 | Comando | Para qué |
 |---|---|
 | `openspec list --json` | Ver el estado de los changes activos |
 | `openspec status --change "infra-backend-core" --json` | Ver artefactos y tareas del change |
-| `openspec validate infra-backend-core` | Validar que los artefactos del change son coherentes |
-| `openspec archive infra-backend-core` | Cerrar el change y sincronizar specs a `openspec/specs/` |
-
----
-
----
-
-## Corrección del flujo de auto-load de skills
-
-### Problema detectado
-
-El `backend/CLAUDE.md` y el `frontend/CLAUDE.md` tenían una tabla de categorías con "skill preferida" para cada tipo de tarea, pero ese lenguaje era **descriptivo**, no imperativo. El sub-agente de apply podía leer la tabla y no entender que tenía que cargar la skill antes de escribir código — simplemente la leía como información de referencia.
-
-Esto explica por qué el apply del change 01 no invocó `clean-architecture`: la instrucción estaba disponible pero no era una orden.
-
-### Flujo correcto definido
-
-```
-Root CLAUDE.md detecta dominio
-        ↓
-"Leer backend/CLAUDE.md antes de operar"
-        ↓
-backend/CLAUDE.md — sección "Auto-load de skills":
-"Antes de escribir cualquier código, identificá la categoría
- y cargá la skill. No escribas código sin haberla cargado."
-        ↓
-Sub-agente identifica categoría en la tabla
-        ↓
-Carga e invoca la skill (ej: clean-architecture)
-        ↓
-Recién entonces escribe código
-```
-
-### Cambios aplicados
-
-Se agregó una sección `## Auto-load de skills` con instrucción imperativa explícita en ambos archivos:
-
-- `backend/CLAUDE.md` — instrucción para código Python/FastAPI
-- `frontend/CLAUDE.md` — instrucción para código React/TS
-
-La instrucción diferencia tres casos:
-- Skill preferida disponible → cargarla e invocarla obligatoriamente
-- Solo fallback (`find-skills`) → buscar una skill específica antes de proceder
-- Sin skill → proceder directamente
-
-### También se creó el skill registry
-
-Se creó `.atl/skill-registry.md` con las reglas compactas de todas las skills instaladas. Esto habilita el protocolo de skill-resolver: el orquestador puede leer el registry y pre-inyectar las reglas en el prompt del sub-agente de apply como `## Project Standards (auto-resolved)`, sin que el sub-agente tenga que buscar nada por su cuenta.
-
-El registry también se guardó en engram con `topic_key: "skill-registry"` para sobrevivir entre sesiones.
+| `openspec validate infra-backend-core` | Validar que los artefactos son coherentes |
+| `openspec archive infra-backend-core` | Cerrar el change y sincronizar specs |
 
 ---
 
@@ -638,3 +168,95 @@ El registry también se guardó en engram con `topic_key: "skill-registry"` para
 | README backend | Creado |
 | Change archivado | `2026-04-26-infra-backend-core` |
 | Specs sincronizadas | 6 capabilities, 27 requirements |
+
+---
+
+# Parte 3 — Correcciones post-archive
+
+Después de archivar el change 01, se detectaron dos tipos de problemas y se corrigieron en la misma sesión.
+
+---
+
+## Revisión de Clean Architecture
+
+Se ejecutó la skill `clean-architecture` como revisión retroactiva del código implementado. Se encontraron dos violations que se corrigieron inmediatamente.
+
+### Por qué no se ejecutó durante el apply
+
+El apply fue generado por un agente que no tenía instrucción explícita de invocar `clean-architecture` antes de escribir código. La skill estaba instalada, pero la tabla de routing en `backend/CLAUDE.md` usaba lenguaje descriptivo ("skill preferida") en vez de lenguaje imperativo. El agente la vio como información de referencia, no como una orden.
+
+Esto es una **deuda de proceso** — se corrigió en esta misma sesión (ver más abajo).
+
+---
+
+### Violation 1 — Excepciones de dominio mezcladas con infraestructura HTTP
+
+**Qué se encontró:** Las excepciones de dominio (`AppError`, `NotFoundError`, `ConflictError`, etc.) vivían en `app/core/errors.py`, el mismo archivo que los handlers HTTP de FastAPI.
+
+**Por qué es un problema:** Cualquier capa que necesite importar `NotFoundError` arrastra indirectamente FastAPI. El dominio no debe conocer nada de HTTP. Viola `dep-no-framework-imports`.
+
+**Solución:** Se creó `app/core/exceptions.py` con solo la jerarquía de excepciones de dominio, sin ningún import de FastAPI ni HTTP. `errors.py` importa desde `exceptions.py`.
+
+**Archivos afectados:**
+- `backend/app/core/exceptions.py` — creado
+- `backend/app/core/errors.py` — refactorizado
+
+---
+
+### Violation 2 — Settings resueltas dentro de un handler
+
+**Qué se encontró:** El handler de excepciones no controladas hacía `from app.core.config import get_settings` dentro del cuerpo de la función, en cada request.
+
+**Por qué es un problema:** La resolución de dependencias (settings, DI) debe ocurrir en el borde del sistema, en `create_app()`, no dentro de los handlers. El handler no declaraba su dependencia, la resolvía solo. Viola `frame-di-container-edge`.
+
+**Solución:** Se reemplazó el handler por una factory `make_unhandled_handler(settings: Settings)` que recibe `Settings` como parámetro y retorna el handler como closure. `register_exception_handlers` también pasó a recibir `settings`. `create_app()` en `main.py` pasa el settings que ya tiene.
+
+**Archivos afectados:**
+- `backend/app/core/errors.py` — nueva firma de `make_unhandled_handler` y `register_exception_handlers`
+- `backend/app/main.py` — `register_exception_handlers(app, settings)`
+
+---
+
+## Corrección del flujo de auto-load de skills
+
+### El problema
+
+El `backend/CLAUDE.md` y el `frontend/CLAUDE.md` tenían una tabla de skills pero con lenguaje descriptivo. El agente podía leerla y no entender que tenía que cargar la skill antes de escribir código. Eso explica por qué el apply del change 01 no invocó `clean-architecture`.
+
+### El flujo correcto (ahora implementado)
+
+```
+CLAUDE.md (root) detecta que la tarea es de backend
+        ↓
+"Leer backend/CLAUDE.md antes de operar"
+        ↓
+backend/CLAUDE.md — sección "Auto-load de skills":
+"Antes de escribir cualquier código, cargá la skill
+ correspondiente. No escribas código sin haberla cargado."
+        ↓
+El agente identifica la categoría en la tabla
+        ↓
+Carga e invoca la skill (ej: clean-architecture para arquitectura)
+        ↓
+Recién entonces escribe código
+```
+
+### Cambios aplicados
+
+- Se agregó la sección `## Auto-load de skills` en `backend/CLAUDE.md` y `frontend/CLAUDE.md` con instrucción imperativa.
+- Se creó `.atl/skill-registry.md` con las reglas compactas de todas las skills instaladas. Esto permite que el orquestador pre-inyecte las reglas relevantes en el prompt del sub-agente antes de que empiece a trabajar.
+- El registry también se guardó en engram para que sobreviva entre sesiones.
+
+---
+
+# Resumen de lecciones aprendidas
+
+| Lección | Contexto |
+|---|---|
+| En pydantic-settings v2, declarar campos complejos como `str` + `@computed_field` | Complicación 1 — CORS_ORIGINS |
+| Al terminar un apply, verificar que cada campo de Settings esté siendo consumido | Complicación 2 — rate limiting |
+| En Windows, agrupar el arranque del servidor y los tests en un solo comando bash | Complicación 3 — puerto ocupado |
+| Las excepciones de dominio no deben vivir en el mismo módulo que los handlers HTTP | Violation 1 — Clean Architecture |
+| La resolución de settings debe ocurrir en `create_app()`, no dentro de los handlers | Violation 2 — Clean Architecture |
+| Las instrucciones para agentes deben ser imperativas, no descriptivas | Flujo de auto-load de skills |
+| Instalar una skill no es suficiente — hay que definir cuándo y cómo invocarla | Flujo de auto-load de skills |
