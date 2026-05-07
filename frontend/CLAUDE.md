@@ -42,36 +42,43 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 
 ## Auto-load de skills
 
-**Antes de escribir cualquier código de frontend**, identificá la categoría de la tarea en la tabla de abajo y cargá la skill correspondiente. No escribas código sin haberla cargado primero.
+**Antes de escribir cualquier código de frontend**, seguí estos pasos en orden:
 
-Si la categoría tiene skill preferida → cargala e invocala.
-Si tiene solo fallback (`find-skills`) → buscá una skill específica antes de proceder.
-Si no hay skill → procedé directamente.
+1. **Buscá la categoría** de la tarea en la tabla de abajo
+2. **Ejecutá `find-skills`** con la tecnología de la categoría para buscar skills del ecosistema (ej: `npx skills find "react zustand"`)
+   - Si encontrás una skill relevante con buen rating → instalala y usala
+   - Si no encontrás → seguí con el paso 3
+3. **Cargá `clean-architecture`** — se carga SIEMPRE, en toda tarea de código, sin excepción. Aplica a frontend también: separación de concerns, dirección de imports (Pages→Features→Hooks→API→Types), no meter lógica de negocio en componentes.
+4. **Cargá la skill de proyecto** indicada en la columna "Skill de proyecto" — estas tienen las convenciones específicas de Food Store
+5. **Recién ahí escribí código** — con la guía de las tres capas: ecosystem (genérica) + clean-architecture (principios) + foodstore-* (convenciones del proyecto)
 
 ## Tabla de categorías
 
 > Las skills `openspec-*` son skills del **workflow OPSX** (especificación, diseño, tasks, verificación).
 > No son skills técnicas del dominio frontend. Usarlas cuando el trabajo es sobre artefactos SDD, no cuando el trabajo es código React/TS.
+>
+> Las skills `foodstore-*` son skills **técnicas del proyecto**. Contienen las convenciones, patrones y reglas de Food Store extraídas de `docs/Integrador.txt`. Cargarlas SIEMPRE antes de escribir código.
 
-| Categoría | Skill preferida | Fallback | Cuándo usarla |
+| Categoría | find-skills query | Skill de proyecto | Cuándo usarla |
 |---|---|---|---|
 | **Workflow OPSX** | | | |
-| Diseño de un change | `openspec-design` | — | Diseñar el approach técnico de un change |
-| Escritura de specs | `openspec-spec` | — | Documentar contratos de UI, estado, flujos |
-| Desglose en tasks | `openspec-tasks` | — | Convertir un change en checklist implementable |
-| Verificar implementación | `openspec-verify` | — | Validar que el código cumple las specs |
+| Diseño de un change | — | `openspec-design` | Diseñar el approach técnico de un change |
+| Escritura de specs | — | `openspec-spec` | Documentar contratos de UI, estado, flujos |
+| Desglose en tasks | — | `openspec-tasks` | Convertir un change en checklist implementable |
+| Verificar implementación | — | `openspec-verify` | Validar que el código cumple las specs |
 | **Dominio técnico frontend** | | | |
-| Límites de capas FSD / boundaries | `clean-architecture` | — | Revisar dirección de imports entre capas FSD, detectar cross-imports indebidos |
-| Componentes UI / React | — | `find-skills` | Componentes, páginas, widgets (FSD) |
-| Estilos / Tailwind CSS | — | `find-skills` | Clases utilitarias, diseño responsivo, dark mode |
-| Estado del cliente / Zustand | — | `find-skills` | authStore, cartStore, paymentStore, uiStore |
-| Estado del servidor / TanStack Query | — | `find-skills` | useQuery, useMutation, invalidación de cache |
-| Formularios / TanStack Form | — | `find-skills` | Validación, submit, campos controlados |
-| Cliente HTTP / Axios | — | `find-skills` | Interceptores JWT, refresh automático, errores |
-| MercadoPago browser | — | `find-skills` | SDK React, CardPayment, tokenización |
+| Componentes UI / React | `"react typescript components"` | `foodstore-frontend` | Componentes, páginas, widgets (FSD) |
+| Estilos / Tailwind CSS | `"tailwind css v3"` | `foodstore-frontend` | Clases utilitarias, diseño responsivo, dark mode |
+| Estado del cliente / Zustand | `"zustand react state"` | `foodstore-frontend` | authStore, cartStore, paymentStore, uiStore |
+| Estado del servidor / TanStack Query | `"tanstack query v5"` | `foodstore-frontend` | useQuery, useMutation, invalidación de cache |
+| Formularios / TanStack Form | `"tanstack form react"` | `foodstore-frontend` | Validación, submit, campos controlados |
+| Cliente HTTP / Axios | `"axios interceptors jwt"` | `foodstore-frontend` | Interceptores JWT, refresh automático, errores |
+| MercadoPago browser | `"mercadopago react sdk"` | `foodstore-frontend` + `foodstore-domain` | SDK React, CardPayment, tokenización, flujo de pago |
+| Lógica de negocio / reglas | — | `foodstore-domain` | FSM de pedidos, reglas RN-01 a RN-05, estados de pago |
+| Límites de capas FSD | `"feature sliced design"` | `clean-architecture` + `foodstore-frontend` | Dirección de imports entre capas FSD, cross-imports |
 | **Revisión y entrega** | | | |
-| PR / commit | `branch-pr` | — | Cuando el trabajo está listo para revisión |
-| Code review adversarial | `judgment-day` | — | Revisión crítica antes de archivar un change |
+| PR / commit | — | `branch-pr` | Cuando el trabajo está listo para revisión |
+| Code review adversarial | — | `judgment-day` | Revisión crítica antes de archivar un change |
 
 ## Regla del contrato API
 - Frontend consume contratos existentes. Nunca los inventa.

@@ -37,37 +37,45 @@ No asumir que existe código implementado. Verificar el estado del change antes 
 
 ## Auto-load de skills
 
-**Antes de escribir cualquier código de backend**, identificá la categoría de la tarea en la tabla de abajo y cargá la skill correspondiente. No escribas código sin haberla cargado primero.
+**Antes de escribir cualquier código de backend**, seguí estos pasos en orden:
 
-Si la categoría tiene skill preferida → cargala e invocala.
-Si tiene solo fallback (`find-skills`) → buscá una skill específica antes de proceder.
-Si no hay skill → procedé directamente.
+1. **Buscá la categoría** de la tarea en la tabla de abajo
+2. **Ejecutá `find-skills`** con la tecnología de la categoría para buscar skills del ecosistema (ej: `npx skills find "fastapi sqlmodel"`)
+   - Si encontrás una skill relevante con buen rating → instalala y usala
+   - Si no encontrás → seguí con el paso 3
+3. **Cargá `clean-architecture`** — se carga SIEMPRE, en toda tarea de código, sin excepción. Contiene las reglas de capas, dirección de dependencias, controllers thin, entities puras, y boundaries. No es opcional.
+4. **Cargá la skill de proyecto** indicada en la columna "Skill de proyecto" — estas tienen las convenciones específicas de Food Store
+5. **Recién ahí escribí código** — con la guía de las tres capas: ecosystem (genérica) + clean-architecture (principios) + foodstore-* (convenciones del proyecto)
 
 ## Tabla de categorías
 
 > Las skills `openspec-*` son skills del **workflow OPSX** (especificación, diseño, tasks, verificación).
 > No son skills técnicas del dominio backend. Usarlas cuando el trabajo es sobre artefactos SDD, no cuando el trabajo es código Python.
+>
+> Las skills `foodstore-*` son skills **técnicas del proyecto**. Contienen las convenciones, patrones y reglas de Food Store extraídas de `docs/Integrador.txt`. Cargarlas SIEMPRE antes de escribir código.
 
-| Categoría | Skill preferida | Fallback | Cuándo usarla |
+| Categoría | find-skills query | Skill de proyecto | Cuándo usarla |
 |---|---|---|---|
 | **Workflow OPSX** | | | |
-| Diseño de un change | `openspec-design` | — | Diseñar el approach técnico de un change |
-| Escritura de specs | `openspec-spec` | — | Documentar contratos, entidades, reglas |
-| Desglose en tasks | `openspec-tasks` | — | Convertir un change en checklist implementable |
-| Verificar implementación | `openspec-verify` | — | Validar que el código cumple las specs |
+| Diseño de un change | — | `openspec-design` | Diseñar el approach técnico de un change |
+| Escritura de specs | — | `openspec-spec` | Documentar contratos, entidades, reglas |
+| Desglose en tasks | — | `openspec-tasks` | Convertir un change en checklist implementable |
+| Verificar implementación | — | `openspec-verify` | Validar que el código cumple las specs |
 | **Dominio técnico backend** | | | |
-| Arquitectura / capas / boundaries | `clean-architecture` | — | Diseñar o revisar la estructura de capas, dirección de dependencias, separación de responsabilidades |
-| Diseño de entidades / use cases | `clean-architecture` | — | Modelar reglas de negocio, aislar use cases, definir puertos y límites |
-| Refactoring arquitectónico | `clean-architecture` | — | Detectar y corregir violaciones de capas o acoplamientos indebidos |
-| Endpoints / routers | — | `find-skills` | Implementación concreta de routers FastAPI |
-| Lógica de negocio | — | `find-skills` | Services, UoW, reglas de negocio, FSM |
-| Modelos / ORM | — | `find-skills` | SQLModel, relaciones, constraints, soft delete |
-| Migraciones | — | `find-skills` | Alembic, scripts DDL |
-| Auth / JWT / RBAC | — | `find-skills` | Tokens, refresh, roles, dependencias FastAPI |
-| Tests | — | `find-skills` | pytest, fixtures, cobertura |
+| Endpoints / routers | `"fastapi router endpoints"` | `foodstore-backend` | Implementar routers FastAPI, status codes, response_model |
+| Lógica de negocio | `"python service layer"` | `foodstore-backend` + `foodstore-domain` | Services, UoW, reglas de negocio RN-01 a RN-05, FSM |
+| Modelos / ORM | `"sqlmodel postgresql"` | `foodstore-backend` + `foodstore-domain` | SQLModel, relaciones, constraints, soft delete, ERD v5 |
+| Schemas Pydantic | `"pydantic v2 schemas"` | `foodstore-backend` | Create/Update/Read separados, validaciones |
+| Migraciones | `"alembic migrations"` | `foodstore-backend` | Alembic, scripts DDL, seed data |
+| Auth / JWT / RBAC | `"fastapi jwt auth"` | `foodstore-backend` + `foodstore-domain` | Tokens, refresh, roles, dependencias FastAPI |
+| MercadoPago backend | `"mercadopago python sdk"` | `foodstore-backend` + `foodstore-domain` | SDK Python, idempotency_key, webhook IPN |
+| Tests | `"pytest fastapi testing"` | `foodstore-backend` | pytest, fixtures, cobertura |
+| Arquitectura / capas | `"clean architecture python"` | `clean-architecture` + `foodstore-backend` | Estructura de capas, dirección de dependencias |
+| Diseño de entidades | `"domain driven design"` | `clean-architecture` + `foodstore-domain` | Modelar reglas de negocio, aislar use cases |
+| Refactoring | `"python refactoring"` | `clean-architecture` | Violaciones de capas o acoplamientos |
 | **Revisión y entrega** | | | |
-| PR / commit | `branch-pr` | — | Cuando el trabajo está listo para revisión |
-| Code review adversarial | `judgment-day` | — | Revisión crítica antes de archivar un change |
+| PR / commit | — | `branch-pr` | Cuando el trabajo está listo para revisión |
+| Code review adversarial | — | `judgment-day` | Revisión crítica antes de archivar un change |
 
 ## Regla del contrato API
 - Backend define el contrato. Nunca lo recibe del frontend.

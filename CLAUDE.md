@@ -1,4 +1,4 @@
-﻿# Food Store — Router Global
+# Food Store — Router Global
 
 ## Fase actual del proyecto
 **Fase temprana: pre-apply. Puede haber changes en propose o diseño, pero no debe asumirse implementación cerrada.**
@@ -51,6 +51,72 @@ Reglas obligatorias en esta fase:
 - El contrato vive en `openspec/` y en FastAPI `/docs`.
 - Cambiar un contrato requiere: proponer el change en backend → definir el contrato con claridad → frontend consume cuando ese contrato está acordado.
 - Frontend nunca fuerza un cambio de contrato.
+
+## Convenciones globales
+
+### Naming
+- Python: `snake_case` (variables, funciones, módulos), `PascalCase` (clases)
+- TypeScript: `camelCase` (variables, funciones), `PascalCase` (componentes, interfaces)
+- Base de datos: `snake_case`
+- API: `/api/v1/recurso` con sustantivos plurales
+
+### Commits
+```
+feat(modulo): descripción del cambio
+fix(modulo): descripción del bug corregido
+refactor(modulo): descripción del refactor
+test(modulo): descripción de los tests
+docs(modulo): descripción del cambio en docs
+```
+No agregar Co-Authored-By ni atribución de AI. Solo conventional commits.
+
+### Calidad de código
+- Funciones < 50 líneas, responsabilidad única (SRP)
+- Docstrings en funciones públicas (Python), JSDoc en funciones públicas (TypeScript)
+- No dejar TODOs sin contexto — si hay un TODO, debe decir POR QUÉ
+
+## Estructura del proyecto
+
+```
+RepositorioBaseFoodStore-SDD/
+├── backend/
+│   ├── app/
+│   │   ├── core/           # Infraestructura: config, errors, middleware, rate_limit
+│   │   ├── api/v1/         # Routers REST bajo /api/v1
+│   │   └── modules/        # Módulos feature-first (auth, productos, pedidos, etc.)
+│   ├── requirements.txt
+│   └── .env / .env.example
+├── frontend/               # React + TypeScript + Vite (por implementar)
+├── docs/                   # Specs del sistema (fuente de verdad)
+│   ├── Integrador.txt      # Arquitectura, ERD v5, API, patrones, rúbrica
+│   ├── Descripcion.txt     # Visión general, actores, stack
+│   ├── Historias_de_usuario.txt  # US-000 a US-076
+│   └── CHANGES.md          # Mapa de 19 changes con dependencias
+├── openspec/               # Artefactos SDD (changes, specs archivadas)
+├── .agents/skills/         # Skills de proyecto
+└── .atl/skill-registry.md  # Registro de skills para delegación
+```
+
+## Skills de dominio
+
+El sistema de skills tiene **tres capas** que se cargan en orden antes de escribir código:
+
+### 1. `find-skills` — Skills del ecosistema (genéricas)
+Ejecutar `find-skills` (`npx skills find "<tecnología>"`) para buscar skills de buenas prácticas de la tecnología en el ecosistema público (skills.sh). Si se encuentra una skill relevante con buen rating, instalarla y usarla.
+
+### 2. `clean-architecture` — Principios arquitectónicos (SIEMPRE)
+Se carga **en toda tarea de código, sin excepción**. No es opcional. Contiene las 42 reglas de Clean Architecture: dirección de dependencias, entities puras, controllers thin, framework isolation, boundary definition. Aplica a backend Y frontend.
+
+### 3. `foodstore-*` — Skills de proyecto (convenciones Food Store)
+Contienen las convenciones específicas de Food Store extraídas de `docs/Integrador.txt`. Se cargan SIEMPRE además de las anteriores.
+
+| Skill | Contenido | Usar cuando |
+|-------|-----------|-------------|
+| `foodstore-backend` | Capas, módulos, UoW, BaseRepo, schemas, HTTP, auth, seed | Cualquier tarea backend |
+| `foodstore-frontend` | FSD, Zustand stores, TanStack Query, TS, UX patterns | Cualquier tarea frontend |
+| `foodstore-domain` | ERD v5, FSM, RN-01 a RN-05, pagos MP, rúbrica, naming | Cross-domain o decisiones de arquitectura |
+
+**Flujo correcto**: `find-skills` (best practices genéricas) → `clean-architecture` (principios) → `foodstore-*` (convenciones del proyecto) → codear.
 
 ## Reglas globales
 - No mezclar capas: backend no asume UI, frontend no inventa endpoints

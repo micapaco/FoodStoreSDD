@@ -1,6 +1,6 @@
 # Informe de avance — Food Store SDD
 
-Este informe documenta las decisiones de arquitectura, el trabajo realizado en el Change 01 y las correcciones aplicadas en la sesión de verificación. Está escrito para que cualquier integrante del equipo pueda entender qué se hizo, por qué, y qué lecciones quedaron.
+Este informe documenta las decisiones de arquitectura, el trabajo realizado en el Change 01 y las correcciones aplicadas en la sesión de verificación.
 
 ---
 
@@ -260,3 +260,160 @@ Recién entonces escribe código
 | La resolución de settings debe ocurrir en `create_app()`, no dentro de los handlers | Violation 2 — Clean Architecture |
 | Las instrucciones para agentes deben ser imperativas, no descriptivas | Flujo de auto-load de skills |
 | Instalar una skill no es suficiente — hay que definir cuándo y cómo invocarla | Flujo de auto-load de skills |
+
+---
+
+# Parte 4 — Sistema de skills de dos capas
+
+## El problema detectado
+
+Al auditar los `CLAUDE.md`, descubrimos que la tabla de categorías usaba `find-skills` como **fallback** para todas las tareas técnicas (endpoints, modelos, auth, estado, etc.). Pero `find-skills` busca skills genéricas en el ecosistema público (`skills.sh`), no convenciones del proyecto.
+
+En la práctica, el flujo era:
+
+```
+Tarea: "implementar router de auth con JWT"
+→ CLAUDE.md dice: fallback find-skills
+→ npx skills find "fastapi jwt"
+→ No encuentra nada relevante (o encuentra algo genérico)
+→ "No encontré skill, procedo directamente"
+→ El agente codea sin guía del proyecto
+```
+
+El resultado: un agente que sabe usar FastAPI en general, pero no sabe que Food Store usa `Router → Service → UoW → Repository → Model`, que los schemas son Create/Update/Read separados, que el UoW hace commit automático, ni que existen 5 reglas de negocio que no puede violar.
+
+## La solución: dos capas de skills
+
+Se implementó un sistema de skills de **dos capas** complementarias:
+
+### Capa 1 — `find-skills` (conocimiento genérico del ecosistema)
+
+Antes de codear, el agente ejecuta `find-skills` con la tecnología de la tarea (ej: `npx skills find "fastapi jwt auth"`). Si encuentra una skill con buen rating en skills.sh, la instala y la usa.
+
+**Qué aporta:** Best practices actualizadas de la tecnología. Errores comunes. Patrones recomendados por la comunidad. Cosas que cambian con cada versión y que un archivo estático no puede cubrir.
+
+### Capa 2 — `foodstore-*` (convenciones específicas del proyecto)
+
+Tres skills de proyecto creadas en `.agents/skills/` con las convenciones extraídas de `docs/Integrador.txt`:
+
+| Skill | Contenido |
+|-------|-----------|
+| `foodstore-backend` | Capas (Router→Service→UoW→Repo→Model), estructura de módulos feature-first, UoW con context manager, BaseRepository[T], schemas Pydantic (Create/Update/Read), HTTP (RFC 7807, status codes, paginación), auth RBAC, seed data, infraestructura ya implementada |
+| `foodstore-frontend` | Feature-Sliced Design con estructura de carpetas, 4 stores Zustand con reglas de persistencia, TanStack Query patterns, TypeScript strict, Axios interceptors, MercadoPago CardPayment, UX patterns obligatorios |
+| `foodstore-domain` | ERD v5 completo (3 dominios), FSM con tabla de transiciones, reglas de negocio RN-01 a RN-05, flujo de pago MercadoPago, naming conventions, rúbrica de 200 puntos |
+
+**Qué aporta:** Las reglas que no van a cambiar con una versión nueva de FastAPI. Las convenciones de ESTE proyecto. Lo que el profe va a evaluar.
+
+## Por qué se necesitan ambas capas
+
+La analogía es directa: es como construir una cocina industrial.
+
+- **`find-skills`** es el manual del fabricante — "cómo instalar correctamente una mesada de acero inoxidable, mejores prácticas, normas de seguridad". Conocimiento genérico que aplica a cualquier cocina.
+- **`foodstore-*`** es el plano de TU restaurante — "la mesada va contra la pared norte, conectada al sistema de agua de la fase 1, y debe soportar los 6 módulos de preparación del ERD". Sin esto, podés instalar la mesada perfecta en el lugar equivocado.
+
+| Solo find-skills | Solo foodstore-* | Ambas juntas |
+|---|---|---|
+| Sabe cómo hacer JWT bien en general | Sabe que Food Store usa refresh tokens hasheados en BD | Hace JWT bien Y como lo necesita Food Store |
+| Sabe best practices de Zustand | Sabe que hay 4 stores con persistencia selectiva | Implementa los 4 stores siguiendo best practices |
+| Sabe qué es un UoW en general | Sabe que el Service recibe `uow` y NUNCA hace commit | Implementa el UoW correctamente y en el lugar correcto |
+
+### El paralelo con la propia arquitectura del proyecto
+
+El sistema de skills refleja la misma separación de responsabilidades del backend:
+
+```
+find-skills    = Framework      (FastAPI, SQLModel — conocimiento genérico)
+foodstore-*    = Service Layer  (reglas de negocio de Food Store — conocimiento de dominio)
+```
+
+FastAPI sabe servir HTTP. Pero no sabe que un pedido tiene 6 estados y que `ENTREGADO` es terminal. Para eso necesitás la capa de dominio. Lo mismo aplica a las skills: la genérica sabe buenas prácticas de la tecnología, la del proyecto sabe las reglas del sistema.
+
+## Flujo resultante
+
+```
+Tarea: "implementar router de auth con JWT"
+→ CLAUDE.md dice: find-skills query "fastapi jwt auth" + skill de proyecto foodstore-backend
+→ Paso 1: npx skills find "fastapi jwt auth" → instala skill si encuentra
+→ Paso 2: Carga foodstore-backend + foodstore-domain
+→ Paso 3: Codea con best practices genéricas + convenciones del proyecto
+```
+
+## Cambios aplicados
+
+### Skills creadas
+- `.agents/skills/foodstore-backend/SKILL.md` — 196 líneas
+- `.agents/skills/foodstore-frontend/SKILL.md` — 155 líneas
+- `.agents/skills/foodstore-domain/SKILL.md` — 163 líneas
+
+### CLAUDE.md actualizados
+- `CLAUDE.md` (root) — agregadas convenciones globales (naming, commits, calidad de código), estructura del proyecto, sección de skills de tres capas
+- `backend/CLAUDE.md` — tabla de categorías con columna `find-skills query` y columna `Skill de proyecto`, `clean-architecture` como paso obligatorio
+- `frontend/CLAUDE.md` — misma estructura de tabla con queries de búsqueda por categoría, `clean-architecture` como paso obligatorio
+
+### Skill registry actualizado
+- `.atl/skill-registry.md` — agregadas las 3 skills `foodstore-*` con triggers y compact rules
+
+## Corrección: `clean-architecture` como skill always-on
+
+### El problema
+
+Al auditar las tablas de categorías, detectamos que `clean-architecture` solo se cargaba cuando la tarea era explícitamente sobre **"Arquitectura / capas"**, **"Diseño de entidades"** o **"Refactoring"**. Pero si la tarea era "implementar router de auth", el agente solo cargaba `foodstore-backend` — no `clean-architecture`.
+
+Esto es exactamente lo que pasó en el change 01: el agente escribió código sin cargar `clean-architecture` y después hubo que corregir dos violations (excepciones de dominio mezcladas con HTTP, Settings resueltas dentro de handlers).
+
+Las reglas de clean architecture no son solo para tareas de "arquitectura" — aplican a TODO el código:
+
+| Regla | Aplica cuando escribís... |
+|---|---|
+| Controllers thin, no business logic | Un router de auth, un endpoint de productos, cualquier handler |
+| Dependencies inward-only | Un service que importa un model, un repository que accede a la DB |
+| Entities sin framework imports | Un modelo SQLModel que define relaciones |
+| DI en el borde, no en handlers | Cualquier función que necesite Settings o dependencias |
+| Separation of concerns | Literalmente todo |
+
+### La corrección
+
+Se promovió `clean-architecture` de "skill por categoría" a **paso obligatorio** en el flujo de auto-load. Ahora es el paso 3 en ambos CLAUDE.md:
+
+```
+Antes (dos capas):
+  1. find-skills (ecosistema)
+  2. foodstore-* (proyecto)
+  3. Codear
+
+Después (tres capas):
+  1. find-skills (ecosistema)
+  2. clean-architecture (SIEMPRE — principios)    ← NUEVO
+  3. foodstore-* (proyecto)
+  4. Codear
+```
+
+La instrucción es explícita e imperativa: **"se carga SIEMPRE, en toda tarea de código, sin excepción"**. No dice "preferida" ni "recomendada" — dice que no es opcional.
+
+### Por qué tres capas y no dos
+
+Cada capa cubre un nivel de abstracción diferente:
+
+```
+find-skills       = HOW     (cómo usar la tecnología correctamente)
+clean-architecture = WHY     (por qué separar capas, por qué dependencies inward-only)
+foodstore-*       = WHAT    (qué convenciones específicas aplican en este proyecto)
+```
+
+Sin el HOW, no sabés las best practices actuales de FastAPI.
+Sin el WHY, metés lógica de negocio en el router porque "funciona".
+Sin el WHAT, no sabés que el UoW hace commit automático en `__exit__`.
+
+Las tres juntas producen código que es técnicamente correcto (HOW), arquitectónicamente sólido (WHY), y alineado con las specs del proyecto (WHAT).
+
+## Lecciones de esta parte
+
+| Lección | Contexto |
+|---|---|
+| Skills genéricas del ecosistema complementan pero no reemplazan las convenciones del proyecto | find-skills busca en skills.sh, no sabe las reglas de Food Store |
+| El CLAUDE.md es un router, no un repositorio de conocimiento — debe rutear a las skills correctas | Separación de responsabilidades aplicada al propio sistema de agentes |
+| Las convenciones del proyecto deben estar en skills dedicadas, no inline en el CLAUDE.md | Un CLAUDE.md de 300 líneas mezcla workflow con convenciones — viola SRP |
+| Cada categoría técnica debe tener un query de búsqueda explícito para find-skills | Si el agente no sabe qué buscar, no busca nada |
+| `clean-architecture` no es una skill "de arquitectura" — es una skill de TODO el código | Si solo se carga para tareas de refactoring, el código nuevo nace con violations |
+| Las instrucciones para agentes deben ser imperativas y no dejar margen de interpretación | "Skill preferida" se ignora; "se carga SIEMPRE, sin excepción" se cumple |
+

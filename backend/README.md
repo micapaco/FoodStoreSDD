@@ -1,57 +1,98 @@
 # Food Store — Backend
 
-API REST construida con FastAPI + Python 3.12+.
+API REST construida con FastAPI + Python 3.13 + PostgreSQL 16.
 
-## Setup
+## Requisitos previos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y corriendo
+- Python 3.12 o superior
+
+## Setup inicial
+
+### 1. Entorno virtual y dependencias
 
 ```bash
-# 1. Crear entorno virtual
+# Desde la carpeta backend/
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# 2. Instalar dependencias
+# Activar el entorno (Windows)
+.venv\Scripts\activate
+
+# Activar el entorno (Mac/Linux)
+source .venv/bin/activate
+
+# Instalar dependencias
 pip install -r requirements.txt
-
-# 3. Configurar variables de entorno
-cp .env.example .env
-# Editar .env y completar SECRET_KEY (mínimo 32 caracteres)
 ```
 
-## Levantar el servidor
+### 2. Variables de entorno
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+# Copiar el ejemplo
+cp .env.example .env
 ```
+
+Abrir `.env` y completar los valores. Los campos obligatorios son:
+
+| Variable | Valor para desarrollo |
+|---|---|
+| `DATABASE_URL` | `postgresql+asyncpg://foodstore_user:foodstore_pass@localhost:5432/foodstore_db` |
+| `POSTGRES_USER` | `foodstore_user` |
+| `POSTGRES_PASSWORD` | `foodstore_pass` |
+| `POSTGRES_DB` | `foodstore_db` |
+| `POSTGRES_PORT` | `5432` |
+| `SECRET_KEY` | Generá uno con el comando de abajo |
+
+Para generar el `SECRET_KEY`:
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### 3. Base de datos
+
+```bash
+# Levantar PostgreSQL con Docker
+docker compose up -d
+
+# Aplicar migraciones
+python -m alembic upgrade head
+
+# Cargar datos iniciales (roles, formas de pago, usuario admin)
+python -m app.db.seed
+```
+
+> El seed crea el usuario `admin@foodstore.com` con password `Admin1234!`. Usarlo solo en desarrollo.
+
+### 4. Levantar el servidor
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+El servidor queda disponible en `http://127.0.0.1:8000`.
+
+---
 
 ## Endpoints disponibles
 
 | Endpoint | Descripción |
 |---|---|
-| `GET /api/v1/health` | Health check — verifica que el servidor está corriendo |
-| `GET /docs` | Swagger UI |
+| `GET /api/v1/health` | Health check |
+| `GET /docs` | Swagger UI — explorador interactivo |
 | `GET /redoc` | ReDoc |
 | `GET /openapi.json` | Schema OpenAPI 3.x |
 
-## Probar el sistema
+## Verificar que todo funciona
 
 ```bash
 # Health check — debe responder 200
 curl http://localhost:8000/api/v1/health
 
-# Método no permitido — debe responder 405 en formato RFC 7807
-curl -X POST http://localhost:8000/api/v1/health
-
 # Ruta inexistente — debe responder 404 en formato RFC 7807
 curl http://localhost:8000/api/v1/no-existe
-
-# Preflight CORS desde el origen del frontend
-curl -X OPTIONS \
-  -H "Origin: http://localhost:5173" \
-  -H "Access-Control-Request-Method: GET" \
-  http://localhost:8000/api/v1/health
 ```
 
-Todos los errores siguen el formato [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807) (`application/problem+json`):
+Todos los errores siguen [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807) (`application/problem+json`):
 
 ```json
 {
@@ -64,9 +105,37 @@ Todos los errores siguen el formato [RFC 7807](https://www.rfc-editor.org/rfc/rf
 }
 ```
 
-## Variables de entorno
+---
 
-Ver `.env.example` para la lista completa con documentación. Las obligatorias son:
+## Comandos útiles
 
-- `SECRET_KEY` — clave secreta mínimo 32 caracteres (`python -c "import secrets; print(secrets.token_hex(32))"`)
-- `DATABASE_URL` — requerida a partir del change `infra-database` (opcional ahora)
+```bash
+# Ver logs de PostgreSQL
+docker compose logs db
+
+# Detener Docker
+docker compose down
+
+# Detener Docker y borrar la base de datos (reset completo)
+docker compose down -v
+
+# Ver estado de migraciones
+python -m alembic current
+
+# Crear nueva migración (después de cambiar modelos)
+python -m alembic revision --autogenerate -m "descripcion"
+```
+
+---
+
+## Problemas conocidos
+
+**`alembic` no se reconoce como comando en Windows**
+Usar `python -m alembic` en lugar de `alembic` directamente.
+
+**El contenedor de Docker arranca con variables vacías**
+Si `docker compose up -d` muestra warnings de variables no seteadas, asegurate de haber completado el `.env` antes de correr el comando. Si ya corrió con variables vacías, hacer reset completo:
+```bash
+docker compose down -v
+docker compose up -d
+```
