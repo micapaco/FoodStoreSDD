@@ -18,6 +18,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         settings.APP_VERSION,
         settings.ENV,
     )
+    logger.info("Docs: http://127.0.0.1:8000/docs")
     yield
     logger.info("Food Store backend shutting down")
 
@@ -102,6 +104,10 @@ def create_app() -> FastAPI:
 
     # 6. Routers
     app.include_router(api_v1_router)
+
+    @app.get("/", include_in_schema=False)
+    async def root() -> RedirectResponse:
+        return RedirectResponse(url="/docs")
 
     return app
 

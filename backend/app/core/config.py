@@ -38,8 +38,13 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # ── Base de datos ────────────────────────────────────────────────────────
-    # Opcional en este change. Obligatorio en infra-database.
-    DATABASE_URL: str | None = None
+    DATABASE_URL: str  # obligatorio — postgresql+asyncpg://user:pass@host:port/db
+
+    # ── Docker / PostgreSQL ──────────────────────────────────────────────────
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_PORT: int = 5432
 
     # ── Seguridad ────────────────────────────────────────────────────────────
     SECRET_KEY: str  # obligatorio, sin default
