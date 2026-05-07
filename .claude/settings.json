@@ -30,9 +30,8 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "bash",
-            "command": "python -c \"import sys,json; d=json.load(sys.stdin); fp=d.get('tool_input',{}).get('file_path',''); print('{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"additionalContext\\\":\\\"Load skills from .atl/skill-registry.md before writing code. Backend (.py): foodstore-backend + clean-architecture. Frontend (.ts/.tsx/.js/.jsx): foodstore-frontend + clean-architecture.\\\"}}') if any(fp.endswith(x) for x in ['.py','.ts','.tsx','.js','.jsx']) else print('{}')\"",
-            "statusMessage": "Verificando skills de dominio..."
+            "command": "python .claude/hooks/inject-skills.py",
+            "statusMessage": "Inyectando skills de dominio..."
           }
         ]
       }
