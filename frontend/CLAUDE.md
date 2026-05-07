@@ -6,7 +6,7 @@
 - Tailwind CSS v3 — skill instalada: `tailwind-css-patterns`
 - Zustand (authStore, cartStore, paymentStore, uiStore)
 - TanStack Query v5 (estado del servidor) — skill instalada: `tanstack-query-best-practices`
-- TanStack Form (formularios)
+- TanStack Form (formularios) — skill instalada: `tanstack-form`
 - Axios (cliente HTTP con interceptores JWT)
 - recharts (gráficos del panel admin)
 - @mercadopago/sdk-react (tokenización PCI SAQ-A)
@@ -72,7 +72,7 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 | Estado del cliente / Zustand | `"zustand react state"` | `foodstore-frontend` | authStore, cartStore, paymentStore, uiStore |
 | Estado del servidor / TanStack Query | ✅ `tanstack-query-best-practices` instalada | `foodstore-frontend` | useQuery, useMutation, invalidación de cache |
 | Build tool / Vite | ✅ `vite` instalada | — | vite.config.ts, plugins, proxy, env vars |
-| Formularios / TanStack Form | `"tanstack form react"` | `foodstore-frontend` | Validación, submit, campos controlados |
+| Formularios / TanStack Form | ✅ `tanstack-form` instalada | `foodstore-frontend` | Validación, submit, campos controlados |
 | Cliente HTTP / Axios | `"axios interceptors jwt"` | `foodstore-frontend` | Interceptores JWT, refresh automático, errores |
 | MercadoPago browser | `"mercadopago react sdk"` | `foodstore-frontend` + `foodstore-domain` | SDK React, CardPayment, tokenización, flujo de pago |
 | Lógica de negocio / reglas | — | `foodstore-domain` | FSM de pedidos, reglas RN-01 a RN-05, estados de pago |

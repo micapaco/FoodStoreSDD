@@ -37,3 +37,6 @@ Thumbs.db
 *.log
 logs/
 .atl/
+
+# Claude Code — local settings (personal, not shared)
+.claude/settings.local.json
