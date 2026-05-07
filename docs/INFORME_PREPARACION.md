@@ -417,3 +417,107 @@ Las tres juntas producen código que es técnicamente correcto (HOW), arquitect�
 | `clean-architecture` no es una skill "de arquitectura" — es una skill de TODO el código | Si solo se carga para tareas de refactoring, el código nuevo nace con violations |
 | Las instrucciones para agentes deben ser imperativas y no dejar margen de interpretación | "Skill preferida" se ignora; "se carga SIEMPRE, sin excepción" se cumple |
 
+---
+
+# Parte 5 — Revisión del sistema de skills y CLAUDE.md
+
+## Contexto
+
+Antes de arrancar el change `03 — infra-frontend-core` se hizo una revisión crítica del sistema de skills y los archivos CLAUDE.md. El objetivo era responder: **¿tienen sentido tal como están, o hay que ajustar algo?**
+
+---
+
+## Revisión de los CLAUDE.md
+
+### Root CLAUDE.md
+Cumple su rol de router: detecta si la tarea es backend, frontend o cross-domain, y delega al CLAUDE.md correspondiente. Tenía una sección "Fase actual del proyecto" desactualizada que decía "pre-apply" cuando ya había dos changes archivados. Se corrigió para reflejar el estado real.
+
+### backend/CLAUDE.md
+Bien estructurado. Tiene tabla de categorías con queries de `find-skills` y skills de proyecto por cada tipo de tarea. Instrucción imperativa de auto-load. Sin ajustes necesarios.
+
+### frontend/CLAUDE.md
+Bien estructurado, misma lógica que backend. Se actualizaron dos cosas:
+1. Stack: se marcaron las skills del ecosistema ya instaladas para cada tecnología (React → `react-dev`, Vite → `vite`, TanStack Query → `tanstack-query-best-practices`, Tailwind → `tailwind-css-patterns`)
+2. Tabla de categorías: se reemplazaron los queries de búsqueda por "✅ instalada" donde ya hay skill disponible
+
+---
+
+## Revisión de las skills foodstore-*
+
+La pregunta concreta era: **¿tienen sentido dado que ahora tenemos skills del ecosistema instaladas?**
+
+La respuesta es sí, y las razones son estas:
+
+### `foodstore-backend` — sigue siendo necesaria
+
+Contiene convenciones que no existen en ninguna skill genérica de FastAPI:
+
+- La cadena unidireccional `Router → Service → UoW → Repository → Model`
+- Que el `Service` recibe `uow` como parámetro y **nunca** llama a `session.commit()`
+- Que los schemas son siempre `Create/Update/Read` separados, nunca el modelo SQLModel directo
+- Los status codes exactos del proyecto (201 create, 204 delete, 422 validación, 429 rate limit)
+- El seed obligatorio después de cada `alembic upgrade head`
+- Las excepciones de dominio en `core/exceptions.py`, nunca `HTTPException` en services
+
+Una skill genérica de FastAPI sabe cómo usar FastAPI. No sabe que **este** sistema tiene un UoW con `__exit__` que hace commit automático.
+
+### `foodstore-frontend` — sigue siendo necesaria
+
+Contiene los 4 stores de Zustand con sus estados exactos, reglas de persistencia y formas de consumo. Una skill genérica de React sabe cómo usar Zustand. No sabe que:
+
+- `authStore` persiste **solo** el `accessToken` (no el usuario completo)
+- `paymentStore` **no persiste** — se resetea en cada recarga
+- Los items del carrito tienen exactamente estos campos: `producto_id, nombre, precio, cantidad, imagen_url`
+- El costo de envío es `50.00` fijo en v1
+
+También contiene los patrones UX que puntúan en la rúbrica: skeleton loaders, toasts, modals de confirmación, empty states, mobile-first, debounce en búsqueda. Sin esta skill, el agente no sabe que esos 10 puntos de UI/UX dependen de esos patrones específicos.
+
+### `foodstore-domain` — es la más crítica de las tres
+
+Contiene conocimiento que no está en ningún otro lugar excepto `docs/Integrador.txt`:
+
+- El ERD v5 completo con constraints, tipos y notas de implementación
+- La FSM con los 6 estados y las transiciones válidas (no solo "hay estados" — sabe cuáles son terminales y qué transiciones son ilegales)
+- Las 5 reglas de negocio (RN-01 a RN-05) que son invariantes — no se pueden violar
+- La rúbrica de 200 puntos desglosada — saber qué se evalúa permite priorizar donde importa
+
+Sin esta skill, un agente puede implementar un flujo de pedidos técnicamente correcto pero que viola RN-03 (historial append-only) o que no trata `ENTREGADO` como estado terminal.
+
+---
+
+## Skills del ecosistema instaladas antes del change 03
+
+Antes de proponer `infra-frontend-core` se instalaron tres skills del ecosistema a nivel proyecto:
+
+| Skill | Installs | Cubre |
+|---|---|---|
+| `antfu/skills@vite` | 20.9K | `vite.config.ts`, plugins, proxy, env vars, HMR — de Anthony Fu (creador de Vite) |
+| `softaworks/agent-toolkit@react-dev` | 3.5K | React 18/19 + TypeScript: tipado de hooks, eventos, props, componentes genéricos |
+| `deckardger/tanstack-agent-skills@tanstack-query-best-practices` | 4.8K | Query keys, caching, mutations, optimistic updates, error handling |
+
+Estas skills cubren el **HOW** (cómo usar la tecnología correctamente). Las `foodstore-*` cubren el **WHAT** (qué convenciones aplican en este proyecto). Se complementan, no se pisan.
+
+---
+
+## Nueva regla: buscar skills antes de cada change
+
+Se estableció una regla de flujo permanente: **antes de proponer cualquier change nuevo**, identificar las tecnologías involucradas y verificar si hay skills del ecosistema disponibles para ellas.
+
+La motivación fue doble:
+1. En un principio se quería que las skills se buscaran automáticamente. Esto requiere autorización del usuario para ejecutar `npx skills add`, así que el paso correcto es preguntarle antes de cada change.
+2. Las skills del ecosistema tienen mucho más valor cuando se instalan ANTES del apply — no como corrección posterior.
+
+La regla quedó documentada en el `CLAUDE.md` raíz para que aplique a todos los changes futuros.
+
+---
+
+## Lecciones de esta parte
+
+| Lección | Contexto |
+|---|---|
+| Las skills del proyecto y las del ecosistema cubren capas distintas — no se pisan | foodstore-* = convenciones del proyecto; ecosystem skills = best practices genéricas |
+| Una skill del ecosistema no puede saber las reglas de negocio del proyecto | Ninguna skill de FastAPI sabe que el UoW hace commit en `__exit__` |
+| Marcar las skills ya instaladas en el CLAUDE.md evita búsquedas redundantes | El agente no necesita buscar `vite` si ya está instalada |
+| Buscar skills ANTES del apply, no después | Instalar una skill después de que el código ya existe tiene menos impacto |
+| El estado del proyecto en CLAUDE.md debe mantenerse actualizado | "pre-apply" estaba desactualizado con dos changes ya archivados |
+

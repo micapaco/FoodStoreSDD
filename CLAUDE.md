@@ -1,9 +1,14 @@
 # Food Store — Router Global
 
 ## Fase actual del proyecto
-**Fase temprana: pre-apply. Puede haber changes en propose o diseño, pero no debe asumirse implementación cerrada.**
 
-Reglas obligatorias en esta fase:
+**Changes archivados:**
+- `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
+- `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
+
+**Próximo change:** `03` `infra-frontend-core` — sin proponer todavía.
+
+Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción
 - No asumir que existe código implementado ni que un change está cerrado
 - Verificar el estado real del change antes de operar:

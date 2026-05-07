@@ -1,11 +1,11 @@
 # Frontend — Food Store
 
 ## Stack
-- React 18 + TypeScript (strict: true)
-- Vite (build tool)
-- Tailwind CSS v3
+- React 18 + TypeScript (strict: true) — skill instalada: `react-dev`
+- Vite (build tool) — skill instalada: `vite`
+- Tailwind CSS v3 — skill instalada: `tailwind-css-patterns`
 - Zustand (authStore, cartStore, paymentStore, uiStore)
-- TanStack Query v5 (estado del servidor)
+- TanStack Query v5 (estado del servidor) — skill instalada: `tanstack-query-best-practices`
 - TanStack Form (formularios)
 - Axios (cliente HTTP con interceptores JWT)
 - recharts (gráficos del panel admin)
@@ -67,10 +67,11 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 | Desglose en tasks | — | `openspec-tasks` | Convertir un change en checklist implementable |
 | Verificar implementación | — | `openspec-verify` | Validar que el código cumple las specs |
 | **Dominio técnico frontend** | | | |
-| Componentes UI / React | `"react typescript components"` | `foodstore-frontend` | Componentes, páginas, widgets (FSD) |
-| Estilos / Tailwind CSS | `"tailwind css v3"` | `foodstore-frontend` | Clases utilitarias, diseño responsivo, dark mode |
+| Componentes UI / React | ✅ `react-dev` instalada | `foodstore-frontend` | Componentes, páginas, widgets (FSD) |
+| Estilos / Tailwind CSS | ✅ `tailwind-css-patterns` instalada | `foodstore-frontend` | Clases utilitarias, diseño responsivo, dark mode |
 | Estado del cliente / Zustand | `"zustand react state"` | `foodstore-frontend` | authStore, cartStore, paymentStore, uiStore |
-| Estado del servidor / TanStack Query | `"tanstack query v5"` | `foodstore-frontend` | useQuery, useMutation, invalidación de cache |
+| Estado del servidor / TanStack Query | ✅ `tanstack-query-best-practices` instalada | `foodstore-frontend` | useQuery, useMutation, invalidación de cache |
+| Build tool / Vite | ✅ `vite` instalada | — | vite.config.ts, plugins, proxy, env vars |
 | Formularios / TanStack Form | `"tanstack form react"` | `foodstore-frontend` | Validación, submit, campos controlados |
 | Cliente HTTP / Axios | `"axios interceptors jwt"` | `foodstore-frontend` | Interceptores JWT, refresh automático, errores |
 | MercadoPago browser | `"mercadopago react sdk"` | `foodstore-frontend` + `foodstore-domain` | SDK React, CardPayment, tokenización, flujo de pago |
