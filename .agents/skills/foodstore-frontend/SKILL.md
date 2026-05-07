@@ -45,10 +45,10 @@ Zustand manages CLIENT state. TanStack Query manages SERVER state. **Mixing both
 
 | Store | File | State | Middleware | Persists |
 |-------|------|-------|-----------|----------|
-| authStore | `store/authStore.ts` | accessToken, usuario, isAuthenticated | `persist` | ✅ Only accessToken (partialize) |
-| cartStore | `store/cartStore.ts` | items (CartItem[]: producto_id, nombre, precio, cantidad, imagen_url) | `persist` | ✅ Complete items |
-| paymentStore | `store/paymentStore.ts` | status (idle/processing/approved/rejected/error), mpPaymentId, statusDetail | None (session) | ❌ Resets on reload |
-| uiStore | `store/uiStore.ts` | cartOpen, sidebarOpen, confirmModal | None | ❌ |
+| authStore | `shared/stores/authStore.ts` | accessToken, refreshToken, user, isAuthenticated | `persist` | ✅ accessToken + refreshToken + user + isAuthenticated (partialize) |
+| cartStore | `shared/stores/cartStore.ts` | items: CartItem[] | `persist` | ✅ items only (partialize) |
+| paymentStore | `shared/stores/paymentStore.ts` | checkoutStep, preferenceId, paymentStatus, error | None | ❌ Resets on reload |
+| uiStore | `shared/stores/uiStore.ts` | theme, sidebarOpen, toasts | `persist` | ✅ theme only (partialize) |
 
 ### authStore
 

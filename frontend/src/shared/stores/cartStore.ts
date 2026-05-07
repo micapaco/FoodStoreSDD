@@ -47,6 +47,9 @@ export const useCartStore = create<CartState>()(
         get().items.reduce((acc, i) => acc + i.producto.precio * i.cantidad, 0),
       getItem: (productoId) => get().items.find((i) => i.productoId === productoId),
     }),
-    { name: 'food-store-cart' },
+    {
+      name: 'food-store-cart',
+      partialize: (state) => ({ items: state.items }),
+    },
   ),
 )
