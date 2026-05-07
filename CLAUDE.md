@@ -118,6 +118,18 @@ Contienen las convenciones específicas de Food Store extraídas de `docs/Integr
 
 **Flujo correcto**: `find-skills` (best practices genéricas) → `clean-architecture` (principios) → `foodstore-*` (convenciones del proyecto) → codear.
 
+## Regla: buscar skills antes de cada change nuevo
+
+**ANTES de proponer o aplicar cualquier change nuevo**, el orquestador DEBE:
+1. Identificar las tecnologías involucradas en el change (ej: React, Vite, FastAPI, Alembic, etc.)
+2. Preguntar al usuario: *"¿Buscamos skills para [tecnologías del change] antes de arrancar?"*
+3. Si el usuario aprueba → correr `npx skills find <tecnología>` por cada tecnología sin skill instalada
+4. Instalar las que tengan buen rating (1K+ installs, fuente reconocida) a nivel proyecto (sin `-g`)
+5. Actualizar `.atl/skill-registry.md` con `/skill-registry` después de instalar
+6. Recién después → `/opsx:propose`
+
+Esta regla aplica a **todos los changes**, no solo los de frontend.
+
 ## Reglas globales
 - No mezclar capas: backend no asume UI, frontend no inventa endpoints
 - No improvisar fuera del dominio asignado
