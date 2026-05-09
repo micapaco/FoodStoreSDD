@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str  # obligatorio, sin default
 
     # ── JWT ──────────────────────────────────────────────────────────────────
+    ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 

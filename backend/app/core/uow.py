@@ -4,6 +4,8 @@ from typing import Optional, Type
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import AsyncSessionLocal
+from app.modules.refreshtokens.repository import RefreshTokenRepository
+from app.modules.usuarios.repository import UsuarioRepository
 
 
 class UnitOfWork:
@@ -26,6 +28,8 @@ class UnitOfWork:
 
     async def __aenter__(self) -> "UnitOfWork":
         self._session = AsyncSessionLocal()
+        self.usuarios = UsuarioRepository(self._session)
+        self.refresh_tokens = RefreshTokenRepository(self._session)
         return self
 
     async def __aexit__(

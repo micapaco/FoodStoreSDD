@@ -7,16 +7,20 @@ import { queryClient } from '@/shared/lib/queryClient'
 import '@/shared/stores'
 import { router } from '@/app/router'
 import { installErrorHandler } from '@/shared/lib/http/installErrorHandler'
+import { useRehydrateUser } from '@/shared/hooks/useAuth'
 import './index.css'
 
-// Install global HTTP error handler once before React mounts.
-// Idempotent — safe to call multiple times (only registers once).
 installErrorHandler()
+
+function AppBootstrap() {
+  useRehydrateUser()
+  return <RouterProvider router={router} />
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AppBootstrap />
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   </StrictMode>,

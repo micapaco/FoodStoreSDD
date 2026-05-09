@@ -30,8 +30,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/inject-skills.py",
-            "statusMessage": "Inyectando skills de dominio..."
+            "command": "cd $(git rev-parse --show-toplevel 2>/dev/null || echo .) && python .claude/hooks/inject-skills.py",
+            "statusMessage": "Inyectando skills de dominio...",
+            "shell": "bash"
           }
         ]
       }

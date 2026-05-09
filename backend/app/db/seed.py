@@ -79,10 +79,15 @@ async def seed(session: AsyncSession) -> None:
         password_hash = _pwd_context.hash("Admin1234!")
         result = await session.execute(
             text(
-                "INSERT INTO usuario (email, password_hash) "
-                "VALUES (:email, :password_hash) RETURNING id"
+                "INSERT INTO usuario (nombre, apellido, email, password_hash) "
+                "VALUES (:nombre, :apellido, :email, :password_hash) RETURNING id"
             ),
-            {"email": admin_email, "password_hash": password_hash},
+            {
+                "nombre": "Admin",
+                "apellido": "FoodStore",
+                "email": admin_email,
+                "password_hash": password_hash,
+            },
         )
         admin_id = result.scalar_one()
         await session.execute(

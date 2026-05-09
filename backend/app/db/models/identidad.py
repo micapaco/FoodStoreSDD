@@ -1,7 +1,9 @@
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import BigInteger, Column, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
 
@@ -18,6 +20,8 @@ class Usuario(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), primary_key=True, autoincrement=True),
     )
+    nombre: str = Field(sa_column=Column(String(100), nullable=False))
+    apellido: str = Field(sa_column=Column(String(100), nullable=False))
     email: str = Field(unique=True, max_length=254)
     password_hash: str = Field(sa_column=Column(String(60), nullable=False))
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
@@ -52,6 +56,14 @@ class RefreshToken(SQLModel, table=True):
     token_hash: str = Field(sa_column=Column(String(64), nullable=False, unique=True))
     usuario_id: int = Field(
         sa_column=Column(BigInteger(), ForeignKey("usuario.id"), nullable=False),
+    )
+    # family_id groups tokens issued across refresh rotations for the same session.
+    # Used to detect replay attacks: if a revoked token is reused, ALL tokens sharing
+    # this family_id are revoked (D-03 in design.md).
+    # MIGRATION REQUIRED: ALTER TABLE refresh_token ADD COLUMN family_id UUID NOT NULL DEFAULT gen_random_uuid();
+    family_id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        sa_column=Column(PG_UUID(as_uuid=True), nullable=False),
     )
     expires_at: datetime = Field(nullable=False)
     revoked_at: Optional[datetime] = Field(default=None, nullable=True)
