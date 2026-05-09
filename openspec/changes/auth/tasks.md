@@ -36,10 +36,10 @@
 
 ## 5. Backend — Validación y tests manuales
 
-- [ ] 5.1 Verificar en Swagger (`/docs`) que los 5 endpoints aparecen con schemas correctos
-- [ ] 5.2 Probar flujo completo: register → login → access protected endpoint → refresh → logout → verificar token revocado
-- [ ] 5.3 Verificar rate limiting: 6 intentos de login fallidos → HTTP 429 con Retry-After
-- [ ] 5.4 Verificar replay attack: usar un refresh token dos veces → segunda vez retorna 401 y revoca familia
+- [x] 5.1 Verificar en Swagger (`/docs`) que los 5 endpoints aparecen con schemas correctos
+- [x] 5.2 Probar flujo completo: register → login → access protected endpoint → refresh → logout → verificar token revocado
+- [x] 5.3 Verificar rate limiting: 6 intentos de login fallidos → HTTP 429 con Retry-After
+- [x] 5.4 Verificar replay attack: usar un refresh token dos veces → segunda vez retorna 401 y revoca familia
 
 ## 6. Frontend — Páginas de auth
 
@@ -61,10 +61,10 @@
 
 ## 9. Frontend — Pruebas manuales
 
-- [ ] 9.1 Flujo de registro: completar form → cuenta creada → redirige a /login
-- [ ] 9.2 Flujo de login: credenciales válidas → tokens en store → navega a /
-- [ ] 9.3 Flujo de login inválido: error toast sin revelar campo
-- [ ] 9.4 Flujo de refresh automático: con access token expirado, hacer una request → interceptor renueva el token transparentemente → request exitosa
-- [ ] 9.5 Flujo de logout: click en logout → tokens limpios → redirige a /
-- [ ] 9.6 Ruta protegida sin token: acceder a /admin → redirige a /login?from=/admin
-- [ ] 9.7 Verificar persistencia: login → recargar página → usuario sigue autenticado
+- [x] 9.1 Flujo de registro: completar form → cuenta creada → redirige a /login
+- [x] 9.2 Flujo de login: credenciales válidas → tokens en store → navega a /
+- [x] 9.3 Flujo de login inválido: error toast sin revelar campo
+- [x] 9.4 Flujo de refresh automático: con access token expirado, hacer una request → interceptor renueva el token transparentemente → request exitosa
+- [x] 9.5 Flujo de logout: click en logout → tokens limpios → redirige a /
+- [x] 9.6 Ruta protegida sin token: acceder a /admin → redirige a /login?from=/admin
+- [x] 9.7 Verificar persistencia: login → recargar página → usuario sigue autenticado

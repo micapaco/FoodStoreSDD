@@ -38,6 +38,11 @@ export async function registerApi(data: RegisterPayload): Promise<UserResponse> 
   return res.data
 }
 
+export async function refreshApi(refreshToken: string): Promise<TokenResponse> {
+  const res = await api.post<TokenResponse>('/auth/refresh', { refresh_token: refreshToken })
+  return res.data
+}
+
 export async function logoutApi(refreshToken: string): Promise<void> {
   await api.post('/auth/logout', { refresh_token: refreshToken })
 }
