@@ -45,16 +45,19 @@ export function installErrorHandler(): void {
           addToast({ type: 'error', message: 'Error del servidor, intentá de nuevo' })
           break
 
-        case 'UNAUTHORIZED':
+        case 'UNAUTHORIZED': {
           // 401 is handled by the refresh interceptor in axios.ts.
           // If we reach here AND the user is no longer authenticated,
           // the refresh failed — the existing interceptor already called logout().
           // Publish the "session expired" warning toast.
-          if (!isAuthenticated) {
+          // Exception: login attempts (no refresh token) set _skipGlobalToast so we
+          // don't show "Tu sesión expiró" for plain wrong-credentials errors.
+          const skipToast = !!(error as { _skipGlobalToast?: boolean })?._skipGlobalToast
+          if (!isAuthenticated && !skipToast) {
             addToast({ type: 'warning', message: 'Tu sesión expiró' })
           }
-          // If still authenticated, refresh succeeded — stay silent.
           break
+        }
 
         case 'VALIDATION':
           // 422: feature handles field-level errors — no global toast.

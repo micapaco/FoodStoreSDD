@@ -37,6 +37,9 @@ axiosInstance.interceptors.response.use(
     const { refreshToken, updateTokens, logout } = useAuthStore.getState()
     if (!refreshToken) {
       logout()
+      // Mark so installErrorHandler skips the "Tu sesión expiró" toast — this is
+      // a login attempt (never had a session), not an expired session.
+      ;(error as AxiosError & { _skipGlobalToast?: boolean })._skipGlobalToast = true
       return Promise.reject(error)
     }
 

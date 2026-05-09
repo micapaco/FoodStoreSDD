@@ -23,8 +23,12 @@ export function LoginPage() {
           const from = searchParams.get('from') ?? '/'
           navigate(from, { replace: true })
         },
-        onError: () => {
-          addToast({ type: 'error', message: 'Credenciales incorrectas. Revisá tus datos.' })
+        onError: (err: unknown) => {
+          const axiosErr = err as { response?: { data?: { detail?: string } } }
+          // Network errors are already handled globally — skip to avoid double toast
+          if (!axiosErr.response) return
+          const detail = axiosErr.response.data?.detail
+          addToast({ type: 'error', message: detail ?? 'Credenciales incorrectas. Revisá tus datos.' })
         },
       })
     },

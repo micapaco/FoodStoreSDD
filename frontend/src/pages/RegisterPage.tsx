@@ -33,7 +33,10 @@ export function RegisterPage() {
         addToast({ message: 'Cuenta creada. Iniciá sesión.', type: 'success' })
         navigate('/login')
       } catch (err: unknown) {
-        const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        const axiosErr = err as { response?: { data?: { detail?: string } } }
+        // Network errors are already handled globally — skip to avoid double toast
+        if (!axiosErr.response) return
+        const detail = axiosErr.response?.data?.detail
         addToast({ message: detail ?? 'No se pudo crear la cuenta.', type: 'error' })
       }
     },
