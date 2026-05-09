@@ -13,19 +13,19 @@ from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.exceptions import ForbiddenError, UnauthorizedError
 from app.core.security import verify_token
 from app.core.uow import UnitOfWork
 from app.db.models.identidad import Usuario
 
-# El tokenUrl apunta al endpoint de login — solo lo usa Swagger UI para el flujo OAuth2.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+# HTTPBearer muestra en Swagger un campo simple para pegar el token — más claro que OAuth2PasswordBearer.
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    token: Annotated[str | None, Depends(oauth2_scheme)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
 ) -> Usuario:
     """Valida el Bearer JWT y retorna el Usuario autenticado.
 
@@ -38,11 +38,11 @@ async def get_current_user(
     Raises:
         UnauthorizedError: token ausente, inválido, expirado, o usuario no encontrado
     """
-    if token is None:
+    if credentials is None:
         raise UnauthorizedError("Se requiere autenticación. Incluí el header Authorization: Bearer <token>.")
 
     # Decodificar y validar JWT — lanza UnauthorizedError si falla
-    payload = verify_token(token)
+    payload = verify_token(credentials.credentials)
 
     user_id_str = payload.get("sub")
     try:
