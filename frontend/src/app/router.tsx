@@ -1,40 +1,127 @@
-import { createBrowserRouter, Outlet } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 
-function NotFound() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-800">404</h1>
-        <p className="mt-2 text-gray-500">Página no encontrada</p>
-      </div>
-    </div>
-  )
-}
+// Layouts
+import { PublicLayout } from '@/app/layouts/PublicLayout'
+import { PrivateLayout } from '@/app/layouts/PrivateLayout'
 
-function PublicLayout() {
-  return <Outlet />
-}
+// Guards
+import { ProtectedRoute } from '@/app/guards/ProtectedRoute'
+import { RoleRoute } from '@/app/guards/RoleRoute'
+import { GuestOnlyRoute } from '@/app/guards/GuestOnlyRoute'
 
-// TODO: change-frontend-shell — add route protection and auth guards here
-function PrivateLayout() {
-  return <Outlet />
-}
+// Pages — public
+import { HomePage } from '@/pages/HomePage'
+import { LoginPage } from '@/pages/LoginPage'
+import { RegisterPage } from '@/pages/RegisterPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ForbiddenPage } from '@/pages/ForbiddenPage'
 
+// Pages — client
+import { ProfilePage } from '@/pages/ProfilePage'
+import { CartPage } from '@/pages/CartPage'
+import { CheckoutPage } from '@/pages/CheckoutPage'
+import { OrdersListPage } from '@/pages/OrdersListPage'
+import { OrderDetailPage } from '@/pages/OrderDetailPage'
+
+// Pages — admin
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
+import { ProductsAdminPage } from '@/pages/admin/ProductsAdminPage'
+import { CategoriesAdminPage } from '@/pages/admin/CategoriesAdminPage'
+import { OrdersAdminPage } from '@/pages/admin/OrdersAdminPage'
+import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
+
+/**
+ * Route map — shell routing spec.
+ *
+ * Guard composition pattern:
+ *  - Public routes: no guard
+ *  - Guest-only: GuestOnlyRoute wrapper
+ *  - Private routes: ProtectedRoute (auth check) → RoleRoute (role check) → page
+ *
+ * All imports from "react-router-dom" (v7, already installed).
+ */
 export const router = createBrowserRouter([
+  // ── Public layout ────────────────────────────────────────────────────────
   {
     element: <PublicLayout />,
     children: [
-      { path: '/', element: <div className="p-8 text-2xl font-bold">Food Store 🍔</div> },
-      { path: '/login', element: <div className="p-8">Login — pendiente (change: auth)</div> },
-      { path: '/register', element: <div className="p-8">Registro — pendiente (change: auth)</div> },
+      // Fully public
+      { path: '/', element: <HomePage /> },
+      { path: '/403', element: <ForbiddenPage /> },
+      { path: '*', element: <NotFoundPage /> },
+
+      // Guest-only (redirect authenticated users to role home)
+      {
+        element: <GuestOnlyRoute />,
+        children: [
+          { path: '/login', element: <LoginPage /> },
+          { path: '/register', element: <RegisterPage /> },
+        ],
+      },
     ],
   },
+
+  // ── Private layout ───────────────────────────────────────────────────────
   {
-    path: '/app',
     element: <PrivateLayout />,
     children: [
-      { index: true, element: <div className="p-8">App shell — pendiente (change: frontend-shell)</div> },
+      // CLIENT area — requires auth + CLIENT role
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleRoute roles={['CLIENT']} />,
+            children: [
+              { path: '/perfil', element: <ProfilePage /> },
+              { path: '/carrito', element: <CartPage /> },
+              { path: '/checkout', element: <CheckoutPage /> },
+              { path: '/pedidos', element: <OrdersListPage /> },
+              { path: '/pedidos/:id', element: <OrderDetailPage /> },
+            ],
+          },
+        ],
+      },
+
+      // ADMIN area — requires auth + ADMIN role
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleRoute roles={['ADMIN']} />,
+            children: [
+              { path: '/admin', element: <AdminDashboardPage /> },
+              { path: '/admin/categorias', element: <CategoriesAdminPage /> },
+              { path: '/admin/usuarios', element: <UsersAdminPage /> },
+            ],
+          },
+        ],
+      },
+
+      // /admin/productos — requires auth + (ADMIN or STOCK)
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleRoute roles={['ADMIN', 'STOCK']} />,
+            children: [
+              { path: '/admin/productos', element: <ProductsAdminPage /> },
+            ],
+          },
+        ],
+      },
+
+      // /admin/pedidos — requires auth + (ADMIN or PEDIDOS)
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleRoute roles={['ADMIN', 'PEDIDOS']} />,
+            children: [
+              { path: '/admin/pedidos', element: <OrdersAdminPage /> },
+            ],
+          },
+        ],
+      },
     ],
   },
-  { path: '*', element: <NotFound /> },
 ])

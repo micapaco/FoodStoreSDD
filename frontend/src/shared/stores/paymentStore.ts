@@ -7,7 +7,7 @@ interface PaymentState {
   preferenceId: string | null
   paymentStatus: string | null
   error: string | null
-  startCheckout: (_pedidoId: number) => void
+  startCheckout: () => void
   setPreference: (preferenceId: string) => void
   updatePaymentStatus: (status: string) => void
   resetPayment: () => void
@@ -22,7 +22,7 @@ const initialState = {
 
 export const usePaymentStore = create<PaymentState>()((set) => ({
   ...initialState,
-  startCheckout: (_pedidoId) => set({ checkoutStep: 'checkout', error: null }),
+  startCheckout: () => set({ checkoutStep: 'checkout', error: null }),
   setPreference: (preferenceId) => set({ preferenceId, checkoutStep: 'processing' }),
   updatePaymentStatus: (status) => set({ paymentStatus: status }),
   resetPayment: () => set(initialState),

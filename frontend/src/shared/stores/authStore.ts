@@ -18,8 +18,12 @@ interface AuthState {
   refreshToken: string | null
   user: User | null
   isAuthenticated: boolean
+  /** Non-persisted: where to redirect after an explicit logout (null = use /login?from=...) */
+  navigateAfterLogout: string | null
   login: (tokens: Tokens, user: User) => void
   logout: () => void
+  /** Explicit logout — also sets a redirect destination for ProtectedRoute */
+  logoutAndRedirect: (to: string) => void
   updateTokens: (tokens: Tokens) => void
   hasRole: (role: string) => boolean
 }
@@ -31,10 +35,13 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       user: null,
       isAuthenticated: false,
+      navigateAfterLogout: null,
       login: (tokens, user) =>
-        set({ ...tokens, user, isAuthenticated: true }),
+        set({ ...tokens, user, isAuthenticated: true, navigateAfterLogout: null }),
       logout: () =>
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false }),
+      logoutAndRedirect: (to) =>
+        set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, navigateAfterLogout: to }),
       updateTokens: (tokens) =>
         set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }),
       hasRole: (role) => get().user?.roles.includes(role) ?? false,
@@ -46,6 +53,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        // navigateAfterLogout is intentionally excluded — transient, resets on page load
       }),
     },
   ),
