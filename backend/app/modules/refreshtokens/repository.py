@@ -6,7 +6,7 @@ de vida del token: búsqueda por hash, revocación individual y por familia.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import select, update
@@ -29,7 +29,7 @@ class RefreshTokenRepository(BaseRepository[RefreshToken]):
 
     async def revoke(self, token: RefreshToken) -> None:
         """Marca un token como revocado (revoked_at = now). No hace flush — el UoW lo maneja."""
-        token.revoked_at = datetime.now(timezone.utc)
+        token.revoked_at = datetime.utcnow()
         self.session.add(token)
         await self.session.flush()
 
@@ -39,7 +39,7 @@ class RefreshTokenRepository(BaseRepository[RefreshToken]):
         Usa UPDATE masivo en lugar de cargar cada fila en memoria — más eficiente
         cuando una familia puede tener múltiples tokens activos (multi-device).
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         await self.session.execute(
             update(RefreshToken)
             .where(

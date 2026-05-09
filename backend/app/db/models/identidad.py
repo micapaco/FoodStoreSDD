@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import BigInteger, Column, ForeignKey, String
@@ -26,11 +26,11 @@ class Usuario(SQLModel, table=True):
     password_hash: str = Field(sa_column=Column(String(60), nullable=False))
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
 
@@ -57,10 +57,7 @@ class RefreshToken(SQLModel, table=True):
     usuario_id: int = Field(
         sa_column=Column(BigInteger(), ForeignKey("usuario.id"), nullable=False),
     )
-    # family_id groups tokens issued across refresh rotations for the same session.
-    # Used to detect replay attacks: if a revoked token is reused, ALL tokens sharing
-    # this family_id are revoked (D-03 in design.md).
-    # MIGRATION REQUIRED: ALTER TABLE refresh_token ADD COLUMN family_id UUID NOT NULL DEFAULT gen_random_uuid();
+    # family_id groups tokens in the same refresh chain; used for replay attack detection.
     family_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         sa_column=Column(PG_UUID(as_uuid=True), nullable=False),
@@ -68,7 +65,7 @@ class RefreshToken(SQLModel, table=True):
     expires_at: datetime = Field(nullable=False)
     revoked_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
 

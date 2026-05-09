@@ -7,7 +7,7 @@ El servicio recibe el UoW ya activo como parámetro.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from passlib.context import CryptContext
 
@@ -40,7 +40,7 @@ def _build_token_response(
         data={"sub": str(usuario.id), "email": usuario.email, "roles": roles}
     )
     refresh_token_value = create_refresh_token()
-    expires_at = datetime.now(timezone.utc) + timedelta(
+    expires_at = datetime.utcnow() + timedelta(
         days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS  # type: ignore[attr-defined]
     )
     token_record = RefreshToken(
@@ -122,7 +122,7 @@ class AuthService:
         if stored is None:
             raise UnauthorizedError("Refresh token inválido.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
 
         # Replay attack: token ya fue revocado
         if stored.revoked_at is not None:
@@ -130,10 +130,7 @@ class AuthService:
             raise UnauthorizedError("Refresh token ya utilizado. Iniciá sesión nuevamente.")
 
         # Token expirado
-        expires = stored.expires_at
-        if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=timezone.utc)
-        if expires < now:
+        if stored.expires_at < now:
             raise UnauthorizedError("Refresh token expirado. Iniciá sesión nuevamente.")
 
         # Revocar token actual y emitir nuevo par con el mismo family_id (rotación)

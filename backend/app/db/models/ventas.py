@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
@@ -43,11 +43,11 @@ class Pedido(SQLModel, table=True):
     )
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
 
@@ -101,7 +101,7 @@ class HistorialEstadoPedido(SQLModel, table=True):
         sa_column=Column(BigInteger(), ForeignKey("usuario.id"), nullable=True),
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
 
@@ -128,10 +128,10 @@ class Pago(SQLModel, table=True):
         sa_column=Column(String(100), unique=True, nullable=False),
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=datetime.utcnow,
         nullable=False,
     )

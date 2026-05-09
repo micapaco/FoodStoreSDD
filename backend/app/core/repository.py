@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Generic, List, Optional, Type, TypeVar
 
 from sqlalchemy import func, select
@@ -48,7 +48,7 @@ class BaseRepository(Generic[T]):
 
     async def soft_delete(self, entity: T) -> None:
         """Marca el registro como eliminado sin borrarlo físicamente."""
-        entity.deleted_at = datetime.now(timezone.utc)  # type: ignore[attr-defined]
+        entity.deleted_at = datetime.utcnow()  # type: ignore[attr-defined]
         self.session.add(entity)
         await self.session.flush()
 
