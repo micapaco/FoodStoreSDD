@@ -14,6 +14,7 @@ interface NavItem {
  */
 const CLIENT_ITEMS: NavItem[] = [
   { to: '/', label: 'Inicio', end: true },
+  { to: '/productos', label: 'Catálogo' },
   { to: '/carrito', label: 'Mi carrito' },
   { to: '/pedidos', label: 'Mis pedidos' },
   { to: '/perfil', label: 'Mi perfil' },

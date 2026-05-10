@@ -15,6 +15,8 @@ import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ForbiddenPage } from '@/pages/ForbiddenPage'
+import { CatalogoPage } from '@/pages/productos/CatalogoPage'
+import { ProductoDetallePage } from '@/pages/productos/ProductoDetallePage'
 
 // Pages — client
 import { ProfilePage } from '@/pages/ProfilePage'
@@ -25,10 +27,15 @@ import { OrderDetailPage } from '@/pages/OrderDetailPage'
 
 // Pages — admin
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
-import { ProductsAdminPage } from '@/pages/admin/ProductsAdminPage'
 import { CategoriesAdminPage } from '@/pages/admin/CategoriesAdminPage'
 import { OrdersAdminPage } from '@/pages/admin/OrdersAdminPage'
 import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
+
+// Pages — productos (admin)
+import { ProductosPage } from '@/pages/productos/ProductosPage'
+import { ProductosCreatePage } from '@/pages/productos/ProductosCreatePage'
+import { ProductosEditPage } from '@/pages/productos/ProductosEditPage'
+import { ProductosDetailPage } from '@/pages/productos/ProductosDetailPage'
 
 /**
  * Route map — shell routing spec.
@@ -47,6 +54,8 @@ export const router = createBrowserRouter([
     children: [
       // Fully public
       { path: '/', element: <HomePage /> },
+      { path: '/productos', element: <CatalogoPage /> },
+      { path: '/productos/:id', element: <ProductoDetallePage /> },
       { path: '/403', element: <ForbiddenPage /> },
       { path: '*', element: <NotFoundPage /> },
 
@@ -104,7 +113,10 @@ export const router = createBrowserRouter([
           {
             element: <RoleRoute roles={['ADMIN', 'STOCK']} />,
             children: [
-              { path: '/admin/productos', element: <ProductsAdminPage /> },
+              { path: '/admin/productos', element: <ProductosPage /> },
+              { path: '/admin/productos/nuevo', element: <ProductosCreatePage /> },
+              { path: '/admin/productos/:id', element: <ProductosDetailPage /> },
+              { path: '/admin/productos/:id/editar', element: <ProductosEditPage /> },
             ],
           },
         ],

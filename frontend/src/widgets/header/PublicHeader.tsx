@@ -30,6 +30,9 @@ export function PublicHeader() {
             <NavLink to="/" className={linkClass} end>
               Inicio
             </NavLink>
+            <NavLink to="/productos" className={linkClass}>
+              Catálogo
+            </NavLink>
             <NavLink to="/login" className={linkClass}>
               Iniciar sesión
             </NavLink>
@@ -58,23 +61,26 @@ export function PublicHeader() {
           </button>
         </div>
 
-        {/* Mobile nav */}
-        {menuOpen && (
-          <nav
-            className="md:hidden pb-4 flex flex-col gap-3"
-            aria-label="Navegación mobile"
-          >
-            <NavLink to="/" className={linkClass} end onClick={() => setMenuOpen(false)}>
-              Inicio
-            </NavLink>
-            <NavLink to="/login" className={linkClass} onClick={() => setMenuOpen(false)}>
-              Iniciar sesión
-            </NavLink>
-            <NavLink to="/register" className={linkClass} onClick={() => setMenuOpen(false)}>
-              Registrarse
-            </NavLink>
-          </nav>
-        )}
+          {/* Mobile nav */}
+          {menuOpen && (
+            <nav
+              className="md:hidden pb-4 flex flex-col gap-3"
+              aria-label="Navegación mobile"
+            >
+              <NavLink to="/" className={linkClass} end onClick={() => setMenuOpen(false)}>
+                Inicio
+              </NavLink>
+              <NavLink to="/productos" className={linkClass} onClick={() => setMenuOpen(false)}>
+                Catálogo
+              </NavLink>
+              <NavLink to="/login" className={linkClass} onClick={() => setMenuOpen(false)}>
+                Iniciar sesión
+              </NavLink>
+              <NavLink to="/register" className={linkClass} onClick={() => setMenuOpen(false)}>
+                Registrarse
+              </NavLink>
+            </nav>
+          )}
       </div>
     </header>
   )
