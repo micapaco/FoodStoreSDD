@@ -1,9 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import BigInteger, CheckConstraint, Column, ForeignKey, Numeric, String
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class Categoria(SQLModel, table=True):
@@ -13,12 +13,27 @@ class Categoria(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), primary_key=True, autoincrement=True),
     )
-    nombre: str = Field(max_length=100, nullable=False)
+    nombre: str = Field(max_length=100, nullable=False, unique=True)
     parent_id: Optional[int] = Field(
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("categoria.id"), nullable=True),
     )
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
+
+    # Self-referential hierarchy: parent → children
+    parent: Optional["Categoria"] = Relationship(
+        back_populates="children",
+        sa_relationship_kwargs={"remote_side": "Categoria.id"},
+    )
+    children: List["Categoria"] = Relationship(back_populates="parent")
 
 
 class Ingrediente(SQLModel, table=True):
@@ -31,6 +46,14 @@ class Ingrediente(SQLModel, table=True):
     nombre: str = Field(unique=True, max_length=100, nullable=False)
     es_alergeno: bool = Field(default=False, nullable=False)
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
 
 
 class Producto(SQLModel, table=True):
@@ -52,11 +75,11 @@ class Producto(SQLModel, table=True):
     disponible: bool = Field(default=True, nullable=False)
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(datetime.timezone.utc),
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(datetime.timezone.utc),
         nullable=False,
     )
 
