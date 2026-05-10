@@ -18,7 +18,14 @@ export function useLogin() {
     onSuccess: ({ tokens, user }) => {
       login(
         { accessToken: tokens.access_token, refreshToken: tokens.refresh_token },
-        { id: user.id, nombre: user.nombre, email: user.email, roles: user.roles },
+        {
+          id: user.id,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          telefono: user.telefono,
+          email: user.email,
+          roles: user.roles,
+        },
       )
     },
   })
@@ -57,7 +64,14 @@ export function useRehydrateUser() {
         if (refreshToken) {
           login(
             { accessToken, refreshToken },
-            { id: user.id, nombre: user.nombre, email: user.email, roles: user.roles },
+            {
+              id: user.id,
+              nombre: user.nombre,
+              apellido: user.apellido,
+              telefono: user.telefono,
+              email: user.email,
+              roles: user.roles,
+            },
           )
         }
       })

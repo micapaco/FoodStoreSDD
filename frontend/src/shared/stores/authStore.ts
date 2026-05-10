@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware'
 interface User {
   id: number
   nombre: string
+  apellido: string
+  telefono: string | null
   email: string
   roles: string[]
 }

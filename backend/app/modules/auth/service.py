@@ -12,16 +12,18 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 
 from app.core.config import get_settings
-from app.core.exceptions import ConflictError, UnauthorizedError
+from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError, ValidationAppError
 from app.core.security import create_access_token, create_refresh_token, hash_token
 from app.core.uow import UnitOfWork
 from app.db.models.identidad import RefreshToken, Usuario, UsuarioRol
 from app.modules.auth.schemas import (
+    ChangePasswordRequest,
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UserResponse,
 )
 
@@ -166,7 +168,94 @@ class AuthService:
             id=usuario.id,
             nombre=usuario.nombre,
             apellido=usuario.apellido,
+            telefono=usuario.telefono,
             email=usuario.email,
             roles=roles,
             created_at=usuario.created_at,
         )
+
+    @staticmethod
+    async def update_profile(
+        usuario_id: int,
+        data: UpdateProfileRequest,
+        uow: UnitOfWork,
+    ) -> UserResponse:
+        """Actualiza los datos personales del perfil.
+
+        Valida unicidad de email si cambió. Actualiza solo los campos permitidos:
+        nombre, apellido, email, telefono.
+        """
+        result = await uow.usuarios.get_with_roles(usuario_id)
+        if result is None:
+            raise UnauthorizedError("Usuario no encontrado o inactivo.")
+        usuario, roles = result
+        if usuario.deleted_at is not None:
+            raise UnauthorizedError("Usuario no encontrado o inactivo.")
+
+        # Validar unicidad de email si cambió
+        if data.email != usuario.email:
+            existing = await uow.usuarios.get_by_email(data.email)
+            if existing is not None:
+                raise ConflictError("El email ya está registrado.")
+
+        # Actualizar campos permitidos
+        usuario.nombre = data.nombre
+        usuario.apellido = data.apellido
+        usuario.email = data.email
+        usuario.telefono = data.telefono
+
+        await uow.usuarios.update(usuario)
+
+        return UserResponse(
+            id=usuario.id,
+            nombre=usuario.nombre,
+            apellido=usuario.apellido,
+            telefono=usuario.telefono,
+            email=usuario.email,
+            roles=roles,
+            created_at=usuario.created_at,
+        )
+
+    @staticmethod
+    async def change_password(
+        usuario_id: int,
+        data: ChangePasswordRequest,
+        uow: UnitOfWork,
+    ) -> None:
+        """Cambia la contraseña del usuario.
+
+        Validaciones (en orden):
+        1. confirm_password == new_password
+        2. current_password correcta → 403 si no
+        3. new_password != current_password → 422 si igual
+        4. new_password no contiene el email del usuario → 422 si contiene
+        5. new_password cumple política (mín 8 chars, sin espacios)
+        """
+        usuario = await uow.usuarios.get_by_id(usuario_id)
+        if usuario is None or usuario.deleted_at is not None:
+            raise UnauthorizedError("Usuario no encontrado o inactivo.")
+
+        # 1. Confirmación coincide
+        if data.new_password != data.confirm_password:
+            raise ValidationAppError("Las contraseñas nuevas no coinciden.")
+
+        # 2. Verificar contraseña actual
+        if not pwd_context.verify(data.current_password, usuario.password_hash):
+            raise ForbiddenError("Contraseña actual incorrecta.")
+
+        # 3. new_password != current_password
+        if data.current_password == data.new_password:
+            raise ValidationAppError(
+                "La nueva contraseña debe ser diferente a la actual."
+            )
+
+        # 4. new_password no contiene el email
+        email_local = usuario.email.split("@")[0].lower()
+        if email_local in data.new_password.lower():
+            raise ValidationAppError(
+                "La nueva contraseña no puede contener tu dirección de email."
+            )
+
+        # 5. Hashear y actualizar
+        usuario.password_hash = pwd_context.hash(data.new_password)
+        await uow.usuarios.update(usuario)

@@ -23,6 +23,7 @@ export interface UserResponse {
   id: number
   nombre: string
   apellido: string
+  telefono: string | null
   email: string
   roles: string[]
   created_at: string
