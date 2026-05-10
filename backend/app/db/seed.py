@@ -98,6 +98,89 @@ async def seed(session: AsyncSession) -> None:
             {"usuario_id": admin_id},
         )
 
+    # ── Categorías jerárquicas ─────────────────────────────────────────────────
+    # Root categories: insert idempotente, luego usamos RETURNING para obtener IDs
+    roots = {
+        "Bebidas": {"nombre": "Bebidas"},
+        "Comidas": {"nombre": "Comidas"},
+        "Snacks": {"nombre": "Snacks"},
+        "Postres": {"nombre": "Postres"},
+        "Salsas y Aderezos": {"nombre": "Salsas y Aderezos"},
+    }
+
+    root_ids: dict[str, int] = {}
+    for root_name, root_data in roots.items():
+        # Check if exists first
+        existing = await session.execute(
+            text("SELECT id FROM categoria WHERE nombre = :nombre"),
+            root_data,
+        )
+        row = existing.fetchone()
+        if row:
+            root_ids[root_name] = row[0]
+        else:
+            result = await session.execute(
+                text("INSERT INTO categoria (nombre) VALUES (:nombre) RETURNING id"),
+                root_data,
+            )
+            root_ids[root_name] = result.scalar_one()
+
+    # Subcategories: requieren parent_id
+    subcategorias = [
+        {"nombre": "Gaseosas", "parent_id": root_ids["Bebidas"]},
+        {"nombre": "Aguas", "parent_id": root_ids["Bebidas"]},
+        {"nombre": "Jugos", "parent_id": root_ids["Bebidas"]},
+        {"nombre": "Hamburguesas", "parent_id": root_ids["Comidas"]},
+        {"nombre": "Pizzas", "parent_id": root_ids["Comidas"]},
+        {"nombre": "Empanadas", "parent_id": root_ids["Comidas"]},
+    ]
+    for sub in subcategorias:
+        await session.execute(
+            text(
+                "INSERT INTO categoria (nombre, parent_id) "
+                "VALUES (:nombre, :parent_id) "
+                "ON CONFLICT ON CONSTRAINT uq_categoria_nombre DO NOTHING"
+            ),
+            sub,
+        )
+
+    # ── Ingredientes ────────────────────────────────────────────────────────────
+    # No alérgenos
+    ingredientes_no_alergenos = [
+        {"nombre": "Queso", "es_alergeno": False},
+        {"nombre": "Lechuga", "es_alergeno": False},
+        {"nombre": "Tomate", "es_alergeno": False},
+        {"nombre": "Cebolla", "es_alergeno": False},
+        {"nombre": "Huevo", "es_alergeno": False},
+    ]
+    for ing in ingredientes_no_alergenos:
+        await session.execute(
+            text(
+                "INSERT INTO ingrediente (nombre, es_alergeno) "
+                "VALUES (:nombre, :es_alergeno) "
+                "ON CONFLICT (nombre) DO NOTHING"
+            ),
+            ing,
+        )
+
+    # Alérgenos
+    ingredientes_alergenos = [
+        {"nombre": "Gluten", "es_alergeno": True},
+        {"nombre": "Leche", "es_alergeno": True},
+        {"nombre": "Maní", "es_alergeno": True},
+        {"nombre": "Soja", "es_alergeno": True},
+        {"nombre": "Mostaza", "es_alergeno": True},
+    ]
+    for ing in ingredientes_alergenos:
+        await session.execute(
+            text(
+                "INSERT INTO ingrediente (nombre, es_alergeno) "
+                "VALUES (:nombre, :es_alergeno) "
+                "ON CONFLICT (nombre) DO NOTHING"
+            ),
+            ing,
+        )
+
     await session.commit()
 
 

@@ -22,6 +22,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
+from sqlalchemy.exc import IntegrityError
+
 from app.core.config import Settings
 from app.core.exceptions import AppError
 
@@ -206,15 +208,58 @@ def make_unhandled_handler(settings: Settings) -> Callable:
     return handler
 
 
+async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    """Mapea IntegrityError de SQLAlchemy a 409 Conflict (RFC 7807).
+
+    Cubre el caso TOCTOU: cuando un nombre único se verifica en el service
+    layer pero una request concurrente inserta entre el check y el INSERT,
+    la DB lanza IntegrityError en lugar del ConflictError del dominio.
+    """
+    # Parse PostgreSQL error code for specific message
+    detail = "La operación violó una restricción de integridad."
+    code = "CONFLICT"
+    pgcode = None
+    try:
+        pgcode = exc.orig.pgcode  # type: ignore[union-attr]
+        if pgcode == "23505":  # unique_violation
+            detail = "El recurso ya existe o crearía un duplicado."
+            code = "UNIQUE_VIOLATION"
+        elif pgcode == "23503":  # foreign_key_violation
+            detail = "El recurso está siendo usado por otra entidad y no puede ser eliminado o modificado."
+            code = "FK_VIOLATION"
+        elif pgcode == "23502":  # not_null_violation
+            detail = "Un campo requerido no puede ser nulo."
+            code = "NOT_NULL_VIOLATION"
+        elif pgcode == "23P01":  # exclusion_violation
+            detail = "La operación violó una restricción de exclusión."
+    except AttributeError:
+        pass  # Non-PostgreSQL backend (e.g., SQLite in tests)
+
+    log_detail = f"pgcode={pgcode}" if pgcode else "no-pgcode"
+    logger.warning(
+        "IntegrityError [%s] en %s %s: %s",
+        log_detail, request.method, request.url.path, str(exc),
+    )
+
+    return _problem_response(
+        status=409,
+        code=code,
+        title="Conflict",
+        detail=detail,
+        instance=str(request.url.path),
+    )
+
+
 # ── Registro ─────────────────────────────────────────────────────────────────
 
 
 def register_exception_handlers(app: FastAPI, settings: Settings) -> None:
-    """Registra los cuatro handlers en la app FastAPI.
+    """Registra los cinco handlers en la app FastAPI.
 
     El orden importa: los más específicos van primero.
     AppError va antes de Exception para capturar subclases correctamente.
     """
+    app.add_exception_handler(IntegrityError, integrity_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, validation_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]

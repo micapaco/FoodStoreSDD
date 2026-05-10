@@ -29,6 +29,12 @@
       "skillPath": "skills/react-router-declarative-mode/SKILL.md",
       "computedHash": "b399ee32fa82efdbdad1121421702b7725fcffac36424529a0ea452796f3bc92"
     },
+    "react-vite-best-practices": {
+      "source": "asyrafhussin/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-vite-best-practices/SKILL.md",
+      "computedHash": "bfd0d0cef40fd678863adcc5bc96a27ffb9c5cece99f56894dc22e5f36f37c6b"
+    },
     "sqlalchemy-alembic-expert-best-practices-code-review": {
       "source": "wispbit-ai/skills",
       "sourceType": "github",
