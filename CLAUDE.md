@@ -2,7 +2,7 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados (7/19):**
+**Changes archivados (8/19):**
 - `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
 - `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
 - `03` `infra-frontend-core` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
@@ -10,8 +10,9 @@
 - `05` `auth` ✅ archivado (`openspec/changes/archive/2026-05-09-auth/`)
 - `06` `profile` ✅ archivado (`openspec/changes/archive/2026-05-10-profile/`)
 - `07` `catalog-categories-ingredients` ✅ archivado (`openspec/changes/archive/2026-05-10-catalog-categories-ingredients/`)
+- `08` `catalog-products` ✅ archivado (`openspec/changes/archive/2026-05-10-catalog-products/`)
 
-**Próximo change:** `08` `productos` — pendiente de proponer. Dependencias: `catalog-categories-ingredients` ✅.
+**Próximo change:** `09` — pendiente de definir según roadmap.
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción
