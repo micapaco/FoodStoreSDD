@@ -22,6 +22,9 @@ class Usuario(SQLModel, table=True):
     )
     nombre: str = Field(sa_column=Column(String(100), nullable=False))
     apellido: str = Field(sa_column=Column(String(100), nullable=False))
+    telefono: Optional[str] = Field(
+        default=None, sa_column=Column(String(20), nullable=True)
+    )
     email: str = Field(unique=True, max_length=254)
     password_hash: str = Field(sa_column=Column(String(60), nullable=False))
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)

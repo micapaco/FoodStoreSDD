@@ -2,11 +2,15 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados:**
+**Changes archivados (6/19):**
 - `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
 - `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
+- `03` `infra-frontend-core` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
+- `04` `frontend-shell` ✅ archivado (`openspec/changes/archive/2026-05-08-frontend-shell/`)
+- `05` `auth` ✅ archivado (`openspec/changes/archive/2026-05-09-auth/`)
+- `06` `profile` ✅ archivado (`openspec/changes/archive/2026-05-10-profile/`)
 
-**Próximo change:** `03` `infra-frontend-core` — sin proponer todavía.
+**Próximo change:** `07` `catalog-categories-ingredients` — sin proponer todavía. Dependencias: `auth` ✅.
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción
@@ -91,7 +95,7 @@ RepositorioBaseFoodStore-SDD/
 │   │   └── modules/        # Módulos feature-first (auth, productos, pedidos, etc.)
 │   ├── requirements.txt
 │   └── .env / .env.example
-├── frontend/               # React + TypeScript + Vite (por implementar)
+├── frontend/               # React + TypeScript + Vite (✅ implementado: shell + auth UI)
 ├── docs/                   # Specs del sistema (fuente de verdad)
 │   ├── Integrador.txt      # Arquitectura, ERD v5, API, patrones, rúbrica
 │   ├── Descripcion.txt     # Visión general, actores, stack

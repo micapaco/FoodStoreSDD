@@ -13,11 +13,13 @@ from app.core.rate_limit import limiter
 from app.core.uow import UnitOfWork
 from app.db.models.identidad import Usuario
 from app.modules.auth.schemas import (
+    ChangePasswordRequest,
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UserResponse,
 )
 from app.modules.auth.service import AuthService
@@ -61,3 +63,24 @@ async def me(current_user: Usuario = Depends(get_current_user)) -> UserResponse:
         result = await uow.usuarios.get_with_roles(current_user.id)  # type: ignore[arg-type]
     roles = result[1] if result else []
     return AuthService.me(current_user, roles)
+
+
+@router.put("/me", response_model=UserResponse)
+async def update_profile(
+    data: UpdateProfileRequest,
+    current_user: Usuario = Depends(get_current_user),
+) -> UserResponse:
+    async with UnitOfWork() as uow:
+        return await AuthService.update_profile(current_user.id, data, uow)  # type: ignore[arg-type]
+
+
+@router.put("/change-password", status_code=status.HTTP_200_OK)
+@limiter.limit("10/minute")
+async def change_password(
+    request: Request,
+    data: ChangePasswordRequest,
+    current_user: Usuario = Depends(get_current_user),
+) -> dict:
+    async with UnitOfWork() as uow:
+        await AuthService.change_password(current_user.id, data, uow)  # type: ignore[arg-type]
+    return {"message": "Contraseña actualizada correctamente."}
