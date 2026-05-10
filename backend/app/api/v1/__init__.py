@@ -8,6 +8,7 @@ from app.api.v1 import health
 from app.modules.auth.router import router as auth_router
 from app.modules.categorias.router import router as categorias_router
 from app.modules.ingredientes.router import router as ingredientes_router
+from app.modules.productos.router import router as productos_router
 
 router = APIRouter(prefix="/api/v1")
 
@@ -15,3 +16,4 @@ router.include_router(health.router)
 router.include_router(auth_router)
 router.include_router(categorias_router)
 router.include_router(ingredientes_router)
+router.include_router(productos_router)

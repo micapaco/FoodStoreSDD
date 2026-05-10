@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Public catalog endpoint
 The system SHALL expose public endpoints for catalog browsing of products, categories and ingredients.
@@ -19,7 +19,7 @@ The system SHALL expose public endpoints for catalog browsing of products, categ
 - **WHEN** an anonymous user accesses public catalog endpoints
 - **THEN** the system returns public data without requiring authentication
 
----
+## ADDED Requirements
 
 ### Requirement: Product filtering
 The system SHALL support advanced filtering on the public product listing endpoint.

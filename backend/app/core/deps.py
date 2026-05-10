@@ -6,11 +6,12 @@ Los routers inyectan estas funciones con Depends() — nunca las llaman directam
 
 Funciones exportadas:
 - get_current_user: valida JWT Bearer, carga usuario desde BD, retorna Usuario
+- get_optional_current_user: como get_current_user pero retorna None si no hay token
 - require_role: factory que retorna una dependency que verifica rol(es)
 """
 
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -60,6 +61,22 @@ async def get_current_user(
     # Retornar el modelo Usuario — los roles viajan en el JWT, no necesitamos cargarlos aquí
     usuario, _ = result
     return usuario
+
+
+async def get_optional_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+) -> Optional[Usuario]:
+    """Versión de get_current_user que retorna None en vez de lanzar error.
+
+    Útil para endpoints que son públicos pero tienen comportamiento
+    extendido para usuarios autenticados (ej: admin ve productos no disponibles).
+    """
+    if credentials is None:
+        return None
+    try:
+        return await get_current_user(credentials)
+    except (UnauthorizedError, ForbiddenError):
+        return None
 
 
 def require_role(roles: list[str]) -> Callable:
