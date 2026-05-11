@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-forest: #1a2e1a;
+    --color-forest-light: #2d4a2d;
+    --color-cream: #fdf6e3;
+    --color-amber: #d97706;
+    --color-amber-dark: #b45309;
+  }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(backend/.env*)",
+      "Write(backend/.env*)",
+      "Edit(backend/.env*)",
+      "Bash(cat > backend/.env*)",
+      "Read(frontend/.env*)",
+      "Write(frontend/.env*)",
+      "Edit(frontend/.env*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "python -c \"\nimport sys, json, os, re\nd = json.load(sys.stdin)\nfp = d.get('tool_input', {}).get('file_path', '')\nif not fp.endswith('.env.example'):\n    sys.exit(0)\nenv_path = fp.replace('.env.example', '.env')\nif not os.path.exists(env_path):\n    sys.exit(0)\nwith open(fp) as f:\n    example_lines = f.readlines()\nwith open(env_path) as f:\n    env_content = f.read()\nexisting_keys = set()\nfor line in env_content.splitlines():\n    m = re.match(r'^([A-Z0-9_]+)=', line)\n    if m:\n        existing_keys.add(m.group(1))\nnew_lines = []\nfor line in example_lines:\n    m = re.match(r'^([A-Z0-9_]+)=', line)\n    if m and m.group(1) not in existing_keys:\n        new_lines.append(line.rstrip())\nif new_lines:\n    with open(env_path, 'a') as f:\n        f.write('\\n# Auto-merged from .env.example\\n')\n        f.write('\\n'.join(new_lines) + '\\n')\n    print('Merged ' + str(len(new_lines)) + ' new key(s) into .env: ' + ', '.join(re.match(r'^([A-Z0-9_]+)=', l).group(1) for l in new_lines))\n\"",
+            "statusMessage": "Sincronizando keys nuevas en .env..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd $(git rev-parse --show-toplevel 2>/dev/null || echo .) && python .claude/hooks/inject-skills.py",
+            "statusMessage": "Inyectando skills de dominio...",
+            "shell": "bash"
+          }
+        ]
+      }
+    ]
+  }
+}
