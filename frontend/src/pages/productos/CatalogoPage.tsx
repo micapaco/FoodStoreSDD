@@ -233,7 +233,7 @@ export function CatalogoPage() {
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {isLoading ? (
           Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : data && data.items.length > 0 ? (
+        ) : data?.items && data.items.length > 0 ? (
           data.items.map((prod) => (
             <ProductCard
               key={prod.id}
@@ -257,7 +257,7 @@ export function CatalogoPage() {
         )}
       </div>
 
-      {data && data.pages > 1 && (
+      {data?.pages && data.pages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-2">
           <button
             type="button"

@@ -1,0 +1,28 @@
+export interface ItemValidar {
+  productoId: number
+  cantidad: number
+  precioEsperado: number
+  exclusiones: number[]
+}
+
+export interface ValidarCarritoRequest {
+  items: ItemValidar[]
+}
+
+export interface ErrorValidacion {
+  productoId: number
+  tipo: 'STOCK_INSUFICIENTE' | 'PRECIO_CAMBIADO' | 'NO_DISPONIBLE'
+  mensaje: string
+}
+
+export interface PrecioActualizado {
+  productoId: number
+  precioViejo: number
+  precioNuevo: number
+}
+
+export interface ValidarCarritoResponse {
+  valido: boolean
+  errores: ErrorValidacion[]
+  preciosActualizados: PrecioActualizado[]
+}

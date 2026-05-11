@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useProductos, useCategorias, useDeleteProducto, useUpdateStock, useUpdateDisponibilidad } from '@/features/productos/hooks/useProductos'
 import { useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
@@ -64,7 +64,6 @@ function DeleteModal({ open, productName, onConfirm, onCancel, loading }: Delete
 }
 
 export function ProductosPage() {
-  const navigate = useNavigate()
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.roles.includes('ADMIN') ?? false
@@ -219,7 +218,7 @@ export function ProductosPage() {
 
         {/* Disponible filter */}
         <select
-          value={disponibleFilter}
+          value={disponibleFilter === '' ? '' : String(disponibleFilter)}
           onChange={(e) => {
             setDisponibleFilter(e.target.value === '' ? '' : e.target.value === 'true')
             setFilters((f) => ({ ...f, page: 1 }))

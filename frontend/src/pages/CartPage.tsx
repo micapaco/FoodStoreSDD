@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { useCartStore } from '@/shared/stores/cartStore'
 import { useIngredientes } from '@/features/productos/hooks/useProductos'
 import { CartItemCard } from '@/features/store/components/CartItemCard'
-import { CartSummary } from '@/features/store/components/CartSummary'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)

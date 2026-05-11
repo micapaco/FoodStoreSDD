@@ -9,10 +9,6 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
 }
 
-function formatDate(dateStr: string): string {
-  return new Intl.DateTimeFormat('es-AR', { dateStyle: 'long' }).format(new Date(dateStr))
-}
-
 function DetailSkeleton() {
   return (
     <div className="animate-pulse">
