@@ -1,17 +1,15 @@
 from datetime import datetime
-from decimal import Decimal
 from uuid import uuid4
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationAppError
 from app.core.uow import UnitOfWork
-from app.db.models.catalogo import Producto
 from app.db.models.identidad import Usuario
-from app.db.models.ventas import HistorialEstadoPedido, Pago, Pedido
+from app.db.models.ventas import Pago, Pedido
 from app.modules.pagos.mercadopago_client import MercadoPagoGateway, MercadoPagoPaymentResult
 from app.modules.pagos.schemas import CrearPagoRequest, PagoRead, PagoStatusResponse
+from app.modules.pedidos.service import PedidosService
 
 ESTADO_PENDIENTE = "PENDIENTE"
-ESTADO_CONFIRMADO = "CONFIRMADO"
 FORMA_MERCADOPAGO = "MERCADOPAGO"
 BLOCKING_STATUSES = {"pending", "in_process"}
 RETRYABLE_STATUSES = {"rejected", "cancelled"}
@@ -48,7 +46,7 @@ class PagosService:
             external_reference=external_reference,
         )
         if result.mp_status == "approved":
-            await self._confirmar_pedido_por_pago(uow, pago.pedido_id)
+            await PedidosService().confirmar_por_pago(uow, pago.pedido_id)
         return self._to_read(pago)
 
     async def obtener_estado_por_pedido(
@@ -86,7 +84,7 @@ class PagosService:
         await uow.pagos.update(pago)
 
         if result.mp_status == "approved":
-            await self._confirmar_pedido_por_pago(uow, pago.pedido_id)
+            await PedidosService().confirmar_por_pago(uow, pago.pedido_id)
 
     @staticmethod
     def _require_usuario_id(current_user: Usuario) -> int:
@@ -188,57 +186,6 @@ class PagosService:
         pago.monto = result.transaction_amount or pago.monto
         pago.raw_payload = result.raw_payload
         pago.updated_at = datetime.utcnow()
-
-    async def _confirmar_pedido_por_pago(self, uow: UnitOfWork, pedido_id: int) -> None:
-        pedido = await uow.pedidos.get_by_id(pedido_id)
-        if pedido is None or pedido.deleted_at is not None:
-            raise NotFoundError("Pedido no encontrado para confirmar.")
-        if pedido.estado_codigo == ESTADO_CONFIRMADO:
-            return
-        if pedido.estado_codigo != ESTADO_PENDIENTE:
-            raise ConflictError("El pedido ya no esta pendiente.")
-
-        await self._descontar_stock_pedido(uow, pedido_id)
-        pedido.estado_codigo = ESTADO_CONFIRMADO
-        pedido.updated_at = datetime.utcnow()
-        await uow.pedidos.update(pedido)
-        await uow.pedidos.create_historial(
-            HistorialEstadoPedido(
-                pedido_id=pedido_id,
-                estado_desde=ESTADO_PENDIENTE,
-                estado_hasta=ESTADO_CONFIRMADO,
-                cambiado_por_id=None,
-            )
-        )
-
-    @staticmethod
-    async def _descontar_stock_pedido(uow: UnitOfWork, pedido_id: int) -> None:
-        detalles = await uow.pedidos.get_detalles_by_pedido_id(pedido_id)
-        cantidades: dict[int, int] = {}
-        for detalle in detalles:
-            if detalle.producto_id is not None:
-                cantidades[detalle.producto_id] = (
-                    cantidades.get(detalle.producto_id, 0) + detalle.cantidad
-                )
-
-        productos = await uow.pedidos.get_productos_for_update(list(cantidades.keys()))
-        productos_by_id = {producto.id: producto for producto in productos}
-        PagosService._apply_stock_decrement(productos_by_id, cantidades)
-        await uow.pedidos.save_productos(productos)
-
-    @staticmethod
-    def _apply_stock_decrement(
-        productos_by_id: dict[int | None, Producto],
-        cantidades: dict[int, int],
-    ) -> None:
-        for producto_id, cantidad in cantidades.items():
-            producto = productos_by_id.get(producto_id)
-            if producto is None:
-                raise ConflictError(f"Producto {producto_id} no disponible para descontar stock.")
-            if producto.stock_cantidad < cantidad:
-                raise ConflictError(f"Stock insuficiente para confirmar {producto.nombre}.")
-            producto.stock_cantidad -= cantidad
-            producto.updated_at = datetime.utcnow()
 
     @staticmethod
     def _to_read(pago: Pago) -> PagoRead:

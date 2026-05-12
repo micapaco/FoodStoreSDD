@@ -109,6 +109,10 @@ class HistorialEstadoPedido(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("usuario.id"), nullable=True),
     )
+    motivo: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text(), nullable=True),
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False,

@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.core.exceptions import (
+    ConflictError,
     ForbiddenError,
     NotFoundError,
     UnauthorizedError,
@@ -12,8 +14,11 @@ from app.db.models.catalogo import Producto
 from app.db.models.identidad import DireccionEntrega, Usuario
 from app.db.models.ventas import DetallePedido, HistorialEstadoPedido, Pedido
 from app.modules.pedidos.schemas import (
+    AvanzarEstadoRequest,
+    CancelarPedidoRequest,
     CrearPedidoRequest,
     ErrorValidacion,
+    HistorialEstadoRead,
     ItemPedidoRequest,
     PedidoRead,
     PrecioActualizado,
@@ -22,7 +27,25 @@ from app.modules.pedidos.schemas import (
 )
 
 ESTADO_PENDIENTE = "PENDIENTE"
+ESTADO_CONFIRMADO = "CONFIRMADO"
+ESTADO_EN_PREP = "EN_PREP"
+ESTADO_EN_CAMINO = "EN_CAMINO"
+ESTADO_ENTREGADO = "ENTREGADO"
+ESTADO_CANCELADO = "CANCELADO"
 COSTO_ENVIO_V1 = Decimal("50.00")
+SISTEMA_USUARIO_ID = None
+MANUAL_TRANSITIONS = {
+    ESTADO_CONFIRMADO: {ESTADO_EN_PREP, ESTADO_CANCELADO},
+    ESTADO_EN_PREP: {ESTADO_EN_CAMINO, ESTADO_CANCELADO},
+    ESTADO_EN_CAMINO: {ESTADO_ENTREGADO},
+}
+TERMINAL_STATES = {ESTADO_ENTREGADO, ESTADO_CANCELADO}
+STOCK_DISCOUNTED_STATES = {ESTADO_CONFIRMADO, ESTADO_EN_PREP, ESTADO_EN_CAMINO}
+
+
+def _utc_now_naive() -> datetime:
+    """UTC sin tzinfo para columnas TIMESTAMP WITHOUT TIME ZONE."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 @dataclass(frozen=True)
@@ -124,11 +147,250 @@ class PedidosService:
             created_at=pedido.created_at,
         )
 
+    async def confirmar_por_pago(self, uow: UnitOfWork, pedido_id: int) -> None:
+        """Confirma automaticamente un pedido cuando pagos informa approved."""
+        pedido = await self._get_active_pedido(uow, pedido_id)
+        if pedido.estado_codigo == ESTADO_CONFIRMADO:
+            return
+        if pedido.estado_codigo != ESTADO_PENDIENTE:
+            raise ConflictError("El pedido ya no esta pendiente.")
+
+        await self._descontar_stock_pedido(uow, pedido_id)
+        await self._apply_estado(
+            uow,
+            pedido=pedido,
+            nuevo_estado=ESTADO_CONFIRMADO,
+            cambiado_por_id=SISTEMA_USUARIO_ID,
+            motivo=None,
+        )
+
+    async def avanzar_estado(
+        self,
+        uow: UnitOfWork,
+        pedido_id: int,
+        request: AvanzarEstadoRequest,
+        current_user: Usuario,
+    ) -> PedidoRead:
+        """Avanza manualmente estados operativos de pedidos."""
+        usuario_id = self._require_usuario_id(current_user)
+        roles = await self._get_user_roles(uow, usuario_id)
+        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            raise ForbiddenError("No tenes permiso para avanzar pedidos.")
+        pedido = await self._get_active_pedido(uow, pedido_id)
+        self._validate_manual_transition(pedido.estado_codigo, request.nuevo_estado)
+
+        if request.nuevo_estado == ESTADO_CANCELADO:
+            self._require_cancel_motivo(request.motivo)
+            await self._restore_stock_if_needed(uow, pedido)
+
+        await self._apply_estado(
+            uow,
+            pedido=pedido,
+            nuevo_estado=request.nuevo_estado,
+            cambiado_por_id=usuario_id,
+            motivo=request.motivo,
+        )
+        return self._to_read(pedido)
+
+    async def cancelar_pedido(
+        self,
+        uow: UnitOfWork,
+        pedido_id: int,
+        request: CancelarPedidoRequest,
+        current_user: Usuario,
+    ) -> PedidoRead:
+        """Cancela un pedido validando ownership, rol y restauracion de stock."""
+        usuario_id = self._require_usuario_id(current_user)
+        pedido = await self._get_active_pedido(uow, pedido_id)
+        roles = await self._get_user_roles(uow, usuario_id)
+
+        self._validate_cancel_permission(pedido, usuario_id, roles)
+        self._validate_cancel_state(pedido.estado_codigo)
+        await self._restore_stock_if_needed(uow, pedido)
+        await self._apply_estado(
+            uow,
+            pedido=pedido,
+            nuevo_estado=ESTADO_CANCELADO,
+            cambiado_por_id=usuario_id,
+            motivo=request.motivo,
+        )
+        return self._to_read(pedido)
+
+    async def obtener_historial(
+        self,
+        uow: UnitOfWork,
+        pedido_id: int,
+        current_user: Usuario,
+    ) -> list[HistorialEstadoRead]:
+        """Retorna historial cronologico visible por propietario u operadores."""
+        usuario_id = self._require_usuario_id(current_user)
+        pedido = await self._get_active_pedido(uow, pedido_id)
+        roles = await self._get_user_roles(uow, usuario_id)
+        if pedido.usuario_id != usuario_id and not self._has_any_role(
+            roles, {"ADMIN", "PEDIDOS"}
+        ):
+            raise ForbiddenError("No tenes permiso para ver el historial de este pedido.")
+
+        historial = await uow.pedidos.list_historial_by_pedido_id(pedido_id)
+        return [self._historial_to_read(item) for item in historial]
+
     @staticmethod
     def _require_usuario_id(current_user: Usuario) -> int:
         if current_user.id is None:
             raise UnauthorizedError("Usuario invalido.")
         return current_user.id
+
+    @staticmethod
+    async def _get_active_pedido(uow: UnitOfWork, pedido_id: int) -> Pedido:
+        pedido = await uow.pedidos.get_by_id(pedido_id)
+        if pedido is None or pedido.deleted_at is not None:
+            raise NotFoundError("Pedido no encontrado.")
+        return pedido
+
+    @staticmethod
+    async def _get_user_roles(uow: UnitOfWork, usuario_id: int) -> list[str]:
+        result = await uow.usuarios.get_with_roles(usuario_id)
+        if result is None:
+            raise UnauthorizedError("Usuario no encontrado o inactivo.")
+        return result[1]
+
+    @staticmethod
+    def _has_any_role(roles: list[str], allowed: set[str]) -> bool:
+        return any(role in allowed for role in roles)
+
+    @staticmethod
+    def _validate_manual_transition(estado_actual: str, nuevo_estado: str) -> None:
+        if nuevo_estado == ESTADO_CONFIRMADO:
+            raise ConflictError("La confirmacion del pedido es automatica por pago aprobado.")
+        if estado_actual in TERMINAL_STATES:
+            raise ConflictError("El pedido esta en un estado terminal.")
+        allowed = MANUAL_TRANSITIONS.get(estado_actual, set())
+        if nuevo_estado not in allowed:
+            raise ConflictError("Transicion de estado no permitida.")
+
+    @staticmethod
+    def _validate_cancel_permission(
+        pedido: Pedido,
+        usuario_id: int,
+        roles: list[str],
+    ) -> None:
+        if pedido.usuario_id == usuario_id and pedido.estado_codigo == ESTADO_PENDIENTE:
+            return
+        if PedidosService._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            return
+        raise ForbiddenError("No tenes permiso para cancelar este pedido.")
+
+    @staticmethod
+    def _validate_cancel_state(estado_actual: str) -> None:
+        if estado_actual in TERMINAL_STATES:
+            raise ConflictError("El pedido esta en un estado terminal.")
+        if estado_actual == ESTADO_EN_CAMINO:
+            raise ConflictError("No se puede cancelar un pedido en camino.")
+        if estado_actual not in {ESTADO_PENDIENTE, ESTADO_CONFIRMADO, ESTADO_EN_PREP}:
+            raise ConflictError("Cancelacion no permitida para el estado actual.")
+
+    @staticmethod
+    def _require_cancel_motivo(motivo: str | None) -> None:
+        if motivo is None or not motivo.strip():
+            raise ValidationAppError("El motivo es obligatorio para cancelar.")
+
+    async def _restore_stock_if_needed(self, uow: UnitOfWork, pedido: Pedido) -> None:
+        if pedido.estado_codigo not in STOCK_DISCOUNTED_STATES:
+            return
+        await self._ajustar_stock_pedido(uow, pedido.id, multiplier=1)
+
+    async def _descontar_stock_pedido(self, uow: UnitOfWork, pedido_id: int) -> None:
+        await self._ajustar_stock_pedido(uow, pedido_id, multiplier=-1)
+
+    @staticmethod
+    async def _ajustar_stock_pedido(
+        uow: UnitOfWork,
+        pedido_id: int | None,
+        *,
+        multiplier: int,
+    ) -> None:
+        if pedido_id is None:
+            raise ValidationAppError("Pedido invalido.")
+        detalles = await uow.pedidos.get_detalles_by_pedido_id(pedido_id)
+        cantidades = PedidosService._sum_detalle_cantidades(detalles, multiplier)
+        productos = await uow.pedidos.get_productos_for_update(list(cantidades.keys()))
+        PedidosService._apply_stock_delta(productos, cantidades)
+        await uow.pedidos.save_productos(productos)
+
+    @staticmethod
+    def _sum_detalle_cantidades(
+        detalles: list[DetallePedido],
+        multiplier: int,
+    ) -> dict[int, int]:
+        cantidades: dict[int, int] = {}
+        for detalle in detalles:
+            if detalle.producto_id is not None:
+                delta = detalle.cantidad * multiplier
+                cantidades[detalle.producto_id] = cantidades.get(detalle.producto_id, 0) + delta
+        return cantidades
+
+    @staticmethod
+    def _apply_stock_delta(productos: list[Producto], deltas: dict[int, int]) -> None:
+        productos_by_id = {producto.id: producto for producto in productos}
+        for producto_id, delta in deltas.items():
+            producto = productos_by_id.get(producto_id)
+            if producto is None:
+                raise ConflictError(f"Producto {producto_id} no disponible para ajustar stock.")
+            if producto.stock_cantidad + delta < 0:
+                raise ConflictError(f"Stock insuficiente para confirmar {producto.nombre}.")
+            producto.stock_cantidad += delta
+            producto.updated_at = datetime.now(timezone.utc)
+
+    @staticmethod
+    async def _apply_estado(
+        uow: UnitOfWork,
+        *,
+        pedido: Pedido,
+        nuevo_estado: str,
+        cambiado_por_id: int | None,
+        motivo: str | None,
+    ) -> None:
+        if pedido.id is None:
+            raise ValidationAppError("Pedido invalido.")
+        estado_desde = pedido.estado_codigo
+        pedido.estado_codigo = nuevo_estado
+        pedido.updated_at = _utc_now_naive()
+        await uow.pedidos.update(pedido)
+        await uow.pedidos.create_historial(
+            HistorialEstadoPedido(
+                pedido_id=pedido.id,
+                estado_desde=estado_desde,
+                estado_hasta=nuevo_estado,
+                cambiado_por_id=cambiado_por_id,
+                motivo=motivo,
+            )
+        )
+
+    @staticmethod
+    def _to_read(pedido: Pedido) -> PedidoRead:
+        if pedido.id is None:
+            raise ValidationAppError("Pedido invalido.")
+        return PedidoRead(
+            id=pedido.id,
+            estado_codigo=pedido.estado_codigo,
+            total=pedido.total,
+            costo_envio=pedido.costo_envio,
+            created_at=pedido.created_at,
+        )
+
+    @staticmethod
+    def _historial_to_read(historial: HistorialEstadoPedido) -> HistorialEstadoRead:
+        if historial.id is None:
+            raise ValidationAppError("Historial invalido.")
+        return HistorialEstadoRead(
+            id=historial.id,
+            pedido_id=historial.pedido_id,
+            estado_desde=historial.estado_desde,
+            estado_hasta=historial.estado_hasta,
+            cambiado_por_id=historial.cambiado_por_id,
+            motivo=historial.motivo,
+            created_at=historial.created_at,
+        )
 
     @staticmethod
     async def _validar_forma_pago(uow: UnitOfWork, codigo: str) -> None:

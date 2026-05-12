@@ -65,9 +65,49 @@ class CrearPedidoRequest(BaseSchema):
         return value or None
 
 
+class AvanzarEstadoRequest(BaseSchema):
+    nuevo_estado: str = Field(alias="nuevoEstado", min_length=1, max_length=20)
+    motivo: str | None = Field(default=None, max_length=500)
+
+    @field_validator("nuevo_estado")
+    @classmethod
+    def normalize_nuevo_estado(cls, value: str) -> str:
+        return value.strip().upper()
+
+    @field_validator("motivo")
+    @classmethod
+    def normalize_motivo(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class CancelarPedidoRequest(BaseSchema):
+    motivo: str = Field(min_length=1, max_length=500)
+
+    @field_validator("motivo")
+    @classmethod
+    def normalize_motivo(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("El motivo es obligatorio para cancelar.")
+        return value
+
+
 class PedidoRead(BaseSchema):
     id: int
     estado_codigo: str = Field(alias="estadoCodigo")
     total: Decimal
     costo_envio: Decimal = Field(alias="costoEnvio")
+    created_at: datetime = Field(alias="createdAt")
+
+
+class HistorialEstadoRead(BaseSchema):
+    id: int
+    pedido_id: int = Field(alias="pedidoId")
+    estado_desde: str | None = Field(alias="estadoDesde")
+    estado_hasta: str = Field(alias="estadoHasta")
+    cambiado_por_id: int | None = Field(alias="cambiadoPorId")
+    motivo: str | None = None
     created_at: datetime = Field(alias="createdAt")

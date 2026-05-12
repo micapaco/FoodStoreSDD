@@ -65,6 +65,16 @@ class PedidoRepository(BaseRepository[Pedido]):
         )
         return list(result.scalars().all())
 
+    async def list_historial_by_pedido_id(
+        self, pedido_id: int
+    ) -> list[HistorialEstadoPedido]:
+        result = await self.session.execute(
+            select(HistorialEstadoPedido)
+            .where(HistorialEstadoPedido.pedido_id == pedido_id)
+            .order_by(HistorialEstadoPedido.created_at.asc(), HistorialEstadoPedido.id.asc())
+        )
+        return list(result.scalars().all())
+
     async def save_productos(self, productos: list[Producto]) -> None:
         for producto in productos:
             self.session.add(producto)
