@@ -209,13 +209,25 @@ Formaliza como se validan operativamente pedidos con `EFECTIVO` o `TRANSFERENCIA
 
 ---
 
+### `15.6` — `pickup-fulfillment-flow`
+
+**Funcionalidad**: Cierre contractual del flujo de retiro en local.
+Formaliza que los pedidos con `direccion_id=NULL` no deben cobrar envio y deben recorrer una variante operativa coherente con retiro en local, evitando pasos de despacho que solo aplican a entrega a domicilio.
+
+**Historias de usuario**: Ajuste correctivo sobre US-035, US-041, US-042, US-051, US-052 y US-071  
+**Depende de**: `order-creation`, `order-fsm`, `order-views`, `offline-payment-order-flow`
+
+> Este change corrige una inconsistencia entre una regla ya documentada (`NULL = retiro en local`) y contratos heredados que seguian aplicando costo de envio fijo y la transicion `EN_PREP -> EN_CAMINO` para todos los pedidos.
+
+---
+
 ### `16` — `order-feedback`
 
 **Funcionalidad**: Feedback UX post-checkout.
 Pantalla de confirmación de pedido creado, resumen de compra, redirecciones y estados visuales después de la creación del pedido.
 
 **Historias de usuario**: US-071  
-**Depende de**: `order-creation`, `offline-payment-order-flow`
+**Depende de**: `order-creation`, `offline-payment-order-flow`, `pickup-fulfillment-flow`
 
 > Se separa porque es UX específica del momento post-creación y no debe perderse dentro de pedidos o pagos.
 

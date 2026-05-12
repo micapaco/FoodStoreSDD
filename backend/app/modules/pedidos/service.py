@@ -51,6 +51,7 @@ MANUAL_TRANSITIONS = {
     ESTADO_EN_PREP: {ESTADO_EN_CAMINO, ESTADO_CANCELADO},
     ESTADO_EN_CAMINO: {ESTADO_ENTREGADO},
 }
+PICKUP_EN_PREP_TRANSITIONS = {ESTADO_ENTREGADO, ESTADO_CANCELADO}
 TERMINAL_STATES = {ESTADO_ENTREGADO, ESTADO_CANCELADO}
 STOCK_DISCOUNTED_STATES = {ESTADO_CONFIRMADO, ESTADO_EN_PREP, ESTADO_EN_CAMINO}
 OFFLINE_PAYMENT_CODES = {"EFECTIVO", "TRANSFERENCIA"}
@@ -142,12 +143,14 @@ class PedidosService:
             (item.precio_snapshot * item.cantidad for item in prepared_items),
             Decimal("0.00"),
         )
+        costo_envio = self._resolve_costo_envio(request.direccion_id)
         pedido = await self._create_pedido(
             uow,
             request=request,
             usuario_id=usuario_id,
             direccion_snapshot=direccion_snapshot,
-            total=subtotal + COSTO_ENVIO_V1,
+            total=subtotal + costo_envio,
+            costo_envio=costo_envio,
         )
         await self._create_detalles(uow, pedido_id=pedido.id, items=prepared_items)
         await self._create_historial(uow, pedido_id=pedido.id, usuario_id=usuario_id)
@@ -208,7 +211,7 @@ class PedidosService:
         if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
             raise ForbiddenError("No tenes permiso para avanzar pedidos.")
         pedido = await self._get_active_pedido(uow, pedido_id)
-        self._validate_manual_transition(pedido.estado_codigo, request.nuevo_estado)
+        self._validate_manual_transition(pedido, request.nuevo_estado)
 
         if request.nuevo_estado == ESTADO_CANCELADO:
             self._require_cancel_motivo(request.motivo)
@@ -397,14 +400,21 @@ class PedidosService:
         return any(role in allowed for role in roles)
 
     @staticmethod
-    def _validate_manual_transition(estado_actual: str, nuevo_estado: str) -> None:
+    def _validate_manual_transition(pedido: Pedido, nuevo_estado: str) -> None:
         if nuevo_estado == ESTADO_CONFIRMADO:
             raise ConflictError("La confirmacion del pedido es automatica por pago aprobado.")
+        estado_actual = pedido.estado_codigo
         if estado_actual in TERMINAL_STATES:
             raise ConflictError("El pedido esta en un estado terminal.")
-        allowed = MANUAL_TRANSITIONS.get(estado_actual, set())
+        allowed = PedidosService._allowed_manual_transitions(pedido)
         if nuevo_estado not in allowed:
             raise ConflictError("Transicion de estado no permitida.")
+
+    @staticmethod
+    def _allowed_manual_transitions(pedido: Pedido) -> set[str]:
+        if pedido.estado_codigo == ESTADO_EN_PREP and PedidosService._is_pickup_order(pedido):
+            return PICKUP_EN_PREP_TRANSITIONS
+        return MANUAL_TRANSITIONS.get(pedido.estado_codigo, set())
 
     @staticmethod
     def _validate_cancel_permission(
@@ -438,6 +448,14 @@ class PedidosService:
             raise ConflictError("Solo se pueden confirmar pagos offline pendientes.")
         if pedido.forma_pago_codigo not in OFFLINE_PAYMENT_CODES:
             raise ConflictError("El pedido no usa una forma de pago offline confirmable.")
+
+    @staticmethod
+    def _is_pickup_order(pedido: Pedido) -> bool:
+        return pedido.direccion_id is None
+
+    @staticmethod
+    def _resolve_costo_envio(direccion_id: int | None) -> Decimal:
+        return Decimal("0.00") if direccion_id is None else COSTO_ENVIO_V1
 
     async def _restore_stock_if_needed(self, uow: UnitOfWork, pedido: Pedido) -> None:
         if pedido.estado_codigo not in STOCK_DISCOUNTED_STATES:
@@ -739,6 +757,7 @@ class PedidosService:
         usuario_id: int,
         direccion_snapshot: dict | None,
         total: Decimal,
+        costo_envio: Decimal,
     ) -> Pedido:
         pedido = Pedido(
             usuario_id=usuario_id,
@@ -748,7 +767,7 @@ class PedidosService:
             direccion_snapshot=direccion_snapshot,
             notas=request.notas,
             total=total,
-            costo_envio=COSTO_ENVIO_V1,
+            costo_envio=costo_envio,
         )
         return await uow.pedidos.create(pedido)
 

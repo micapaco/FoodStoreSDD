@@ -78,12 +78,13 @@ class FakeUnitOfWork:
         self.usuarios = FakeUsuarioRepository(roles)
 
 
-def build_pedido(estado_codigo: str) -> Pedido:
+def build_pedido(estado_codigo: str, *, direccion_id: int | None = 1) -> Pedido:
     return Pedido(
         id=1,
         usuario_id=10,
         estado_codigo=estado_codigo,
         forma_pago_codigo="MERCADOPAGO",
+        direccion_id=direccion_id,
         total=Decimal("250.00"),
         costo_envio=Decimal("50.00"),
     )
@@ -197,6 +198,62 @@ class PedidosFsmTests(IsolatedAsyncioTestCase):
 
         with self.assertRaises(ConflictError):
             await PedidosService().avanzar_estado(uow, 1, request, current_user)
+
+    async def test_retiro_local_avanza_de_preparacion_a_entregado(self) -> None:
+        pedido = build_pedido(ESTADO_EN_PREP, direccion_id=None)
+        producto = build_producto(stock_cantidad=5)
+        uow = FakeUnitOfWork(pedido, [build_detalle()], [producto], roles=["PEDIDOS"])
+        request = AvanzarEstadoRequest(nuevoEstado=ESTADO_ENTREGADO)
+        current_user = Usuario(
+            id=20,
+            nombre="Ops",
+            apellido="Food",
+            email="ops@example.com",
+            password_hash="x" * 60,
+        )
+
+        result = await PedidosService().avanzar_estado(uow, 1, request, current_user)
+
+        self.assertEqual(ESTADO_ENTREGADO, result.estado_codigo)
+        self.assertEqual(ESTADO_ENTREGADO, uow.pedidos.historial[0].estado_hasta)
+
+    async def test_retiro_local_rechaza_en_camino(self) -> None:
+        pedido = build_pedido(ESTADO_EN_PREP, direccion_id=None)
+        producto = build_producto(stock_cantidad=5)
+        uow = FakeUnitOfWork(pedido, [build_detalle()], [producto], roles=["PEDIDOS"])
+        request = AvanzarEstadoRequest(nuevoEstado=ESTADO_EN_CAMINO)
+        current_user = Usuario(
+            id=20,
+            nombre="Ops",
+            apellido="Food",
+            email="ops@example.com",
+            password_hash="x" * 60,
+        )
+
+        with self.assertRaises(ConflictError):
+            await PedidosService().avanzar_estado(uow, 1, request, current_user)
+
+        self.assertEqual(ESTADO_EN_PREP, pedido.estado_codigo)
+        self.assertEqual([], uow.pedidos.historial)
+
+    async def test_entrega_domicilio_rechaza_salto_directo_a_entregado(self) -> None:
+        pedido = build_pedido(ESTADO_EN_PREP, direccion_id=9)
+        producto = build_producto(stock_cantidad=5)
+        uow = FakeUnitOfWork(pedido, [build_detalle()], [producto], roles=["PEDIDOS"])
+        request = AvanzarEstadoRequest(nuevoEstado=ESTADO_ENTREGADO)
+        current_user = Usuario(
+            id=20,
+            nombre="Ops",
+            apellido="Food",
+            email="ops@example.com",
+            password_hash="x" * 60,
+        )
+
+        with self.assertRaises(ConflictError):
+            await PedidosService().avanzar_estado(uow, 1, request, current_user)
+
+        self.assertEqual(ESTADO_EN_PREP, pedido.estado_codigo)
+        self.assertEqual([], uow.pedidos.historial)
 
     async def test_cliente_propietario_cancela_pendiente(self) -> None:
         pedido = build_pedido(ESTADO_PENDIENTE)

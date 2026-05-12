@@ -28,7 +28,6 @@ export function CheckoutPage() {
   const items = useCartStore((s) => s.items)
   const subtotal = useCartStore((s) => s.subtotal)
   const costoEnvio = useCartStore((s) => s.costoEnvio)
-  const total = useCartStore((s) => s.total)
   const clearCart = useCartStore((s) => s.clearCart)
   const addToast = useUiStore((s) => s.addToast)
   const startCheckoutPayment = usePaymentStore((s) => s.startCheckout)
@@ -50,6 +49,8 @@ export function CheckoutPage() {
   const hasItems = items.length > 0
   const hasBlockingIssues = resultado && !resultado.valido
   const isPending = validarCheckout.isPending || crearPedido.isPending
+  const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : costoEnvio()
+  const checkoutTotal = subtotal() + checkoutCostoEnvio
 
   const selectedDireccionId = useMemo(() => {
     if (modoEntrega === 'pickup') return null
@@ -315,12 +316,12 @@ export function CheckoutPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Costo de envio</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(costoEnvio())}</span>
+                  <span className="font-medium text-gray-900">{formatCurrency(checkoutCostoEnvio)}</span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-semibold text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-orange-600">{formatCurrency(total())}</span>
+                    <span className="text-lg font-bold text-orange-600">{formatCurrency(checkoutTotal)}</span>
                   </div>
                 </div>
               </div>

@@ -86,3 +86,4 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 - Antes de consumir un endpoint, verificar que el change de backend está archivado en `openspec/`.
 - Si falta un campo o endpoint → no improvisar, reportar al root para coordinar cross-domain.
 - Los flujos de pagos offline (`EFECTIVO`/`TRANSFERENCIA`) deben consumirse solo cuando el change `offline-payment-order-flow` defina y archive el contrato correspondiente.
+- La experiencia de retiro en local, incluyendo costo de envio visible y acciones operativas sin `EN_CAMINO`, debe seguir el contrato que defina `pickup-fulfillment-flow`; no inferir variantes desde la UI antes de que backend las acuerde.

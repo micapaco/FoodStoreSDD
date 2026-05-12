@@ -2,7 +2,7 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados (15/20):**
+**Changes archivados (16/21):**
 - `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
 - `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
 - `03` `infra-frontend-core` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
@@ -18,8 +18,9 @@
 - `13` `payment-integration` ✅ archivado (`openspec/changes/archive/2026-05-12-payment-integration/`)
 - `14` `order-fsm` ✅ archivado (`openspec/changes/archive/2026-05-12-order-fsm/`)
 - `15` `order-views` ✅ archivado (`openspec/changes/archive/2026-05-12-order-views/`)
+- `15.5` `offline-payment-order-flow` ✅ archivado (`openspec/changes/archive/2026-05-12-offline-payment-order-flow/`)
 
-**Próximo change:** `15.5 — offline-payment-order-flow` (ver `docs/CHANGES.md`).
+**Próximo change:** `15.6 — pickup-fulfillment-flow` (ver `docs/CHANGES.md`).
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción

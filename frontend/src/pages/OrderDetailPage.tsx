@@ -91,7 +91,11 @@ export function OrderDetailPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-5">
               <p className="text-xs font-semibold uppercase text-gray-500">Total</p>
               <p className="mt-2 text-lg font-bold text-orange-600">{formatCurrency(data.total)}</p>
-              <p className="mt-1 text-sm text-gray-500">Envio {formatCurrency(data.costoEnvio)}</p>
+              <p className="mt-1 text-sm text-gray-500">
+                {data.direccionSnapshot
+                  ? `Envio ${formatCurrency(data.costoEnvio)}`
+                  : `Retiro en local - Envio ${formatCurrency(data.costoEnvio)}`}
+              </p>
             </div>
           </section>
 

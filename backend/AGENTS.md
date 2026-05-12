@@ -82,3 +82,4 @@ No asumir que existe código implementado. Verificar el estado del change antes 
 - Si cambia un endpoint, payload o response → coordinar con el root antes de implementar.
 - El contrato vive en los specs de `openspec/` y en FastAPI `/docs`.
 - La confirmacion de pagos offline (`EFECTIVO`/`TRANSFERENCIA`) solo se implementa bajo el change `offline-payment-order-flow`; no reutilizar la transicion generica a `CONFIRMADO` fuera de ese contrato.
+- El flujo de retiro en local (`direccion_id=NULL`) y sus reglas diferenciales de costo/transiciones solo se ajustan bajo el change `pickup-fulfillment-flow`; no aplicar excepciones ad hoc fuera de ese contrato.

@@ -11,14 +11,21 @@ import { useUiStore } from '@/shared/stores/uiStore'
 import type { EstadoPedidoOperativo } from '@/entities/pedidos/types'
 
 const ESTADOS = ['', 'PENDIENTE', 'CONFIRMADO', 'EN_PREP', 'EN_CAMINO', 'ENTREGADO', 'CANCELADO']
-const NEXT_STATE: Partial<Record<EstadoPedidoOperativo, EstadoPedidoOperativo>> = {
-  CONFIRMADO: 'EN_PREP',
-  EN_PREP: 'EN_CAMINO',
-  EN_CAMINO: 'ENTREGADO',
+function resolveNextState(
+  estado: EstadoPedidoOperativo,
+  isPickup: boolean,
+): EstadoPedidoOperativo | undefined {
+  if (estado === 'CONFIRMADO') return 'EN_PREP'
+  if (estado === 'EN_PREP') return isPickup ? 'ENTREGADO' : 'EN_CAMINO'
+  if (estado === 'EN_CAMINO') return 'ENTREGADO'
+  return undefined
 }
 
-function nextStateLabel(estado: EstadoPedidoOperativo): string | null {
-  const nextState = NEXT_STATE[estado]
+function nextStateLabel(
+  estado: EstadoPedidoOperativo,
+  isPickup: boolean,
+): string | null {
+  const nextState = resolveNextState(estado, isPickup)
   if (!nextState) return null
 
   const labels: Record<Exclude<EstadoPedidoOperativo, 'PENDIENTE' | 'CONFIRMADO' | 'CANCELADO'>, string> = {
@@ -99,7 +106,8 @@ export function OrdersAdminPage() {
   const parsedListError = error ? parseHttpError(error) : null
   const parsedDetailError = detailQuery.error ? parseHttpError(detailQuery.error) : null
   const selectedEstado = detailQuery.data?.estadoCodigo as EstadoPedidoOperativo | undefined
-  const nextEstado = selectedEstado ? NEXT_STATE[selectedEstado] : undefined
+  const selectedPedidoIsPickup = detailQuery.data?.direccionSnapshot === null
+  const nextEstado = selectedEstado ? resolveNextState(selectedEstado, selectedPedidoIsPickup) : undefined
   const actionBusy = advanceMutation.isPending || cancelMutation.isPending || confirmOfflineMutation.isPending
 
   const handleSearch = (value: string) => {
@@ -344,6 +352,12 @@ export function OrdersAdminPage() {
                 </div>
               </div>
               <div>
+                <p className="text-gray-500">Entrega</p>
+                <p className="mt-1 font-semibold text-gray-900">
+                  {selectedPedidoIsPickup ? 'Retiro en local' : 'Envio a domicilio'}
+                </p>
+              </div>
+              <div>
                 <p className="text-gray-500">Pago</p>
                 <p className="mt-1 font-semibold text-gray-900">
                   {describePaymentStatus(
@@ -374,7 +388,7 @@ export function OrdersAdminPage() {
                       disabled={actionBusy}
                       className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {nextStateLabel(selectedEstado)}
+                      {nextStateLabel(selectedEstado, selectedPedidoIsPickup)}
                     </button>
                   )}
                   {selectedEstado && canCancel(selectedEstado) && (
