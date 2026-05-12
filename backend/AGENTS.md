@@ -81,3 +81,4 @@ No asumir que existe código implementado. Verificar el estado del change antes 
 - Backend define el contrato. Nunca lo recibe del frontend.
 - Si cambia un endpoint, payload o response → coordinar con el root antes de implementar.
 - El contrato vive en los specs de `openspec/` y en FastAPI `/docs`.
+- La confirmacion de pagos offline (`EFECTIVO`/`TRANSFERENCIA`) solo se implementa bajo el change `offline-payment-order-flow`; no reutilizar la transicion generica a `CONFIRMADO` fuera de ese contrato.

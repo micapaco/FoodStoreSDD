@@ -99,7 +99,7 @@ export function ProductosPage() {
     ...filters,
     q: debouncedSearch || undefined,
     categoria_id: catFilter || undefined,
-    disponible: disponibleFilter || undefined,
+    disponible: disponibleFilter === '' ? undefined : disponibleFilter,
   }
   if (stockBajo) {
     effectiveFilters.sort = 'stock_cantidad'

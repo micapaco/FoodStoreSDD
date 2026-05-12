@@ -10,7 +10,7 @@ from app.modules.categorias.router import router as categorias_router
 from app.modules.direcciones.router import router as direcciones_router
 from app.modules.ingredientes.router import router as ingredientes_router
 from app.modules.productos.router import router as productos_router
-from app.modules.pedidos.router import router as pedidos_router
+from app.modules.pedidos.router import admin_router as pedidos_admin_router, router as pedidos_router
 from app.modules.pagos.router import router as pagos_router
 
 router = APIRouter(prefix="/api/v1")
@@ -22,4 +22,5 @@ router.include_router(direcciones_router)
 router.include_router(ingredientes_router)
 router.include_router(productos_router)
 router.include_router(pedidos_router)
+router.include_router(pedidos_admin_router)
 router.include_router(pagos_router)

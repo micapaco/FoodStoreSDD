@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
+from math import ceil
 
 from app.core.exceptions import (
     ConflictError,
@@ -16,10 +17,21 @@ from app.db.models.ventas import DetallePedido, HistorialEstadoPedido, Pedido
 from app.modules.pedidos.schemas import (
     AvanzarEstadoRequest,
     CancelarPedidoRequest,
+    ConfirmarPagoOfflineRequest,
     CrearPedidoRequest,
+    DireccionSnapshotRead,
     ErrorValidacion,
     HistorialEstadoRead,
     ItemPedidoRequest,
+    PedidoAdminDetailRead,
+    PedidoAdminListItemRead,
+    PedidoAdminListResponse,
+    PedidoClienteRead,
+    PedidoDetalleItemRead,
+    PedidoDetailRead,
+    PedidoListItemRead,
+    PedidoListResponse,
+    PedidoPagoResumenRead,
     PedidoRead,
     PrecioActualizado,
     ValidarCarritoRequest,
@@ -41,6 +53,7 @@ MANUAL_TRANSITIONS = {
 }
 TERMINAL_STATES = {ESTADO_ENTREGADO, ESTADO_CANCELADO}
 STOCK_DISCOUNTED_STATES = {ESTADO_CONFIRMADO, ESTADO_EN_PREP, ESTADO_EN_CAMINO}
+OFFLINE_PAYMENT_CODES = {"EFECTIVO", "TRANSFERENCIA"}
 
 
 def _utc_now_naive() -> datetime:
@@ -152,17 +165,35 @@ class PedidosService:
         pedido = await self._get_active_pedido(uow, pedido_id)
         if pedido.estado_codigo == ESTADO_CONFIRMADO:
             return
-        if pedido.estado_codigo != ESTADO_PENDIENTE:
-            raise ConflictError("El pedido ya no esta pendiente.")
-
-        await self._descontar_stock_pedido(uow, pedido_id)
-        await self._apply_estado(
+        await self._confirmar_pedido_pendiente(
             uow,
             pedido=pedido,
-            nuevo_estado=ESTADO_CONFIRMADO,
             cambiado_por_id=SISTEMA_USUARIO_ID,
             motivo=None,
         )
+
+    async def confirmar_pago_offline(
+        self,
+        uow: UnitOfWork,
+        pedido_id: int,
+        request: ConfirmarPagoOfflineRequest,
+        current_user: Usuario,
+    ) -> PedidoRead:
+        """Confirma pagos offline pendientes por una accion operativa autorizada."""
+        usuario_id = self._require_usuario_id(current_user)
+        roles = await self._get_user_roles(uow, usuario_id)
+        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            raise ForbiddenError("No tenes permiso para confirmar pagos offline.")
+
+        pedido = await self._get_active_pedido(uow, pedido_id)
+        self._validate_offline_confirmation(pedido)
+        await self._confirmar_pedido_pendiente(
+            uow,
+            pedido=pedido,
+            cambiado_por_id=usuario_id,
+            motivo=request.motivo,
+        )
+        return self._to_read(pedido)
 
     async def avanzar_estado(
         self,
@@ -234,6 +265,113 @@ class PedidosService:
         historial = await uow.pedidos.list_historial_by_pedido_id(pedido_id)
         return [self._historial_to_read(item) for item in historial]
 
+    async def listar_propios(
+        self,
+        uow: UnitOfWork,
+        *,
+        current_user: Usuario,
+        page: int,
+        size: int,
+        estado: str | None,
+    ) -> PedidoListResponse:
+        """Lista pedidos propios con paginacion y filtro de estado."""
+        usuario_id = self._require_usuario_id(current_user)
+        rows, total = await uow.pedidos.list_by_usuario_paginated(
+            usuario_id,
+            page=page,
+            size=size,
+            estado=estado,
+        )
+        return PedidoListResponse(
+            items=[
+                self._to_list_item_read(pedido, cantidad_items)
+                for pedido, cantidad_items in rows
+            ],
+            total=total,
+            page=page,
+            size=size,
+            pages=max(1, ceil(total / size)),
+        )
+
+    async def obtener_detalle_propio(
+        self,
+        uow: UnitOfWork,
+        *,
+        pedido_id: int,
+        current_user: Usuario,
+    ) -> PedidoDetailRead:
+        """Retorna detalle completo de un pedido propio."""
+        usuario_id = self._require_usuario_id(current_user)
+        pedido = await self._get_active_pedido(uow, pedido_id)
+        if pedido.usuario_id != usuario_id:
+            raise ForbiddenError("No tenes permiso para ver este pedido.")
+        return await self._build_detail_read(uow, pedido)
+
+    async def listar_operativos(
+        self,
+        uow: UnitOfWork,
+        *,
+        current_user: Usuario,
+        page: int,
+        size: int,
+        estado: str | None,
+        desde,
+        hasta,
+        q: str | None,
+    ) -> PedidoAdminListResponse:
+        """Lista pedidos del sistema para ADMIN/PEDIDOS."""
+        usuario_id = self._require_usuario_id(current_user)
+        roles = await self._get_user_roles(uow, usuario_id)
+        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            raise ForbiddenError("No tenes permiso para consultar pedidos operativos.")
+
+        rows, total = await uow.pedidos.list_admin_paginated(
+            page=page,
+            size=size,
+            estado=estado,
+            desde=desde,
+            hasta=hasta,
+            q=q,
+        )
+        return PedidoAdminListResponse(
+            items=[
+                self._to_admin_list_item_read(pedido, usuario, cantidad_items)
+                for pedido, usuario, cantidad_items in rows
+            ],
+            total=total,
+            page=page,
+            size=size,
+            pages=max(1, ceil(total / size)),
+        )
+
+    async def obtener_detalle_operativo(
+        self,
+        uow: UnitOfWork,
+        *,
+        pedido_id: int,
+        current_user: Usuario,
+    ) -> PedidoAdminDetailRead:
+        """Retorna detalle operativo de cualquier pedido visible por ADMIN/PEDIDOS."""
+        usuario_id = self._require_usuario_id(current_user)
+        roles = await self._get_user_roles(uow, usuario_id)
+        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            raise ForbiddenError("No tenes permiso para ver pedidos operativos.")
+
+        result = await uow.pedidos.get_admin_pedido_with_usuario(pedido_id)
+        if result is None:
+            raise NotFoundError("Pedido no encontrado.")
+        pedido, usuario = result
+        detail = await self._build_detail_read(uow, pedido)
+        return PedidoAdminDetailRead(
+            **detail.model_dump(),
+            cliente=PedidoClienteRead(
+                id=usuario.id,
+                nombre=usuario.nombre,
+                apellido=usuario.apellido,
+                email=usuario.email,
+            ),
+        )
+
     @staticmethod
     def _require_usuario_id(current_user: Usuario) -> int:
         if current_user.id is None:
@@ -294,6 +432,13 @@ class PedidosService:
         if motivo is None or not motivo.strip():
             raise ValidationAppError("El motivo es obligatorio para cancelar.")
 
+    @staticmethod
+    def _validate_offline_confirmation(pedido: Pedido) -> None:
+        if pedido.estado_codigo != ESTADO_PENDIENTE:
+            raise ConflictError("Solo se pueden confirmar pagos offline pendientes.")
+        if pedido.forma_pago_codigo not in OFFLINE_PAYMENT_CODES:
+            raise ConflictError("El pedido no usa una forma de pago offline confirmable.")
+
     async def _restore_stock_if_needed(self, uow: UnitOfWork, pedido: Pedido) -> None:
         if pedido.estado_codigo not in STOCK_DISCOUNTED_STATES:
             return
@@ -301,6 +446,27 @@ class PedidosService:
 
     async def _descontar_stock_pedido(self, uow: UnitOfWork, pedido_id: int) -> None:
         await self._ajustar_stock_pedido(uow, pedido_id, multiplier=-1)
+
+    async def _confirmar_pedido_pendiente(
+        self,
+        uow: UnitOfWork,
+        *,
+        pedido: Pedido,
+        cambiado_por_id: int | None,
+        motivo: str | None,
+    ) -> None:
+        if pedido.id is None:
+            raise ValidationAppError("Pedido invalido.")
+        if pedido.estado_codigo != ESTADO_PENDIENTE:
+            raise ConflictError("El pedido ya no esta pendiente.")
+        await self._descontar_stock_pedido(uow, pedido.id)
+        await self._apply_estado(
+            uow,
+            pedido=pedido,
+            nuevo_estado=ESTADO_CONFIRMADO,
+            cambiado_por_id=cambiado_por_id,
+            motivo=motivo,
+        )
 
     @staticmethod
     async def _ajustar_stock_pedido(
@@ -379,6 +545,30 @@ class PedidosService:
         )
 
     @staticmethod
+    def _to_list_item_read(
+        pedido: Pedido,
+        cantidad_items: int,
+    ) -> PedidoListItemRead:
+        base = PedidosService._to_read(pedido)
+        return PedidoListItemRead(
+            **base.model_dump(),
+            cantidad_items=cantidad_items,
+        )
+
+    @staticmethod
+    def _to_admin_list_item_read(
+        pedido: Pedido,
+        usuario: Usuario,
+        cantidad_items: int,
+    ) -> PedidoAdminListItemRead:
+        base = PedidosService._to_list_item_read(pedido, cantidad_items)
+        return PedidoAdminListItemRead(
+            **base.model_dump(),
+            cliente_nombre=f"{usuario.nombre} {usuario.apellido}".strip(),
+            cliente_email=usuario.email,
+        )
+
+    @staticmethod
     def _historial_to_read(historial: HistorialEstadoPedido) -> HistorialEstadoRead:
         if historial.id is None:
             raise ValidationAppError("Historial invalido.")
@@ -390,6 +580,64 @@ class PedidosService:
             cambiado_por_id=historial.cambiado_por_id,
             motivo=historial.motivo,
             created_at=historial.created_at,
+        )
+
+    async def _build_detail_read(
+        self,
+        uow: UnitOfWork,
+        pedido: Pedido,
+    ) -> PedidoDetailRead:
+        base = self._to_read(pedido)
+        detalles = await uow.pedidos.get_detalles_by_pedido_id(pedido.id)
+        historial = await uow.pedidos.list_historial_by_pedido_id(pedido.id)
+        pagos = await uow.pagos.list_by_pedido_id(pedido.id)
+        ultimo_pago = pagos[-1] if pagos else None
+        return PedidoDetailRead(
+            **base.model_dump(),
+            forma_pago_codigo=pedido.forma_pago_codigo,
+            direccion_snapshot=self._direccion_snapshot_to_read(pedido.direccion_snapshot),
+            notas=pedido.notas,
+            items=[self._detalle_to_read(detalle) for detalle in detalles],
+            historial=[self._historial_to_read(item) for item in historial],
+            pago=self._pago_resumen_to_read(ultimo_pago),
+        )
+
+    @staticmethod
+    def _detalle_to_read(detalle: DetallePedido) -> PedidoDetalleItemRead:
+        return PedidoDetalleItemRead(
+            producto_id=detalle.producto_id,
+            nombre_snapshot=detalle.nombre_snapshot,
+            precio_snapshot=detalle.precio_snapshot,
+            cantidad=detalle.cantidad,
+            personalizacion=detalle.personalizacion or [],
+        )
+
+    @staticmethod
+    def _direccion_snapshot_to_read(
+        snapshot: dict | None,
+    ) -> DireccionSnapshotRead | None:
+        if snapshot is None:
+            return None
+        return DireccionSnapshotRead(
+            id=snapshot.get("id"),
+            alias=snapshot.get("alias"),
+            linea1=snapshot.get("linea1", ""),
+            linea2=snapshot.get("linea2"),
+            ciudad=snapshot.get("ciudad", ""),
+            provincia=snapshot.get("provincia", ""),
+            codigo_postal=snapshot.get("codigo_postal"),
+            notas=snapshot.get("notas"),
+        )
+
+    @staticmethod
+    def _pago_resumen_to_read(pago) -> PedidoPagoResumenRead | None:
+        if pago is None:
+            return None
+        return PedidoPagoResumenRead(
+            mp_payment_id=pago.mp_payment_id,
+            mp_status=pago.mp_status,
+            status_detail=pago.status_detail,
+            updated_at=pago.updated_at,
         )
 
     @staticmethod

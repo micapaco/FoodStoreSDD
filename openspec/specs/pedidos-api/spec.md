@@ -69,7 +69,7 @@ El sistema SHALL calcular el total del pedido con los precios snapshot y el cost
 - **THEN** el descuento de stock queda reservado para la transicion futura a `CONFIRMADO`
 
 ### Requirement: Confirmar pedido automaticamente por pago aprobado
-El sistema SHALL confirmar automaticamente un pedido `PENDIENTE` cuando el dominio de pagos informa un pago aprobado.
+El sistema SHALL confirmar automaticamente un pedido `PENDIENTE` cuando MercadoPago informa un pago aprobado, y SHALL permitir una confirmacion explicita separada para pagos offline definidos por este change.
 
 #### Scenario: Confirmacion automatica exitosa
 - **WHEN** MercadoPago informa estado real `approved` para un pedido `PENDIENTE`
@@ -78,13 +78,8 @@ El sistema SHALL confirmar automaticamente un pedido `PENDIENTE` cuando el domin
 - **THEN** inserta un `HistorialEstadoPedido` con `estado_desde=PENDIENTE` y `estado_hasta=CONFIRMADO`
 - **THEN** todo ocurre dentro de una unica transaccion
 
-#### Scenario: Confirmacion duplicada
-- **WHEN** llega nuevamente el mismo pago aprobado y el pedido ya esta `CONFIRMADO`
-- **THEN** el sistema no descuenta stock otra vez
-- **THEN** el sistema no inserta historial duplicado
-
-#### Scenario: Confirmacion manual rechazada
-- **WHEN** un usuario intenta avanzar manualmente un pedido a `CONFIRMADO`
+#### Scenario: Confirmacion manual generica rechazada
+- **WHEN** un usuario intenta avanzar manualmente un pedido a `CONFIRMADO` mediante el endpoint generico de cambio de estado
 - **THEN** el sistema responde `409 Conflict`
 - **THEN** no cambia estado, stock ni historial
 
@@ -179,4 +174,102 @@ El sistema SHALL exponer `GET /api/v1/pedidos/{pedido_id}/historial` para consul
 - **WHEN** se registra una transicion
 - **THEN** el sistema inserta un nuevo `HistorialEstadoPedido`
 - **THEN** ninguna capa actualiza o elimina registros existentes de historial
+
+### Requirement: Listar pedidos propios paginados
+El sistema SHALL exponer `GET /api/v1/pedidos` para que un usuario autenticado con rol `CLIENT` consulte un listado paginado de sus propios pedidos.
+
+#### Scenario: Cliente lista sus pedidos
+- **WHEN** un cliente autenticado solicita `GET /api/v1/pedidos`
+- **THEN** el sistema responde `200 OK`
+- **THEN** retorna solo pedidos cuyo `usuario_id` coincide con el usuario autenticado
+- **THEN** cada item incluye numero de pedido, fecha, estado actual, total y cantidad de items
+
+#### Scenario: Orden y paginacion
+- **WHEN** el cliente consulta sus pedidos con `page` y `size`
+- **THEN** el sistema responde con `items`, `total`, `page`, `size` y `pages`
+- **THEN** los pedidos se ordenan por fecha descendente
+
+#### Scenario: Filtrar por estado
+- **WHEN** el cliente envia `estado=<codigo_estado>`
+- **THEN** el sistema retorna solo pedidos propios que coinciden con ese estado
+
+---
+
+### Requirement: Consultar detalle de pedido propio
+El sistema SHALL exponer `GET /api/v1/pedidos/{pedido_id}` para que un cliente consulte el detalle completo de un pedido propio.
+
+#### Scenario: Cliente consulta detalle propio
+- **WHEN** el propietario consulta `GET /api/v1/pedidos/{pedido_id}`
+- **THEN** el sistema responde `200 OK`
+- **THEN** retorna items con snapshots, cantidades y personalizacion
+- **THEN** retorna direccion snapshot, estado actual, total, historial cronologico y estado de pago visible
+
+#### Scenario: Cliente no consulta pedido ajeno
+- **WHEN** un cliente solicita el detalle de un pedido que no le pertenece
+- **THEN** el sistema responde `403 Forbidden`
+
+#### Scenario: Pedido inexistente
+- **WHEN** se consulta un pedido inexistente o no visible para el actor
+- **THEN** el sistema responde `404 Not Found` cuando corresponda al contrato de lectura segura
+
+---
+
+### Requirement: Listar pedidos para operacion
+El sistema SHALL exponer `GET /api/v1/admin/pedidos` para usuarios `ADMIN` o `PEDIDOS`, con filtros y paginacion orientados a gestion operativa.
+
+#### Scenario: Operador lista todos los pedidos
+- **WHEN** un usuario `ADMIN` o `PEDIDOS` solicita `GET /api/v1/admin/pedidos`
+- **THEN** el sistema responde `200 OK`
+- **THEN** retorna pedidos de todos los clientes
+
+#### Scenario: Filtros operativos
+- **WHEN** el operador envia filtros por `estado`, `desde`, `hasta` o busqueda por numero de pedido o nombre de cliente
+- **THEN** el sistema aplica esos filtros sin romper la paginacion
+
+#### Scenario: Usuario sin rol operativo
+- **WHEN** un usuario sin rol `ADMIN` ni `PEDIDOS` consulta `GET /api/v1/admin/pedidos`
+- **THEN** el sistema responde `403 Forbidden`
+
+---
+
+### Requirement: Consultar detalle operativo de cualquier pedido
+El sistema SHALL exponer `GET /api/v1/admin/pedidos/{pedido_id}` para que usuarios `ADMIN` o `PEDIDOS` consulten el detalle completo de cualquier pedido.
+
+#### Scenario: Operador consulta detalle completo
+- **WHEN** un usuario `ADMIN` o `PEDIDOS` solicita el detalle de un pedido existente
+- **THEN** el sistema responde `200 OK`
+- **THEN** retorna snapshots de items, direccion snapshot, historial completo, datos del cliente y estado de pago
+
+#### Scenario: Operador consulta pedido inexistente
+- **WHEN** el pedido solicitado no existe
+- **THEN** el sistema responde `404 Not Found`
+
+### Requirement: Confirmar pagos offline pendientes
+El sistema SHALL exponer una operacion dedicada para que usuarios `ADMIN` o `PEDIDOS` confirmen pagos offline de pedidos `PENDIENTE` con `forma_pago_codigo=EFECTIVO|TRANSFERENCIA`.
+
+#### Scenario: Confirmar efectivo pendiente
+- **WHEN** un usuario `ADMIN` o `PEDIDOS` confirma un pedido `PENDIENTE` cuya forma de pago es `EFECTIVO`
+- **THEN** el sistema cambia el pedido a `CONFIRMADO`
+- **THEN** descuenta stock de los productos del pedido
+- **THEN** registra historial `PENDIENTE -> CONFIRMADO`
+- **THEN** la API responde `200 OK`
+
+#### Scenario: Confirmar transferencia pendiente
+- **WHEN** un usuario `ADMIN` o `PEDIDOS` confirma un pedido `PENDIENTE` cuya forma de pago es `TRANSFERENCIA`
+- **THEN** el sistema aplica la misma transicion atomica `PENDIENTE -> CONFIRMADO`
+- **THEN** conserva trazabilidad del actor operativo que ejecuto la accion
+
+#### Scenario: Rechazar metodo no offline
+- **WHEN** se intenta usar la confirmacion offline sobre un pedido `MERCADOPAGO`
+- **THEN** el sistema responde `409 Conflict` o `422 Unprocessable Entity`
+- **THEN** no cambia estado, stock ni historial
+
+#### Scenario: Rechazar pedido no pendiente
+- **WHEN** se intenta confirmar offline un pedido que ya no esta en `PENDIENTE`
+- **THEN** el sistema responde `409 Conflict`
+- **THEN** no descuenta stock dos veces ni duplica historial
+
+#### Scenario: Rechazar actor sin rol operativo
+- **WHEN** un usuario sin rol `ADMIN` ni `PEDIDOS` intenta confirmar un pago offline
+- **THEN** el sistema responde `403 Forbidden`
 

@@ -85,3 +85,4 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 - Frontend consume contratos existentes. Nunca los inventa.
 - Antes de consumir un endpoint, verificar que el change de backend está archivado en `openspec/`.
 - Si falta un campo o endpoint → no improvisar, reportar al root para coordinar cross-domain.
+- Los flujos de pagos offline (`EFECTIVO`/`TRANSFERENCIA`) deben consumirse solo cuando el change `offline-payment-order-flow` defina y archive el contrato correspondiente.
