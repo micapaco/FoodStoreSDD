@@ -85,3 +85,26 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 - Frontend consume contratos existentes. Nunca los inventa.
 - Antes de consumir un endpoint, verificar que el change de backend está archivado en `openspec/`.
 - Si falta un campo o endpoint → no improvisar, reportar al root para coordinar cross-domain.
+
+## Google Stitch MCP — Referencia visual
+
+Stitch es una herramienta de diseño AI conectada vía MCP. Se usa para guiar decisiones visuales, no técnicas.
+
+**Qué podés usar de Stitch:**
+- Paleta de colores, tokens de tipografía, escala de espaciado
+- Layout general de pantallas y componentes
+- Jerarquía visual, proporciones, ritmo de la UI
+- El `DESIGN.md` que exporta Stitch como referencia de sistema de diseño
+
+**Qué NO podés hacer con Stitch:**
+- Definir nombres de campos, modelos o estructuras de datos basándote en lo que muestra el diseño
+- Inventar endpoints o payloads a partir del diseño
+- Sobreescribir contratos de API porque "en el diseño se ve diferente"
+- Tomar el `DESIGN.md` como fuente de verdad del dominio — es solo guía visual
+
+**Regla de oro:** Si hay conflicto entre el diseño de Stitch y las specs en `openspec/` → **la spec gana siempre**.
+
+**Cómo usarlo:**
+1. Abrí Stitch y exportá el `DESIGN.md` del proyecto
+2. Usalo como referencia al escribir clases Tailwind, elegir colores o definir layout
+3. No copiés código generado por Stitch directamente — adaptalo a las convenciones del proyecto (FSD, Tailwind v3, TypeScript strict)
