@@ -10,14 +10,14 @@ export function ProductosCreatePage() {
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.roles.includes('ADMIN') ?? false
+  const { mutate: createProducto, isPending } = useCreateProducto()
+  const { data: categorias, isLoading: catLoading } = useCategorias()
+  const { data: ingredientes, isLoading: ingLoading } = useIngredientes()
 
   // Only ADMIN can create products
   if (!isAdmin) {
     return <Navigate to="/403" replace />
   }
-  const { mutate: createProducto, isPending } = useCreateProducto()
-  const { data: categorias, isLoading: catLoading } = useCategorias()
-  const { data: ingredientes, isLoading: ingLoading } = useIngredientes()
 
   const handleSubmit = (values: ProductoFormValues) => {
     const payload: ProductoCreate = {

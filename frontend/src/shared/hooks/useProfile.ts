@@ -58,7 +58,7 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: (data: ChangePasswordPayload) => changePasswordApi(data),
     onSuccess: () => {
-      addToast({ message: 'Contraseña actualizada correctamente.', type: 'success' })
+      addToast({ message: 'Contraseña cambiada con éxito.', type: 'success' })
     },
     onError: (error: AxiosError<{ detail?: string }>) => {
       const detail = error.response?.data?.detail

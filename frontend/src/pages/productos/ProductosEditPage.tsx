@@ -13,15 +13,15 @@ export function ProductosEditPage() {
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.roles.includes('ADMIN') ?? false
 
-  // Only ADMIN can edit products
-  if (!isAdmin) {
-    return <Navigate to="/403" replace />
-  }
-
   const { data: producto, isLoading: prodLoading, isError } = useProducto(productId)
   const { data: categorias, isLoading: catLoading } = useCategorias()
   const { data: ingredientes, isLoading: ingLoading } = useIngredientes()
   const { mutate: updateProducto, isPending } = useUpdateProducto()
+
+  // Only ADMIN can edit products
+  if (!isAdmin) {
+    return <Navigate to="/403" replace />
+  }
 
   const handleSubmit = (values: ProductoFormValues) => {
     const payload: ProductoUpdate = {

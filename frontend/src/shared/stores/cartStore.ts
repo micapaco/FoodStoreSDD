@@ -26,6 +26,16 @@ function matchItem(i: CartItem, productoId: number, p: Personalizacion) {
   return i.productoId === productoId && sameExclusiones(i.personalizacion.ingredientesExcluidos, p.ingredientesExcluidos)
 }
 
+function productQuantity(items: CartItem[], productoId: number): number {
+  return items
+    .filter((item) => item.productoId === productoId)
+    .reduce((acc, item) => acc + item.cantidad, 0)
+}
+
+function maxCartQuantity(stockDisponible?: number): number {
+  return Math.min(99, stockDisponible ?? 99)
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -33,14 +43,23 @@ export const useCartStore = create<CartState>()(
 
       addItem: (producto, cantidad, personalizacion) =>
         set((state) => {
+          const currentProductQuantity = productQuantity(state.items, producto.id)
+          const available = Math.max(0, maxCartQuantity(producto.stockDisponible) - currentProductQuantity)
+          const quantityToAdd = Math.min(cantidad, available)
+          if (quantityToAdd <= 0) return state
+
           const idx = state.items.findIndex((i) => matchItem(i, producto.id, personalizacion))
           if (idx !== -1) {
             const next = [...state.items]
-            next[idx] = { ...next[idx], cantidad: next[idx].cantidad + cantidad }
+            next[idx] = {
+              ...next[idx],
+              producto: { ...next[idx].producto, stockDisponible: producto.stockDisponible },
+              cantidad: next[idx].cantidad + quantityToAdd,
+            }
             return { items: next }
           }
           return {
-            items: [...state.items, { productoId: producto.id, producto, cantidad, personalizacion }],
+            items: [...state.items, { productoId: producto.id, producto, cantidad: quantityToAdd, personalizacion }],
           }
         }),
 
@@ -51,9 +70,14 @@ export const useCartStore = create<CartState>()(
 
       updateCantidad: (productoId, personalizacion, cantidad) =>
         set((state) => ({
-          items: state.items.map((i) =>
-            matchItem(i, productoId, personalizacion) ? { ...i, cantidad } : i,
-          ),
+          items: state.items.map((item) => {
+            if (!matchItem(item, productoId, personalizacion)) return item
+            const otherProductQuantity = state.items
+              .filter((other) => other.productoId === productoId && other !== item)
+              .reduce((acc, other) => acc + other.cantidad, 0)
+            const maxForItem = Math.max(1, maxCartQuantity(item.producto.stockDisponible) - otherProductQuantity)
+            return { ...item, cantidad: Math.min(Math.max(1, cantidad), maxForItem) }
+          }),
         })),
 
       clearCart: () => set({ items: [] }),

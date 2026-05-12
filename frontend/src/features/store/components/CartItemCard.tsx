@@ -13,6 +13,13 @@ function formatCurrency(value: number): string {
 export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
   const removeItem = useCartStore((s) => s.removeItem)
   const updateCantidad = useCartStore((s) => s.updateCantidad)
+  const stockDisponible = Math.min(99, item.producto.stockDisponible ?? 99)
+  const otherProductQuantity = useCartStore((s) =>
+    s.items
+      .filter((cartItem) => cartItem.productoId === item.productoId && cartItem !== item)
+      .reduce((acc, cartItem) => acc + cartItem.cantidad, 0),
+  )
+  const maxCantidad = Math.max(1, stockDisponible - otherProductQuantity)
 
   const handleDecrement = () => {
     if (item.cantidad <= 1) {
@@ -23,7 +30,7 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
   }
 
   const handleIncrement = () => {
-    if (item.cantidad >= 99) return
+    if (item.cantidad >= maxCantidad) return
     updateCantidad(item.productoId, item.personalizacion, item.cantidad + 1)
   }
 
@@ -84,7 +91,7 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
           <button
             type="button"
             onClick={handleIncrement}
-            disabled={item.cantidad >= 99}
+            disabled={item.cantidad >= maxCantidad}
             className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label="Aumentar cantidad"
           >
@@ -92,6 +99,9 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
+          {item.cantidad >= maxCantidad && (
+            <span className="text-xs text-gray-400">Stock máximo</span>
+          )}
           <span className="ml-auto text-sm font-medium text-gray-900">
             {formatCurrency(item.producto.precio * item.cantidad)}
           </span>

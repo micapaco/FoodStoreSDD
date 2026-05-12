@@ -11,7 +11,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const items = useCartStore((s) => s.items)
-  const itemCount = useCartStore((s) => s.itemCount)
+  const itemCount = items.reduce((acc, item) => acc + item.cantidad, 0)
   const { data: ingredientes } = useIngredientes()
   const ingredientNameMap = new Map(ingredientes?.map((i) => [i.id, i.nombre]) ?? [])
 
@@ -33,7 +33,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         <div className="flex h-full w-full flex-col bg-white">
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Carrito {itemCount() > 0 && `(${itemCount()})`}
+              Carrito {itemCount > 0 && `(${itemCount})`}
             </h2>
             <button
               type="button"

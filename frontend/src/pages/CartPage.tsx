@@ -9,7 +9,7 @@ function formatCurrency(value: number): string {
 
 export function CartPage() {
   const items = useCartStore((s) => s.items)
-  const itemCount = useCartStore((s) => s.itemCount)
+  const itemCount = items.reduce((acc, item) => acc + item.cantidad, 0)
   const clearCart = useCartStore((s) => s.clearCart)
   const subtotal = useCartStore((s) => s.subtotal)
   const costoEnvio = useCartStore((s) => s.costoEnvio)
@@ -21,7 +21,7 @@ export function CartPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">
-          Mi carrito {itemCount() > 0 && `(${itemCount()} productos)`}
+          Mi carrito {itemCount > 0 && `(${itemCount} productos)`}
         </h1>
         {items.length > 0 && (
           <button

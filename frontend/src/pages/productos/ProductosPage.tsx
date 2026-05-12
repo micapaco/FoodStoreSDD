@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductos, useCategorias, useDeleteProducto, useUpdateStock, useUpdateDisponibilidad } from '@/features/productos/hooks/useProductos'
 import { useAuthStore } from '@/shared/stores/authStore'
@@ -77,25 +77,21 @@ export function ProductosPage() {
   const [catFilter, setCatFilter] = useState<number | ''>('')
   const [disponibleFilter, setDisponibleFilter] = useState<boolean | ''>('')
   const [stockBajo, setStockBajo] = useState(false)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; nombre: string } | null>(null)
 
-  // Debounce search
-  const debounced = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>
-      return (value: string) => {
-        clearTimeout(timer)
-        timer = setTimeout(() => setDebouncedSearch(value), 300)
-      }
-    })(),
-    [],
-  )
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
+  }, [])
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
-    debounced(value)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => setDebouncedSearch(value), 300)
   }
 
   // Build filters

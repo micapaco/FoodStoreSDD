@@ -5,4 +5,6 @@ export interface Toast {
   message: string
   type: 'success' | 'error' | 'info' | 'warning'
   duration?: number
+  actionLabel?: string
+  actionTo?: string
 }

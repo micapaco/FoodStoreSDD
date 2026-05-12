@@ -1,12 +1,13 @@
 ## ADDED Requirements
 
 ### Requirement: CartStore gestiona el estado del carrito client-side
-El sistema SHALL proveer un store Zustand (`cartStore`) que gestione el estado del carrito de compras completamente en el cliente, sin interacción con el backend.
+El sistema SHALL proveer un store Zustand (`cartStore`) que gestione el estado del carrito de compras completamente en el cliente, sin interaccion con el backend.
 
 #### Scenario: Agregar producto al carrito
 - **WHEN** un usuario agrega un producto al carrito con `{ producto_id, nombre, precio, cantidad, imagen_url, exclusiones }`
 - **THEN** el producto se agrega a `items[]` en el store
 - **THEN** si el producto ya existe en el carrito (mismo `producto_id` y mismas `exclusiones`), se incrementa la cantidad
+- **THEN** la cantidad total del producto en el carrito no supera el stock disponible ni el maximo de 99 unidades
 
 #### Scenario: Remover producto del carrito
 - **WHEN** un usuario remueve un item del carrito
@@ -14,27 +15,32 @@ El sistema SHALL proveer un store Zustand (`cartStore`) que gestione el estado d
 
 #### Scenario: Actualizar cantidad de un producto
 - **WHEN** un usuario cambia la cantidad de un item en el carrito
-- **THEN** la cantidad se actualiza (mínimo 1, máximo 99)
+- **THEN** la cantidad se actualiza (minimo 1, maximo 99 y maximo stock disponible del producto)
+
+#### Scenario: Limitar cantidad por stock disponible
+- **WHEN** un usuario intenta agregar o incrementar un producto por encima del stock disponible
+- **THEN** el store mantiene la cantidad maxima permitida para ese producto
+- **THEN** no se crean cantidades negativas ni cantidades mayores a 99
 
 #### Scenario: Limpiar carrito
-- **WHEN** un usuario vacía el carrito o completa una compra
+- **WHEN** un usuario vacia el carrito o completa una compra
 - **THEN** todos los items se eliminan de `items[]`
 
 #### Scenario: Persistencia en localStorage
 - **WHEN** el usuario agrega o modifica items en el carrito
-- **THEN** el estado se persiste automáticamente en localStorage
-- **WHEN** el usuario recarga la página
+- **THEN** el estado se persiste automaticamente en localStorage
+- **WHEN** el usuario recarga la pagina
 - **THEN** el carrito se restaura desde localStorage
 
-#### Scenario: Cómputo de subtotal
+#### Scenario: Computo de subtotal
 - **WHEN** el store computa `subtotal()`
 - **THEN** retorna la suma de `item.precio * item.cantidad` para todos los items
 
-#### Scenario: Cómputo de costo de envío
+#### Scenario: Computo de costo de envio
 - **WHEN** el store computa `costoEnvio`
-- **THEN** retorna 50.00 si hay al menos 1 item, 0 si el carrito está vacío
+- **THEN** retorna 50.00 si hay al menos 1 item, 0 si el carrito esta vacio
 
-#### Scenario: Cómputo de total
+#### Scenario: Computo de total
 - **WHEN** el store computa `total()`
 - **THEN** retorna `subtotal() + costoEnvio`
 

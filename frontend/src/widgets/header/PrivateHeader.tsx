@@ -21,7 +21,7 @@ export function PrivateHeader() {
   const [cartOpen, setCartOpen] = useState(false)
   const user = useAuthStore((s) => s.user)
   const logoutAndRedirect = useAuthStore((s) => s.logoutAndRedirect)
-  const itemCount = useCartStore((s) => s.itemCount)
+  const count = useCartStore((s) => s.items.reduce((acc, item) => acc + item.cantidad, 0))
 
   const handleLogout = () => {
     logoutAndRedirect('/')
@@ -29,7 +29,6 @@ export function PrivateHeader() {
 
   const primaryRole = user ? getPrimaryRole(user.roles) : 'CLIENT'
   const badgeClass = roleBadgeClass[primaryRole] ?? 'bg-gray-100 text-gray-700'
-  const count = itemCount()
 
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">

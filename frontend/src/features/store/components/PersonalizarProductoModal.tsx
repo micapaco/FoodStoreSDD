@@ -8,6 +8,7 @@ interface PersonalizarProductoModalProps {
   onConfirm: (personalizacion: Personalizacion) => void
   productoNombre: string
   ingredientesRemovibles: IngredienteReadRef[]
+  cantidad?: number
 }
 
 export function PersonalizarProductoModal({
@@ -16,6 +17,7 @@ export function PersonalizarProductoModal({
   onConfirm,
   productoNombre,
   ingredientesRemovibles,
+  cantidad = 1,
 }: PersonalizarProductoModalProps) {
   const [excludedIds, setExcludedIds] = useState<number[]>([])
 
@@ -100,7 +102,7 @@ export function PersonalizarProductoModal({
             onClick={handleConfirm}
             className="rounded-lg bg-orange-500 px-6 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
           >
-            Agregar al carrito
+            {cantidad > 1 ? `Agregar ${cantidad} al carrito` : 'Agregar al carrito'}
           </button>
         </div>
       </div>

@@ -249,9 +249,8 @@ class AuthService:
                 "La nueva contraseña debe ser diferente a la actual."
             )
 
-        # 4. new_password no contiene el email
-        email_local = usuario.email.split("@")[0].lower()
-        if email_local in data.new_password.lower():
+        # 4. new_password no contiene la direccion completa de email
+        if usuario.email.lower() in data.new_password.lower():
             raise ValidationAppError(
                 "La nueva contraseña no puede contener tu dirección de email."
             )
