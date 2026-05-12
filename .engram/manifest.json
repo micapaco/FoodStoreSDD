@@ -40,6 +40,14 @@
       "sessions": 3,
       "memories": 12,
       "prompts": 32
+    },
+    {
+      "id": "11762e7c",
+      "created_by": "GAMER",
+      "created_at": "2026-05-12T22:05:28Z",
+      "sessions": 3,
+      "memories": 3,
+      "prompts": 24
     }
   ]
 }
