@@ -42,7 +42,7 @@ export function installErrorHandler(): void {
           break
 
         case 'SERVER_ERROR':
-          addToast({ type: 'error', message: 'Error del servidor, intentá de nuevo' })
+          addToast({ type: 'error', message: parsed.message })
           break
 
         case 'UNAUTHORIZED': {

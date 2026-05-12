@@ -129,12 +129,25 @@ class Pago(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), unique=True, nullable=True),
     )
+    mp_order_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String(100), unique=True, nullable=True),
+    )
     mp_status: Optional[str] = Field(default=None, max_length=30, nullable=True)
+    status_detail: Optional[str] = Field(default=None, max_length=100, nullable=True)
+    monto: Optional[Decimal] = Field(
+        default=None,
+        sa_column=Column(Numeric(10, 2), nullable=True),
+    )
     external_reference: str = Field(
         sa_column=Column(String(100), unique=True, nullable=False),
     )
     idempotency_key: str = Field(
         sa_column=Column(String(100), unique=True, nullable=False),
+    )
+    raw_payload: Optional[dict] = Field(
+        default=None,
+        sa_column=Column(JSONB, nullable=True),
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,

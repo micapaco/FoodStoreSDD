@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { PedidoRead, ValidarCarritoResponse } from '@/entities/pedidos/types'
 import { useAddressesQuery } from '@/features/direcciones/hooks/useDirecciones'
+import { MercadoPagoCardPayment } from '@/features/pagos/MercadoPagoCardPayment'
 import { parseHttpError } from '@/shared/lib/http/parseHttpError'
 import { useCrearPedido } from '@/shared/hooks/usePedidos'
 import { useValidarCheckout } from '@/shared/hooks/useValidarCheckout'
 import { useCartStore } from '@/shared/stores/cartStore'
+import { usePaymentStore } from '@/shared/stores/paymentStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 
 const FORMAS_PAGO = [
@@ -29,6 +31,8 @@ export function CheckoutPage() {
   const total = useCartStore((s) => s.total)
   const clearCart = useCartStore((s) => s.clearCart)
   const addToast = useUiStore((s) => s.addToast)
+  const startCheckoutPayment = usePaymentStore((s) => s.startCheckout)
+  const resetPayment = usePaymentStore((s) => s.resetPayment)
 
   const validarCheckout = useValidarCheckout()
   const crearPedido = useCrearPedido()
@@ -66,6 +70,7 @@ export function CheckoutPage() {
     setRequestError(null)
     setResultado(null)
     setPedidoCreado(null)
+    resetPayment()
 
     if (modoEntrega === 'delivery' && selectedDireccionId === null) {
       setRequestError('Selecciona una direccion de entrega o elegi retiro en local.')
@@ -90,6 +95,9 @@ export function CheckoutPage() {
 
       clearCart()
       setPedidoCreado(pedido)
+      if (formaPagoCodigo === 'MERCADOPAGO') {
+        startCheckoutPayment()
+      }
       addToast({ type: 'success', message: 'Pedido creado correctamente.' })
     } catch (error) {
       const parsed = parseHttpError(error)
@@ -130,6 +138,7 @@ export function CheckoutPage() {
               Volver al catalogo
             </Link>
           </div>
+          {formaPagoCodigo === 'MERCADOPAGO' && <MercadoPagoCardPayment pedido={pedidoCreado} />}
         </div>
       </div>
     )

@@ -58,3 +58,14 @@ class PedidoRepository(BaseRepository[Pedido]):
     async def create_historial(self, historial: HistorialEstadoPedido) -> None:
         self.session.add(historial)
         await self.session.flush()
+
+    async def get_detalles_by_pedido_id(self, pedido_id: int) -> list[DetallePedido]:
+        result = await self.session.execute(
+            select(DetallePedido).where(DetallePedido.pedido_id == pedido_id)
+        )
+        return list(result.scalars().all())
+
+    async def save_productos(self, productos: list[Producto]) -> None:
+        for producto in productos:
+            self.session.add(producto)
+        await self.session.flush()

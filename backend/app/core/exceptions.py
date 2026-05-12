@@ -78,6 +78,15 @@ class ConflictError(AppError):
         super().__init__(detail, **kwargs)
 
 
+class BadGatewayError(AppError):
+    status_code = 502
+    code = "BAD_GATEWAY"
+    title = "Bad Gateway"
+
+    def __init__(self, detail: str = "Error al comunicarse con un servicio externo.", **kwargs: Any) -> None:
+        super().__init__(detail, **kwargs)
+
+
 class RateLimitedError(AppError):
     status_code = 429
     code = "RATE_LIMITED"
