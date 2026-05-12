@@ -26,3 +26,24 @@ export interface ValidarCarritoResponse {
   errores: ErrorValidacion[]
   preciosActualizados: PrecioActualizado[]
 }
+
+export interface ItemPedidoRequest {
+  productoId: number
+  cantidad: number
+  personalizacion: number[]
+}
+
+export interface CrearPedidoRequest {
+  items: ItemPedidoRequest[]
+  formaPagoCodigo: string
+  direccionId: number | null
+  notas?: string | null
+}
+
+export interface PedidoRead {
+  id: number
+  estadoCodigo: string
+  total: string
+  costoEnvio: string
+  createdAt: string
+}

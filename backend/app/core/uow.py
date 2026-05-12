@@ -7,6 +7,7 @@ from app.db.session import AsyncSessionLocal
 from app.modules.categorias.repository import CategoriaRepository
 from app.modules.direcciones.repository import DireccionRepository
 from app.modules.ingredientes.repository import IngredienteRepository
+from app.modules.pedidos.repository import PedidoRepository
 from app.modules.productos.repository import ProductoRepository
 from app.modules.refreshtokens.repository import RefreshTokenRepository
 from app.modules.usuarios.repository import UsuarioRepository
@@ -38,6 +39,7 @@ class UnitOfWork:
         self.categorias = CategoriaRepository(self._session)
         self.ingredientes = IngredienteRepository(self._session)
         self.productos = ProductoRepository(self._session)
+        self.pedidos = PedidoRepository(self._session)
         return self
 
     async def __aexit__(

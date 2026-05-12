@@ -2,7 +2,7 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados (11/19):**
+**Changes archivados (12/19):**
 - `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
 - `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
 - `03` `infra-frontend-core` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
@@ -14,8 +14,9 @@
 - `09` `addresses` ✅ archivado (`openspec/changes/archive/2026-05-11-addresses/`)
 - `10` `cart` ✅ archivado (`openspec/changes/archive/2026-05-11-cart/`)
 - `11` `checkout-validation` ✅ archivado (`openspec/changes/archive/2026-05-11-checkout-validation/`)
+- `12` `order-creation` ✅ archivado (`openspec/changes/archive/2026-05-12-order-creation/`)
 
-**Próximo change:** `12 — order-creation` (ver `docs/CHANGES.md`).
+**Próximo change:** `13 — payment-integration` (ver `docs/CHANGES.md`).
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción

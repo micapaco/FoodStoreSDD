@@ -2,7 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, ForeignKey, Integer, Numeric, String
+from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
 
@@ -36,6 +37,14 @@ class Pedido(SQLModel, table=True):
     direccion_id: Optional[int] = Field(
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("direccion_entrega.id"), nullable=True),
+    )
+    direccion_snapshot: Optional[dict] = Field(
+        default=None,
+        sa_column=Column(JSONB, nullable=True),
+    )
+    notas: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text(), nullable=True),
     )
     total: Decimal = Field(sa_column=Column(Numeric(10, 2), nullable=False))
     costo_envio: Decimal = Field(

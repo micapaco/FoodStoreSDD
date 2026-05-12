@@ -1,7 +1,8 @@
 from decimal import Decimal
+from datetime import datetime
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.core.schemas import BaseSchema
 
@@ -36,3 +37,37 @@ class ValidarCarritoResponse(BaseSchema):
         default_factory=list,
         alias="preciosActualizados",
     )
+
+
+class ItemPedidoRequest(BaseSchema):
+    producto_id: int = Field(alias="productoId", gt=0)
+    cantidad: int = Field(gt=0)
+    personalizacion: list[int] = Field(default_factory=list)
+
+
+class CrearPedidoRequest(BaseSchema):
+    items: list[ItemPedidoRequest] = Field(min_length=1)
+    forma_pago_codigo: str = Field(alias="formaPagoCodigo", min_length=1, max_length=20)
+    direccion_id: int | None = Field(default=None, alias="direccionId", gt=0)
+    notas: str | None = Field(default=None, max_length=500)
+
+    @field_validator("forma_pago_codigo")
+    @classmethod
+    def normalize_forma_pago(cls, value: str) -> str:
+        return value.strip().upper()
+
+    @field_validator("notas")
+    @classmethod
+    def normalize_notas(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class PedidoRead(BaseSchema):
+    id: int
+    estado_codigo: str = Field(alias="estadoCodigo")
+    total: Decimal
+    costo_envio: Decimal = Field(alias="costoEnvio")
+    created_at: datetime = Field(alias="createdAt")
