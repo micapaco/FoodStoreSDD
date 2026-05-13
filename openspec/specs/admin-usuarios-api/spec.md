@@ -1,5 +1,8 @@
-## ADDED Requirements
+# admin-usuarios-api Specification
 
+## Purpose
+TBD - created by archiving change admin-users. Update Purpose after archive.
+## Requirements
 ### Requirement: Listar usuarios (Admin)
 The system SHALL expose `GET /api/v1/admin/usuarios` requiring role ADMIN.
 Query params: `q` (string, optional — ILIKE on nombre+email), `rol` (string, optional — filter by rol codigo), `page` (int, default 1), `size` (int, default 20, max 100).
@@ -96,3 +99,4 @@ After desactivating: all active refresh tokens of the target user MUST be revoke
 #### Scenario: Desactivar al único ADMIN
 - **WHEN** ADMIN tries to deactivate the only user with ADMIN role
 - **THEN** the system returns HTTP 409 with message "No se puede desactivar al único administrador del sistema"
+

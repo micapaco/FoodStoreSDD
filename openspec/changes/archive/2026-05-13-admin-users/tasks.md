@@ -2,7 +2,7 @@
 
 - [x] 1.1 Generar migración Alembic: `alembic revision --autogenerate -m "add_activo_to_usuario"` y verificar script
 - [x] 1.2 Ajustar script si es necesario: `op.add_column` con `server_default='true'`, luego `alter_column` para `NOT NULL`
-- [ ] 1.3 Aplicar migración: `alembic upgrade head`
+- [x] 1.3 Aplicar migración: `alembic upgrade head`
 - [x] 1.4 Agregar campo `activo: bool = Field(default=True, nullable=False)` al modelo `Usuario` en `identidad.py`
 
 ## 2. Auth — bloqueo de login para usuarios inactivos
@@ -59,10 +59,10 @@
 
 ## 10. Verificación
 
-- [ ] 10.1 Aplicar migración en BD local y confirmar columna `activo`
-- [ ] 10.2 Verificar que login con usuario inactivo retorna 403
-- [ ] 10.3 Verificar listado con búsqueda y filtro por rol
-- [ ] 10.4 Verificar edición de datos y cambio de roles
-- [ ] 10.5 Verificar que intentar degradar al único ADMIN retorna 409
-- [ ] 10.6 Verificar desactivación: usuario no puede loguear + tokens revocados
-- [ ] 10.7 Build frontend sin errores de TypeScript
+- [x] 10.1 Aplicar migración en BD local y confirmar columna `activo`
+- [x] 10.2 Verificar que login con usuario inactivo retorna 403
+- [x] 10.3 Verificar listado con búsqueda y filtro por rol
+- [x] 10.4 Verificar edición de datos y cambio de roles
+- [x] 10.5 Verificar que intentar degradar al único ADMIN retorna 409
+- [x] 10.6 Verificar desactivación: usuario no puede loguear + tokens revocados
+- [x] 10.7 Build frontend sin errores de TypeScript

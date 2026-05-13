@@ -1,5 +1,8 @@
-## ADDED Requirements
+# admin-usuarios-frontend Specification
 
+## Purpose
+TBD - created by archiving change admin-users. Update Purpose after archive.
+## Requirements
 ### Requirement: Tabla paginada de usuarios
 La página `/admin/usuarios` SHALL mostrar una tabla de usuarios con columnas: nombre completo, email, roles (badges), estado (activo/inactivo), fecha de registro.
 La tabla SHALL soportar paginación con selector de página.
@@ -74,3 +77,4 @@ El propio admin autenticado no puede desactivarse a sí mismo desde la UI.
 #### Scenario: Intento de desactivar al único ADMIN
 - **WHEN** ADMIN intenta desactivar al único administrador
 - **THEN** la UI muestra el error HTTP 409 del backend
+

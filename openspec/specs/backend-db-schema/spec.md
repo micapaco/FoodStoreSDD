@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Database schema requirements for Food Store — defines table structures, indexes, constraints, and migrations for all entities. Each requirement maps to one or more Alembic migrations.
+
+## Requirements
 
 ### Requirement: Categoria table
 The system SHALL store categories in a `categoria` table with hierarchical self-reference.
@@ -51,3 +54,23 @@ El esquema de base de datos SHALL permitir persistir un snapshot inmutable de la
 #### Scenario: Pedido con retiro en local
 - **WHEN** un pedido se crea con `direccion_id=NULL`
 - **THEN** `direccion_snapshot` queda `NULL`
+
+---
+
+### Requirement: Campo activo en tabla usuario
+The system SHALL add an `activo` column to the `usuario` table via an Alembic migration.
+The column SHALL be `BOOLEAN NOT NULL DEFAULT TRUE`.
+All existing rows MUST be backfilled to `TRUE` atomically as part of the migration.
+
+#### Scenario: Migración aplicada
+- **WHEN** the migration `add_activo_to_usuario` is applied
+- **THEN** the `usuario` table contains column `activo BOOLEAN NOT NULL DEFAULT TRUE`
+- **THEN** all pre-existing rows have `activo = TRUE`
+
+#### Scenario: Nuevo usuario creado
+- **WHEN** a new user registers via `POST /api/v1/auth/register`
+- **THEN** the `activo` field defaults to `TRUE` without requiring it in the request body
+
+#### Scenario: Rollback de migración
+- **WHEN** `alembic downgrade -1` is executed
+- **THEN** the `activo` column is removed from `usuario` without data loss in other columns
