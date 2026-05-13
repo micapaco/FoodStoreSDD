@@ -3,6 +3,8 @@
 Para levantar la aplicación correctamente, necesitás abrir **tres terminales separadas** y seguir estos pasos en orden. Para probar webhooks de MercadoPago en local, usá una **cuarta terminal** con ngrok.
 
 ---
+## 0. Antes denada, se debe hacer una copiar de los ".env.example" respectivos del backend y frontend, y pegarlos en su mismo directorio sin el final ".example"
+
 
 ## 1. 🗄️ Base de Datos (PostgreSQL en Docker)
 
