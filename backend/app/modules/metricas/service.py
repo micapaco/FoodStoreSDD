@@ -1,6 +1,6 @@
 """Módulo metricas — service layer (solo lectura, sin repositorio dedicado)."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 
@@ -27,14 +27,14 @@ _GRANULARIDAD_MAP: dict[str, str] = {
 
 
 def _rango_default() -> tuple[datetime, datetime]:
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     return now - timedelta(days=30), now
 
 
 def _to_datetime(d: date | None, end_of_day: bool = False) -> datetime | None:
     if d is None:
         return None
-    dt = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
+    dt = datetime(d.year, d.month, d.day)
     if end_of_day:
         dt = dt.replace(hour=23, minute=59, second=59)
     return dt
@@ -46,7 +46,7 @@ async def get_resumen(
     hasta: date | None,
 ) -> ResumenResponse:
     desde_dt = _to_datetime(desde) or _rango_default()[0]
-    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.now(timezone.utc)
+    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.utcnow()
 
     session = uow.session
 
@@ -114,7 +114,7 @@ async def get_ventas(
     granularidad: Literal["dia", "semana", "mes"],
 ) -> VentasResponse:
     desde_dt = _to_datetime(desde) or _rango_default()[0]
-    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.now(timezone.utc)
+    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.utcnow()
     pg_trunc = _GRANULARIDAD_MAP[granularidad]
 
     session = uow.session
@@ -155,7 +155,7 @@ async def get_productos_top(
     hasta: date | None,
 ) -> ProductosTopResponse:
     desde_dt = _to_datetime(desde) or _rango_default()[0]
-    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.now(timezone.utc)
+    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.utcnow()
 
     session = uow.session
     stmt = (
@@ -196,7 +196,7 @@ async def get_pedidos_por_estado(
     hasta: date | None,
 ) -> PedidosPorEstadoResponse:
     desde_dt = _to_datetime(desde) or _rango_default()[0]
-    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.now(timezone.utc)
+    hasta_dt = _to_datetime(hasta, end_of_day=True) or datetime.utcnow()
 
     session = uow.session
     stmt = (
