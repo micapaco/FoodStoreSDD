@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useCartStore } from '@/shared/stores/cartStore'
 
 interface User {
   id: number
@@ -38,8 +39,13 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       navigateAfterLogout: null,
-      login: (tokens, user) =>
-        set({ ...tokens, user, isAuthenticated: true, navigateAfterLogout: null }),
+      login: (tokens, user) => {
+        set({ ...tokens, user, isAuthenticated: true, navigateAfterLogout: null })
+        // Non-client roles (ADMIN, STOCK, PEDIDOS) should never see a previous client's cart
+        if (!user.roles.includes('CLIENT')) {
+          useCartStore.getState().clearCart()
+        }
+      },
       logout: () =>
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false }),
       logoutAndRedirect: (to) =>

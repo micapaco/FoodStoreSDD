@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCartStore } from '@/shared/stores/cartStore'
+import { useConfigPublica } from '@/shared/hooks/useConfig'
 import { useIngredientes } from '@/features/productos/hooks/useProductos'
 import { CartItemCard } from '@/features/store/components/CartItemCard'
 
@@ -15,6 +16,8 @@ export function CartPage() {
   const costoEnvio = useCartStore((s) => s.costoEnvio)
   const total = useCartStore((s) => s.total)
   const { data: ingredientes } = useIngredientes()
+  const { data: configPublica } = useConfigPublica()
+  const configCosto = configPublica?.costo_envio_base ?? 50
   const ingredientNameMap = new Map(ingredientes?.map((i) => [i.id, i.nombre]) ?? [])
 
   return (
@@ -73,13 +76,13 @@ export function CartPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Costo de envío</span>
                   <span className="font-medium text-gray-900">
-                    {costoEnvio() === 0 ? '—' : formatCurrency(costoEnvio())}
+                    {costoEnvio(configCosto) === 0 ? '—' : formatCurrency(costoEnvio(configCosto))}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-semibold text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-orange-600">{formatCurrency(total())}</span>
+                    <span className="text-lg font-bold text-orange-600">{formatCurrency(total(configCosto))}</span>
                   </div>
                 </div>
               </div>

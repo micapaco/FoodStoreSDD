@@ -26,6 +26,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: '/admin/categorias', label: 'Categorías' },
   { to: '/admin/pedidos', label: 'Pedidos' },
   { to: '/admin/usuarios', label: 'Usuarios' },
+  { to: '/admin/configuracion', label: 'Configuración' },
 ]
 
 const STOCK_ITEMS: NavItem[] = [{ to: '/admin/productos', label: 'Productos' }]

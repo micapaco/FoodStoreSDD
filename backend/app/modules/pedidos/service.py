@@ -3,15 +3,19 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from math import ceil
 
+from sqlalchemy import select
+
 from app.core.exceptions import (
     ConflictError,
     ForbiddenError,
     NotFoundError,
+    ServiceUnavailableError,
     UnauthorizedError,
     ValidationAppError,
 )
 from app.core.uow import UnitOfWork
 from app.db.models.catalogo import Producto
+from app.db.models.configuracion import Configuracion
 from app.db.models.identidad import DireccionEntrega, Usuario
 from app.db.models.ventas import DetallePedido, HistorialEstadoPedido, Pedido
 from app.modules.pedidos.schemas import (
@@ -130,6 +134,21 @@ class PedidosService:
         current_user: Usuario,
     ) -> PedidoRead:
         """Crea un pedido completo dentro del UoW abierto por el router."""
+        # Verificar que el local está aceptando pedidos
+        try:
+            habilitados_result = await uow.session.execute(
+                select(Configuracion).where(Configuracion.clave == "pedidos_habilitados")
+            )
+            habilitados_row = habilitados_result.scalar_one_or_none()
+            if habilitados_row is not None and habilitados_row.valor.lower() == "false":
+                raise ServiceUnavailableError(
+                    "El local no está aceptando pedidos en este momento."
+                )
+        except ServiceUnavailableError:
+            raise
+        except Exception:
+            pass  # Si no se puede leer la config, se permite continuar
+
         usuario_id = self._require_usuario_id(current_user)
         await self._validar_forma_pago(uow, request.forma_pago_codigo)
         direccion_snapshot = await self._build_direccion_snapshot(
@@ -143,7 +162,7 @@ class PedidosService:
             (item.precio_snapshot * item.cantidad for item in prepared_items),
             Decimal("0.00"),
         )
-        costo_envio = self._resolve_costo_envio(request.direccion_id)
+        costo_envio = await self._resolve_costo_envio(uow, request.direccion_id)
         pedido = await self._create_pedido(
             uow,
             request=request,
@@ -453,9 +472,25 @@ class PedidosService:
     def _is_pickup_order(pedido: Pedido) -> bool:
         return pedido.direccion_id is None
 
-    @staticmethod
-    def _resolve_costo_envio(direccion_id: int | None) -> Decimal:
-        return Decimal("0.00") if direccion_id is None else COSTO_ENVIO_V1
+    async def _resolve_costo_envio(
+        self, uow: UnitOfWork, direccion_id: int | None
+    ) -> Decimal:
+        """Retorna costo de envío. Si es pickup (sin dirección) retorna 0.
+        De lo contrario, lee costo_envio_base de la tabla configuracion.
+        Fallback a COSTO_ENVIO_V1 si la clave no existe o el valor no es parseable.
+        """
+        if direccion_id is None:
+            return Decimal("0.00")
+        try:
+            result = await uow.session.execute(
+                select(Configuracion).where(Configuracion.clave == "costo_envio_base")
+            )
+            row = result.scalar_one_or_none()
+            if row is not None:
+                return Decimal(row.valor)
+        except Exception:
+            pass
+        return COSTO_ENVIO_V1
 
     async def _restore_stock_if_needed(self, uow: UnitOfWork, pedido: Pedido) -> None:
         if pedido.estado_codigo not in STOCK_DISCOUNTED_STATES:

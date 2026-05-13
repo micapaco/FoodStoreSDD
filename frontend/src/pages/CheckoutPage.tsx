@@ -5,6 +5,7 @@ import { useAddressesQuery } from '@/features/direcciones/hooks/useDirecciones'
 import { parseHttpError } from '@/shared/lib/http/parseHttpError'
 import { useCrearPedido } from '@/shared/hooks/usePedidos'
 import { useValidarCheckout } from '@/shared/hooks/useValidarCheckout'
+import { useConfigPublica } from '@/shared/hooks/useConfig'
 import { useCartStore } from '@/shared/stores/cartStore'
 import { usePaymentStore } from '@/shared/stores/paymentStore'
 import { useUiStore } from '@/shared/stores/uiStore'
@@ -33,6 +34,7 @@ export function CheckoutPage() {
   const validarCheckout = useValidarCheckout()
   const crearPedido = useCrearPedido()
   const addressesQuery = useAddressesQuery({ page: 1, page_size: 100 })
+  const { data: configPublica } = useConfigPublica()
 
   const [resultado, setResultado] = useState<ValidarCarritoResponse | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
@@ -45,7 +47,8 @@ export function CheckoutPage() {
   const hasItems = items.length > 0
   const hasBlockingIssues = resultado && !resultado.valido
   const isPending = validarCheckout.isPending || crearPedido.isPending
-  const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : costoEnvio()
+  const configCosto = configPublica?.costo_envio_base ?? 50
+  const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : configCosto
   const checkoutTotal = subtotal() + checkoutCostoEnvio
 
   const selectedDireccionId = useMemo(() => {

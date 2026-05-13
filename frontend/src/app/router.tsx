@@ -31,6 +31,7 @@ import { OrderConfirmationPage } from '@/pages/OrderConfirmationPage'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { CategoriesAdminPage } from '@/pages/admin/CategoriesAdminPage'
 import { OrdersAdminPage } from '@/pages/admin/OrdersAdminPage'
+import { SystemConfigPage } from '@/pages/admin/SystemConfigPage'
 import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
 
 // Pages — productos (admin)
@@ -105,6 +106,7 @@ export const router = createBrowserRouter([
               { path: '/admin', element: <AdminDashboardPage /> },
               { path: '/admin/categorias', element: <CategoriesAdminPage /> },
               { path: '/admin/usuarios', element: <UsersAdminPage /> },
+              { path: '/admin/configuracion', element: <SystemConfigPage /> },
             ],
           },
         ],
