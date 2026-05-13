@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useCartStore } from '@/shared/stores/cartStore'
+import { useConfigPublica } from '@/shared/hooks/useConfig'
 import { useIngredientes } from '@/features/productos/hooks/useProductos'
 import { CartItemCard } from '@/features/store/components/CartItemCard'
-import { CartSummary } from '@/features/store/components/CartSummary'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
@@ -10,19 +10,21 @@ function formatCurrency(value: number): string {
 
 export function CartPage() {
   const items = useCartStore((s) => s.items)
-  const itemCount = useCartStore((s) => s.itemCount)
+  const itemCount = items.reduce((acc, item) => acc + item.cantidad, 0)
   const clearCart = useCartStore((s) => s.clearCart)
   const subtotal = useCartStore((s) => s.subtotal)
   const costoEnvio = useCartStore((s) => s.costoEnvio)
   const total = useCartStore((s) => s.total)
   const { data: ingredientes } = useIngredientes()
+  const { data: configPublica } = useConfigPublica()
+  const configCosto = configPublica?.costo_envio_base ?? 50
   const ingredientNameMap = new Map(ingredientes?.map((i) => [i.id, i.nombre]) ?? [])
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">
-          Mi carrito {itemCount() > 0 && `(${itemCount()} productos)`}
+          Mi carrito {itemCount > 0 && `(${itemCount} productos)`}
         </h1>
         {items.length > 0 && (
           <button
@@ -74,13 +76,13 @@ export function CartPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Costo de envío</span>
                   <span className="font-medium text-gray-900">
-                    {costoEnvio() === 0 ? '—' : formatCurrency(costoEnvio())}
+                    {costoEnvio(configCosto) === 0 ? '—' : formatCurrency(costoEnvio(configCosto))}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-semibold text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-orange-600">{formatCurrency(total())}</span>
+                    <span className="text-lg font-bold text-orange-600">{formatCurrency(total(configCosto))}</span>
                   </div>
                 </div>
               </div>

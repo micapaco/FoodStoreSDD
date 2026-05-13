@@ -1,13 +1,19 @@
 ## ADDED Requirements
 
-### Requirement: PublicLayout renders public chrome with outlet
+### Requirement: PublicLayout renders session-aware chrome with outlet
 
-The system SHALL provide a `<PublicLayout>` component that wraps every public route with a public header, an `<Outlet />` for page content, a footer, a global toaster and a root error boundary.
+The system SHALL provide a `<PublicLayout>` component that wraps every public route with session-aware chrome, an `<Outlet />` for page content, a footer, a global toaster and a root error boundary.
 
 #### Scenario: Public layout structure
 
-- **WHEN** any route under `<PublicLayout>` is rendered
+- **WHEN** any route under `<PublicLayout>` is rendered without an authenticated session
 - **THEN** the DOM contains, in order: `<PublicHeader>`, `<main>` with `<Outlet />`, `<Footer>`, `<Toaster>`
+- **THEN** the outlet content is wrapped by `<RootErrorBoundary>`
+
+#### Scenario: Authenticated public route structure
+
+- **WHEN** any route under `<PublicLayout>` is rendered with an authenticated session
+- **THEN** the DOM contains, in order: `<PrivateHeader>`, `<RoleNav>`, `<main>` with `<Outlet />`, `<Footer>`, `<Toaster>`
 - **THEN** the outlet content is wrapped by `<RootErrorBoundary>`
 
 #### Scenario: Public header has no session controls

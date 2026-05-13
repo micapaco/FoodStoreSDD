@@ -1,0 +1,10 @@
+id: catalog-timestamp-hotfix
+status: proposed
+title: Normalize catalog timestamps for local PostgreSQL
+kind: fix
+areas:
+  - backend
+  - catalog
+depends_on:
+  - catalog-categories-ingredients
+  - catalog-products

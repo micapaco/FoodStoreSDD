@@ -2,6 +2,7 @@ export interface Producto {
   id: number
   nombre: string
   precio: number
+  stockDisponible: number
   imagen?: string
 }
 

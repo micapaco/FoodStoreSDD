@@ -1,19 +1,24 @@
-## ADDED Requirements
+# auth-rbac Specification
 
+## Purpose
+Define fixed application roles and RBAC dependencies for authenticated routes.
+## Requirements
 ### Requirement: Four fixed roles
 The system SHALL enforce exactly 4 roles: ADMIN, STOCK, PEDIDOS, CLIENT.
-Roles are stored in the `Rol` table as semantic PKs (VARCHAR(20)).
-A user MAY have multiple roles simultaneously (M:N via `UsuarioRol`).
+A user SHALL have exactly one active role at a time.
 
-#### Scenario: CLIENT assigned on register
-- **WHEN** a new user registers via POST /auth/register
-- **THEN** the role CLIENT is automatically assigned by the service — it MUST NOT come from the request body
+#### Scenario: Registration assigns CLIENT role
+- **WHEN** a new user registers successfully
+- **THEN** the role CLIENT is automatically assigned by the service
+- **AND** it MUST NOT come from the request body
 
-#### Scenario: Multiple roles
-- **WHEN** a user has both ADMIN and CLIENT roles
-- **THEN** the access token's roles claim contains ["ADMIN", "CLIENT"]
+#### Scenario: Single role token
+- **WHEN** a user has role ADMIN
+- **THEN** the access token's roles claim contains ["ADMIN"]
 
----
+#### Scenario: Multiple role assignment rejected
+- **WHEN** an ADMIN attempts to assign more than one role to a user
+- **THEN** the system rejects the request with validation error
 
 ### Requirement: get_current_user dependency
 The system SHALL provide a FastAPI dependency `get_current_user()` that:
@@ -34,8 +39,6 @@ The system SHALL provide a FastAPI dependency `get_current_user()` that:
 - **WHEN** an expired JWT is provided
 - **THEN** get_current_user raises HTTP 401 with message indicating token expiration
 
----
-
 ### Requirement: require_role dependency
 The system SHALL provide a FastAPI dependency factory `require_role(roles: list[str])` that:
 1. Calls `get_current_user()` to get the authenticated user.
@@ -53,8 +56,6 @@ The system SHALL provide a FastAPI dependency factory `require_role(roles: list[
 #### Scenario: Any-of role matching
 - **WHEN** a STOCK user accesses an endpoint protected with require_role(["ADMIN", "STOCK"])
 - **THEN** the request proceeds (STOCK is in the allowed list)
-
----
 
 ### Requirement: Public routes
 The following routes SHALL be accessible without authentication:
@@ -79,3 +80,4 @@ The following routes SHALL be accessible without authentication:
 #### Scenario: Public product detail
 - **WHEN** GET /api/v1/productos/{id} is called without a Bearer token
 - **THEN** the system returns product detail (no 401)
+

@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useProductos, useCategorias, useDeleteProducto, useUpdateStock, useUpdateDisponibilidad } from '@/features/productos/hooks/useProductos'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { ProductoFilters } from '@/entities/productos/types'
 
@@ -64,11 +64,11 @@ function DeleteModal({ open, productName, onConfirm, onCancel, loading }: Delete
 }
 
 export function ProductosPage() {
-  const navigate = useNavigate()
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
-  const isAdmin = user?.roles.includes('ADMIN') ?? false
-  const isStock = user?.roles.includes('STOCK') ?? false
+  const roles = getSafeUserRoles(user)
+  const isAdmin = roles.includes('ADMIN')
+  const isStock = roles.includes('STOCK')
 
   // Filters state
   const [search, setSearch] = useState('')
@@ -78,25 +78,21 @@ export function ProductosPage() {
   const [catFilter, setCatFilter] = useState<number | ''>('')
   const [disponibleFilter, setDisponibleFilter] = useState<boolean | ''>('')
   const [stockBajo, setStockBajo] = useState(false)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; nombre: string } | null>(null)
 
-  // Debounce search
-  const debounced = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>
-      return (value: string) => {
-        clearTimeout(timer)
-        timer = setTimeout(() => setDebouncedSearch(value), 300)
-      }
-    })(),
-    [],
-  )
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
+  }, [])
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
-    debounced(value)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => setDebouncedSearch(value), 300)
   }
 
   // Build filters
@@ -104,7 +100,7 @@ export function ProductosPage() {
     ...filters,
     q: debouncedSearch || undefined,
     categoria_id: catFilter || undefined,
-    disponible: disponibleFilter || undefined,
+    disponible: disponibleFilter === '' ? undefined : disponibleFilter,
   }
   if (stockBajo) {
     effectiveFilters.sort = 'stock_cantidad'
@@ -219,7 +215,7 @@ export function ProductosPage() {
 
         {/* Disponible filter */}
         <select
-          value={disponibleFilter}
+          value={disponibleFilter === '' ? '' : String(disponibleFilter)}
           onChange={(e) => {
             setDisponibleFilter(e.target.value === '' ? '' : e.target.value === 'true')
             setFilters((f) => ({ ...f, page: 1 }))

@@ -40,8 +40,8 @@ The system SHALL allow authenticated users to change their password by providing
 - **WHEN** an authenticated user sends `PUT /auth/change-password` with `new_password` identical to `current_password`
 - **THEN** the system returns `422 Unprocessable Entity` with validation error "La nueva contraseña debe ser diferente a la actual"
 
-### Scenario: New password contains email
-- **WHEN** an authenticated user sends `PUT /auth/change-password` with `new_password` containing the user's email
+### Scenario: New password contains full email
+- **WHEN** an authenticated user sends `PUT /auth/change-password` with `new_password` containing the user's full email address
 - **THEN** the system returns `422 Unprocessable Entity` with validation error "La contraseña no puede contener tu email"
 
 ### Scenario: Confirm password does not match
@@ -83,7 +83,7 @@ The system SHALL accept the following fields on `PUT /auth/me`:
 ## Requirement: ChangePasswordRequest schema
 The system SHALL accept the following fields on `PUT /auth/change-password`:
 - `current_password`: string, required
-- `new_password`: string, required, minimum 8 chars, must differ from current password, must not contain user's email
+- `new_password`: string, required, minimum 8 chars, must differ from current password, must not contain user's full email address
 - `confirm_password`: string, required, must match `new_password`
 
 ### Scenario: ChangePasswordRequest validation

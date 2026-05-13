@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { loginApi, registerApi, logoutApi, meApi } from '@/shared/api/auth'
 import type { LoginPayload, RegisterPayload } from '@/shared/api/auth'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 
 export function useLogin() {
   const { login, updateTokens } = useAuthStore()
@@ -24,7 +24,7 @@ export function useLogin() {
           apellido: user.apellido,
           telefono: user.telefono,
           email: user.email,
-          roles: user.roles,
+          roles: getSafeUserRoles(user),
         },
       )
     },
@@ -70,7 +70,7 @@ export function useRehydrateUser() {
               apellido: user.apellido,
               telefono: user.telefono,
               email: user.email,
-              roles: user.roles,
+              roles: getSafeUserRoles(user),
             },
           )
         }

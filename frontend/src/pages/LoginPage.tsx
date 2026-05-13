@@ -1,6 +1,8 @@
 import { useForm } from '@tanstack/react-form'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useLogin } from '@/shared/hooks/useAuth'
+import { resolvePostLoginPath } from '@/shared/lib/auth/roles'
+import { getSafeUserRoles } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 
 function FieldError({ errors }: { errors: unknown[] }) {
@@ -19,9 +21,10 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
     onSubmit: async ({ value }) => {
       login(value, {
-        onSuccess: () => {
-          const from = searchParams.get('from') ?? '/'
-          navigate(from, { replace: true })
+        onSuccess: ({ user }) => {
+          const from = searchParams.get('from')
+          const roles = getSafeUserRoles(user)
+          navigate(resolvePostLoginPath(roles, from), { replace: true })
         },
         onError: (err: unknown) => {
           const axiosErr = err as { response?: { data?: { detail?: string } } }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { Toast } from '@/shared/types/ui'
 
@@ -43,7 +44,18 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
         typeStyles[toast.type],
       ].join(' ')}
     >
-      <p className="flex-1 text-sm font-medium">{toast.message}</p>
+      <div className="flex-1">
+        <p className="text-sm font-medium">{toast.message}</p>
+        {toast.actionLabel && toast.actionTo && (
+          <Link
+            to={toast.actionTo}
+            onClick={() => onRemove(toast.id)}
+            className="mt-2 inline-flex rounded-md bg-white/70 px-2 py-1 text-xs font-semibold underline-offset-2 hover:underline"
+          >
+            {toast.actionLabel}
+          </Link>
+        )}
+      </div>
       <button
         type="button"
         onClick={() => onRemove(toast.id)}

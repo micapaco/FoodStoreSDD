@@ -1,7 +1,7 @@
 import { useForm } from '@tanstack/react-form'
 import type { DireccionCreate } from '@/entities/direcciones/types'
 
-export interface DireccionFormValues extends DireccionCreate {}
+export type DireccionFormValues = DireccionCreate
 
 function FieldError({ errors }: { errors: unknown[] }) {
   const msgs = errors.filter(Boolean) as string[]

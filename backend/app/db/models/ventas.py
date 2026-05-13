@@ -2,7 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, ForeignKey, Integer, Numeric, String
+from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
 
@@ -36,6 +37,14 @@ class Pedido(SQLModel, table=True):
     direccion_id: Optional[int] = Field(
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("direccion_entrega.id"), nullable=True),
+    )
+    direccion_snapshot: Optional[dict] = Field(
+        default=None,
+        sa_column=Column(JSONB, nullable=True),
+    )
+    notas: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text(), nullable=True),
     )
     total: Decimal = Field(sa_column=Column(Numeric(10, 2), nullable=False))
     costo_envio: Decimal = Field(
@@ -100,6 +109,10 @@ class HistorialEstadoPedido(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("usuario.id"), nullable=True),
     )
+    motivo: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text(), nullable=True),
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False,
@@ -120,12 +133,25 @@ class Pago(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), unique=True, nullable=True),
     )
+    mp_order_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String(100), unique=True, nullable=True),
+    )
     mp_status: Optional[str] = Field(default=None, max_length=30, nullable=True)
+    status_detail: Optional[str] = Field(default=None, max_length=100, nullable=True)
+    monto: Optional[Decimal] = Field(
+        default=None,
+        sa_column=Column(Numeric(10, 2), nullable=True),
+    )
     external_reference: str = Field(
         sa_column=Column(String(100), unique=True, nullable=False),
     )
     idempotency_key: str = Field(
         sa_column=Column(String(100), unique=True, nullable=False),
+    )
+    raw_payload: Optional[dict] = Field(
+        default=None,
+        sa_column=Column(JSONB, nullable=True),
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,

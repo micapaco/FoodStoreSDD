@@ -1,5 +1,6 @@
 """Importa todos los modelos para que Alembic los descubra via SQLModel.metadata."""
 
+from app.db.models.configuracion import Configuracion
 from app.db.models.catalogo import (
     Categoria,
     FormaPago,
@@ -24,6 +25,7 @@ from app.db.models.ventas import (
 )
 
 __all__ = [
+    "Configuracion",
     "Rol",
     "Usuario",
     "UsuarioRol",

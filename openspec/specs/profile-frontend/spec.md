@@ -51,14 +51,14 @@ The system SHALL provide a separate section on the profile page for changing the
 
 ### Scenario: Successful password change
 - **WHEN** the user fills all three password fields correctly and submits
-- **THEN** a success toast "Contraseña actualizada correctamente" appears and the form fields clear
+- **THEN** a success toast "Contraseña cambiada con éxito" appears and the form fields clear
 
 ### Scenario: Validation error on password change
 - **WHEN** the user submits with validation errors (passwords don't match, too short)
 - **THEN** inline validation errors appear below the corresponding fields
 
-### Scenario: Password contains email
-- **WHEN** the user submits with a new password containing their email
+### Scenario: Password contains full email
+- **WHEN** the user submits with a new password containing their full email address
 - **THEN** inline validation error "La contraseña no puede contener tu email" appears
 
 ### Scenario: Server error on password change

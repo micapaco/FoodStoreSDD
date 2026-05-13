@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useProducto, useDeleteProducto } from '@/features/productos/hooks/useProductos'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 
 function formatCurrency(value: number): string {
@@ -39,7 +39,7 @@ export function ProductosDetailPage() {
   const navigate = useNavigate()
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
-  const isAdmin = user?.roles.includes('ADMIN') ?? false
+  const isAdmin = getSafeUserRoles(user).includes('ADMIN')
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 

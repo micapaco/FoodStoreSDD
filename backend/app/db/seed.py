@@ -335,6 +335,21 @@ async def seed(session: AsyncSession) -> None:
                     },
                 )
 
+    # ── Configuración del sistema ─────────────────────────────────────────────
+    configuraciones = [
+        {"clave": "costo_envio_base", "valor": "50.00"},
+        {"clave": "pedidos_habilitados", "valor": "true"},
+        {"clave": "mensaje_sistema", "valor": ""},
+    ]
+    for cfg in configuraciones:
+        await session.execute(
+            text(
+                "INSERT INTO configuracion (clave, valor, updated_at) "
+                "VALUES (:clave, :valor, NOW()) ON CONFLICT DO NOTHING"
+            ),
+            cfg,
+        )
+
     await session.commit()
 
 

@@ -61,10 +61,14 @@ export function parseHttpError(error: unknown): AppHttpError {
     }
 
     if (status >= 500 && status <= 599) {
+      const backendMessage =
+        status === 502 && typeof data?.detail === 'string'
+          ? data.detail
+          : 'Error del servidor, intentá de nuevo'
       return {
         status,
         code: 'SERVER_ERROR',
-        message: 'Error del servidor, intentá de nuevo',
+        message: backendMessage,
         detail: data,
       }
     }

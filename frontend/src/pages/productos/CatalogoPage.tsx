@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductosPublic, useCategorias } from '@/features/productos/hooks/useProductos'
 import { useCartStore } from '@/shared/stores/cartStore'
+import { useUiStore } from '@/shared/stores/uiStore'
 import type { ProductoFilters } from '@/entities/productos/types'
 import type { ProductoRead } from '@/entities/productos/types'
 
@@ -33,15 +34,39 @@ interface ProductCardProps {
 
 function ProductCard({ producto, categoriaNames, hasAlergenos }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem)
+  const cartQuantity = useCartStore((s) =>
+    s.items
+      .filter((item) => item.productoId === producto.id)
+      .reduce((acc, item) => acc + item.cantidad, 0),
+  )
+  const addToast = useUiStore((s) => s.addToast)
+  const maxAgregable = Math.min(99, producto.stock_cantidad)
+  const stockRestante = Math.max(0, maxAgregable - cartQuantity)
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (stockRestante <= 0) {
+      addToast({ type: 'warning', message: 'Ya agregaste todo el stock disponible de este producto.' })
+      return
+    }
     addItem(
-      { id: producto.id, nombre: producto.nombre, precio: producto.precio_base },
+      {
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: producto.precio_base,
+        stockDisponible: producto.stock_cantidad,
+      },
       1,
       { ingredientesExcluidos: [] },
     )
+    addToast({
+      type: 'success',
+      message: 'Producto agregado al carrito.',
+      actionLabel: 'Ir a mi carrito',
+      actionTo: '/carrito',
+      duration: 7000,
+    })
   }
 
   return (
@@ -61,6 +86,9 @@ function ProductCard({ producto, categoriaNames, hasAlergenos }: ProductCardProp
         </h3>
         <p className="mt-1.5 text-lg font-bold text-orange-600">
           {formatCurrency(producto.precio_base)}
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          {stockRestante > 0 ? `${stockRestante} disponibles` : 'Sin stock disponible'}
         </p>
 
         <div className="mt-2 flex flex-wrap gap-1">
@@ -89,7 +117,8 @@ function ProductCard({ producto, categoriaNames, hasAlergenos }: ProductCardProp
         <button
           type="button"
           onClick={handleQuickAdd}
-          className="absolute right-2 top-2 rounded-full bg-orange-500 p-1.5 text-white shadow-sm hover:bg-orange-600 transition-colors"
+          disabled={stockRestante <= 0}
+          className="absolute right-2 top-2 rounded-full bg-orange-500 p-1.5 text-white shadow-sm hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300 transition-colors"
           aria-label={`Agregar ${producto.nombre} al carrito`}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,26 +137,23 @@ export function CatalogoPage() {
   const [precioMin, setPrecioMin] = useState('')
   const [precioMax, setPrecioMax] = useState('')
   const [page, setPage] = useState(1)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: categorias } = useCategorias()
 
-  const debounced = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>
-      return (value: string) => {
-        clearTimeout(timer)
-        timer = setTimeout(() => {
-          setDebouncedSearch(value)
-          setPage(1)
-        }, 300)
-      }
-    })(),
-    [],
-  )
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
+  }, [])
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
-    debounced(value)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      setDebouncedSearch(value)
+      setPage(1)
+    }, 300)
   }
 
   const filters: ProductoFilters = {
@@ -233,7 +259,7 @@ export function CatalogoPage() {
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {isLoading ? (
           Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : data && data.items.length > 0 ? (
+        ) : data?.items && data.items.length > 0 ? (
           data.items.map((prod) => (
             <ProductCard
               key={prod.id}
@@ -257,7 +283,7 @@ export function CatalogoPage() {
         )}
       </div>
 
-      {data && data.pages > 1 && (
+      {data?.pages && data.pages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-2">
           <button
             type="button"

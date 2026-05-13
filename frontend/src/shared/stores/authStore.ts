@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useCartStore } from '@/shared/stores/cartStore'
 
-interface User {
+export interface User {
   id: number
   nombre: string
   apellido: string
@@ -30,6 +31,30 @@ interface AuthState {
   hasRole: (role: string) => boolean
 }
 
+type StoredUser = Omit<User, 'roles'> & { roles?: unknown }
+type StoredAuthState = Partial<Omit<AuthState, 'user'>> & { user?: StoredUser | null }
+type PersistedAuthState = {
+  accessToken: string | null
+  refreshToken: string | null
+  user: User | null
+  isAuthenticated: boolean
+}
+
+export function getSafeUserRoles(user: { roles?: unknown } | null | undefined): string[] {
+  return Array.isArray(user?.roles)
+    ? user.roles.filter((role): role is string => typeof role === 'string')
+    : []
+}
+
+function normalizeUser(user: StoredUser | User | null | undefined): User | null {
+  if (!user) return null
+  return {
+    ...user,
+    telefono: user.telefono ?? null,
+    roles: getSafeUserRoles(user),
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -38,22 +63,39 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       navigateAfterLogout: null,
-      login: (tokens, user) =>
-        set({ ...tokens, user, isAuthenticated: true, navigateAfterLogout: null }),
+      login: (tokens, user) => {
+        const normalizedUser = normalizeUser(user)
+        if (!normalizedUser) return
+        set({ ...tokens, user: normalizedUser, isAuthenticated: true, navigateAfterLogout: null })
+        // Non-client roles (ADMIN, STOCK, PEDIDOS) should never see a previous client's cart
+        if (!normalizedUser.roles.includes('CLIENT')) {
+          useCartStore.getState().clearCart()
+        }
+      },
       logout: () =>
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false }),
       logoutAndRedirect: (to) =>
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, navigateAfterLogout: to }),
       updateTokens: (tokens) =>
         set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }),
-      hasRole: (role) => get().user?.roles.includes(role) ?? false,
+      hasRole: (role) => getSafeUserRoles(get().user).includes(role),
     }),
     {
       name: 'food-store-auth',
-      partialize: (state) => ({
+      version: 1,
+      migrate: (persistedState) => {
+        const state = persistedState as StoredAuthState
+        return {
+          accessToken: state.accessToken ?? null,
+          refreshToken: state.refreshToken ?? null,
+          user: normalizeUser(state.user),
+          isAuthenticated: state.isAuthenticated ?? false,
+        } satisfies PersistedAuthState
+      },
+      partialize: (state): PersistedAuthState => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
-        user: state.user,
+        user: normalizeUser(state.user),
         isAuthenticated: state.isAuthenticated,
         // navigateAfterLogout is intentionally excluded — transient, resets on page load
       }),

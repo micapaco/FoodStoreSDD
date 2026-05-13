@@ -5,8 +5,6 @@ import type {
   ProductoCreate,
   ProductoUpdate,
 } from '@/entities/productos/types'
-import type { CategoriaRead } from '@/entities/categorias/types'
-import type { IngredienteRead } from '@/entities/ingredientes/types'
 
 /**
  * useProductos — Fetch paginated product list (admin: includes unavailable).

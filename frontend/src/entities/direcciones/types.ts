@@ -25,7 +25,7 @@ export interface DireccionCreate {
   notas: string
 }
 
-export interface DireccionUpdate extends DireccionCreate {}
+export type DireccionUpdate = DireccionCreate
 
 export interface DireccionesPaginatedResponse {
   items: DireccionRead[]

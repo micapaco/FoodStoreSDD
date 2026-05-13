@@ -197,13 +197,37 @@ Listado y detalle de pedidos propios, panel de pedidos para `PEDIDOS`/`ADMIN`, h
 
 ---
 
+### `15.5` — `offline-payment-order-flow`
+
+**Funcionalidad**: Cierre contractual del flujo de pagos offline.
+Formaliza como se validan operativamente pedidos con `EFECTIVO` o `TRANSFERENCIA`, manteniendo `CONFIRMADO` como estado asociado a pago validado y definiendo una accion dedicada para que `ADMIN`/`PEDIDOS` confirmen esos pedidos sin romper la FSM vigente.
+
+**Historias de usuario**: Ajuste correctivo sobre US-035, US-039, US-043, US-051, US-052 y US-065  
+**Depende de**: `order-fsm`, `order-views`
+
+> Este change corrige una regla de contrato incompleta: las formas de pago offline existian desde infraestructura, pero el flujo archivado solo resolvia confirmacion automatica por MercadoPago.
+
+---
+
+### `15.6` — `pickup-fulfillment-flow`
+
+**Funcionalidad**: Cierre contractual del flujo de retiro en local.
+Formaliza que los pedidos con `direccion_id=NULL` no deben cobrar envio y deben recorrer una variante operativa coherente con retiro en local, evitando pasos de despacho que solo aplican a entrega a domicilio.
+
+**Historias de usuario**: Ajuste correctivo sobre US-035, US-041, US-042, US-051, US-052 y US-071  
+**Depende de**: `order-creation`, `order-fsm`, `order-views`, `offline-payment-order-flow`
+
+> Este change corrige una inconsistencia entre una regla ya documentada (`NULL = retiro en local`) y contratos heredados que seguian aplicando costo de envio fijo y la transicion `EN_PREP -> EN_CAMINO` para todos los pedidos.
+
+---
+
 ### `16` — `order-feedback`
 
 **Funcionalidad**: Feedback UX post-checkout.
 Pantalla de confirmación de pedido creado, resumen de compra, redirecciones y estados visuales después de la creación del pedido.
 
 **Historias de usuario**: US-071  
-**Depende de**: `order-creation`
+**Depende de**: `order-creation`, `offline-payment-order-flow`, `pickup-fulfillment-flow`
 
 > Se separa porque es UX específica del momento post-creación y no debe perderse dentro de pedidos o pagos.
 

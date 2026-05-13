@@ -81,6 +81,13 @@ export function ProfilePage() {
         if (value.new_password && value.current_password === value.new_password) {
           return 'La nueva contraseña debe ser diferente a la actual.'
         }
+        if (
+          profile?.email &&
+          value.new_password &&
+          value.new_password.toLowerCase().includes(profile.email.toLowerCase())
+        ) {
+          return 'La contraseña no puede contener tu email.'
+        }
         return undefined
       },
     },
@@ -112,7 +119,7 @@ export function ProfilePage() {
     if (!editing) {
       formInitialized.current = false
     }
-  }, [editing, profile])
+  }, [editing, profile, profileForm])
 
   // ── Loading state ──────────────────────────────────────────────────────
   if (isLoading) {

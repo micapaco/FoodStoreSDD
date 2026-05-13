@@ -1,7 +1,7 @@
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useCreateProducto, useCategorias, useIngredientes } from '@/features/productos/hooks/useProductos'
 import { ProductoForm, type ProductoFormValues } from '@/features/productos/components/ProductoForm'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { ProductoCreate } from '@/entities/productos/types'
 
@@ -9,15 +9,15 @@ export function ProductosCreatePage() {
   const navigate = useNavigate()
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
-  const isAdmin = user?.roles.includes('ADMIN') ?? false
+  const isAdmin = getSafeUserRoles(user).includes('ADMIN')
+  const { mutate: createProducto, isPending } = useCreateProducto()
+  const { data: categorias, isLoading: catLoading } = useCategorias()
+  const { data: ingredientes, isLoading: ingLoading } = useIngredientes()
 
   // Only ADMIN can create products
   if (!isAdmin) {
     return <Navigate to="/403" replace />
   }
-  const { mutate: createProducto, isPending } = useCreateProducto()
-  const { data: categorias, isLoading: catLoading } = useCategorias()
-  const { data: ingredientes, isLoading: ingLoading } = useIngredientes()
 
   const handleSubmit = (values: ProductoFormValues) => {
     const payload: ProductoCreate = {

@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     # ── MercadoPago ──────────────────────────────────────────────────────────
     MERCADOPAGO_ACCESS_TOKEN: str | None = None
     MERCADOPAGO_PUBLIC_KEY: str | None = None
+    MERCADOPAGO_WEBHOOK_SECRET: str | None = None
+    MERCADOPAGO_NOTIFICATION_URL: str | None = None
 
     # ── Rate limiting ────────────────────────────────────────────────────────
     # String parseable por slowapi. No se usa como default_limits en este change.
