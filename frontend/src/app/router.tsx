@@ -25,6 +25,7 @@ import { CartPage } from '@/pages/CartPage'
 import { CheckoutPage } from '@/pages/CheckoutPage'
 import { OrdersListPage } from '@/pages/OrdersListPage'
 import { OrderDetailPage } from '@/pages/OrderDetailPage'
+import { OrderConfirmationPage } from '@/pages/OrderConfirmationPage'
 
 // Pages — admin
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
               { path: '/checkout', element: <CheckoutPage /> },
               { path: '/pedidos', element: <OrdersListPage /> },
               { path: '/pedidos/:id', element: <OrderDetailPage /> },
+              { path: '/pedidos/:id/confirmacion', element: <OrderConfirmationPage /> },
             ],
           },
         ],
