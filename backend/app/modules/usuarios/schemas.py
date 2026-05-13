@@ -1,7 +1,7 @@
-"""Módulo usuarios — schemas Pydantic v2."""
+"""Modulo usuarios - schemas Pydantic v2."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -39,13 +39,13 @@ class UsuarioUpdateRequest(BaseModel):
 
 
 class CambiarRolesRequest(BaseModel):
-    roles: list[str]
+    roles: list[Literal["ADMIN", "STOCK", "PEDIDOS", "CLIENT"]]
 
     @field_validator("roles")
     @classmethod
     def roles_no_vacios(cls, v: list[str]) -> list[str]:
-        if not v:
-            raise ValueError("La lista de roles no puede estar vacía.")
+        if len(v) != 1:
+            raise ValueError("El usuario debe tener exactamente un rol.")
         return v
 
 

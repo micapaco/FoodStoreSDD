@@ -37,6 +37,14 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(value)
 }
 
+function toNumber(value: unknown): number {
+  return typeof value === 'number' ? value : Number(value ?? 0)
+}
+
+function toStringValue(value: unknown): string {
+  return typeof value === 'string' ? value : String(value ?? '')
+}
+
 function isoToday(): string {
   return new Date().toISOString().slice(0, 10)
 }
@@ -183,8 +191,10 @@ export function AdminDashboardPage() {
                 <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(value: number, name: string) =>
-                    name === 'total_ventas' ? [formatCurrency(value), 'Ventas'] : [value, 'Pedidos']
+                  formatter={(value, name) =>
+                    name === 'total_ventas'
+                      ? [formatCurrency(toNumber(value)), 'Ventas']
+                      : [toNumber(value), 'Pedidos']
                   }
                 />
                 <Legend />
@@ -217,7 +227,7 @@ export function AdminDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="nombre" tick={{ fontSize: 11 }} width={100} />
-                  <Tooltip formatter={(value: number) => [value, 'Unidades']} />
+                  <Tooltip formatter={(value) => [toNumber(value), 'Unidades']} />
                   <Bar dataKey="cantidad_vendida" fill="#f97316" radius={[0, 4, 4, 0]} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
@@ -244,16 +254,21 @@ export function AdminDashboardPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={90}
-                    label={({ estado_codigo, percent }) =>
-                      `${ESTADO_LABELS[estado_codigo] ?? estado_codigo} ${(percent * 100).toFixed(0)}%`
-                    }
+                    label={({ name, percent }) => {
+                      const estado = toStringValue(name)
+                      const percentValue = typeof percent === 'number' ? percent : 0
+                      return `${ESTADO_LABELS[estado] ?? estado} ${(percentValue * 100).toFixed(0)}%`
+                    }}
                   >
                     {porEstado.data.estados.map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number, name: string) => [value, ESTADO_LABELS[name] ?? name]}
+                    formatter={(value, name) => {
+                      const estado = toStringValue(name)
+                      return [toNumber(value), ESTADO_LABELS[estado] ?? estado]
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>

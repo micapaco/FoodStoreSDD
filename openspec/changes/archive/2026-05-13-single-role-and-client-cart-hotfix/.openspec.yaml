@@ -1,0 +1,14 @@
+id: single-role-and-client-cart-hotfix
+status: proposed
+title: Enforce single user role and client-only cart chrome
+kind: fix
+areas:
+  - backend
+  - frontend
+  - auth
+  - cart
+depends_on:
+  - auth
+  - frontend-shell
+  - admin-users
+  - cart

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductos, useCategorias, useDeleteProducto, useUpdateStock, useUpdateDisponibilidad } from '@/features/productos/hooks/useProductos'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { ProductoFilters } from '@/entities/productos/types'
 
@@ -66,8 +66,9 @@ function DeleteModal({ open, productName, onConfirm, onCancel, loading }: Delete
 export function ProductosPage() {
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
-  const isAdmin = user?.roles.includes('ADMIN') ?? false
-  const isStock = user?.roles.includes('STOCK') ?? false
+  const roles = getSafeUserRoles(user)
+  const isAdmin = roles.includes('ADMIN')
+  const isStock = roles.includes('STOCK')
 
   // Filters state
   const [search, setSearch] = useState('')

@@ -8,6 +8,11 @@ from sqlmodel import SQLModel
 T = TypeVar("T", bound=SQLModel)
 
 
+def _utc_now_naive() -> datetime:
+    """Return UTC without tzinfo for timestamp columns bound as timezone-naive."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class BaseRepository(Generic[T]):
     """Repositorio genérico con CRUD básico.
 
@@ -48,7 +53,7 @@ class BaseRepository(Generic[T]):
 
     async def soft_delete(self, entity: T) -> None:
         """Marca el registro como eliminado sin borrarlo físicamente."""
-        entity.deleted_at = datetime.now(timezone.utc)  # type: ignore[attr-defined]
+        entity.deleted_at = _utc_now_naive()  # type: ignore[attr-defined]
         self.session.add(entity)
         await self.session.flush()
 

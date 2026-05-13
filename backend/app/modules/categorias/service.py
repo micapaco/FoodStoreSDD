@@ -8,7 +8,7 @@ Contiene la lógica de negocio para la gestión de categorías jerárquicas:
 - Árbol jerárquico completo
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from math import ceil
 from typing import Optional
 
@@ -25,6 +25,11 @@ from app.modules.categorias.schemas import (
 
 class CategoriaService:
     """Servicio stateless de categorías. La transacción la maneja el UoW."""
+
+    @staticmethod
+    def _utc_now_naive() -> datetime:
+        """UTC sin tzinfo para columnas timestamp sin zona horaria."""
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
     async def _build_tree(categorias: list[Categoria]) -> list[CategoriaRead]:
@@ -142,7 +147,7 @@ class CategoriaService:
         if not changed:
             raise ValidationAppError("No se enviaron campos para actualizar.")
 
-        categoria.updated_at = datetime.now(datetime.timezone.utc)
+        categoria.updated_at = CategoriaService._utc_now_naive()
         categoria = await uow.categorias.update(categoria)
 
         return CategoriaRead(

@@ -60,25 +60,25 @@ On email conflict: HTTP 409. On not found: HTTP 404.
 
 ### Requirement: Cambiar roles de usuario (Admin)
 The system SHALL expose `PATCH /api/v1/admin/usuarios/{id}/roles` requiring role ADMIN.
-Body: `{ roles: list[str] }` — full replacement of the user's role set.
+Body: `{ roles: list[str] }` as full replacement of the user's role set.
+The submitted role list SHALL contain exactly one role code from: ADMIN, STOCK, PEDIDOS, CLIENT.
 Response: HTTP 200 + `UsuarioDetailRead`.
-On removing last ADMIN: HTTP 409. On not found: HTTP 404.
-After success: all active refresh tokens of the target user MUST be revoked.
 
-#### Scenario: Asignación de roles exitosa
-- **WHEN** ADMIN submits a new role list for a user
-- **THEN** the system replaces the user's roles and returns HTTP 200
-- **THEN** all previously active refresh tokens of that user are revoked
+#### Scenario: Asignación de rol exitosa
+- **WHEN** ADMIN submits a one-item role list for a user
+- **THEN** the system replaces the user's role and returns HTTP 200
 
-#### Scenario: Protección del último ADMIN (RN-RB04)
+#### Scenario: Protección del último ADMIN
 - **WHEN** ADMIN tries to remove ADMIN role from the only user with that role
-- **THEN** the system returns HTTP 409 with message "No se puede degradar al único administrador del sistema"
+- **THEN** the system returns HTTP 409 Conflict
 
 #### Scenario: Lista de roles vacía
 - **WHEN** ADMIN submits an empty roles list
-- **THEN** the system returns HTTP 422
+- **THEN** the system returns HTTP 422 Unprocessable Entity
 
----
+#### Scenario: Múltiples roles
+- **WHEN** ADMIN submits two or more roles
+- **THEN** the system returns HTTP 422 Unprocessable Entity
 
 ### Requirement: Activar o desactivar usuario (Admin)
 The system SHALL expose `PATCH /api/v1/admin/usuarios/{id}/estado` requiring role ADMIN.

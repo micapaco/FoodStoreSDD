@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useCartStore } from '@/shared/stores/cartStore'
 import { CartDrawer } from '@/features/store/components/CartDrawer'
 
@@ -27,7 +27,9 @@ export function PrivateHeader() {
     logoutAndRedirect('/')
   }
 
-  const primaryRole = user ? getPrimaryRole(user.roles) : 'CLIENT'
+  const roles = user ? getSafeUserRoles(user) : []
+  const primaryRole = user ? getPrimaryRole(roles) : 'CLIENT'
+  const canUseCart = roles.length === 1 && roles[0] === 'CLIENT'
   const badgeClass = roleBadgeClass[primaryRole] ?? 'bg-gray-100 text-gray-700'
 
   return (
@@ -39,22 +41,23 @@ export function PrivateHeader() {
           </span>
 
           <div className="flex items-center gap-4">
-            {/* Cart button */}
-            <button
-              type="button"
-              onClick={() => setCartOpen(true)}
-              className="relative rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-              aria-label="Abrir carrito"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-              </svg>
-              {count > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-bold text-white">
-                  {count > 99 ? '99+' : count}
-                </span>
-              )}
-            </button>
+            {canUseCart && (
+              <button
+                type="button"
+                onClick={() => setCartOpen(true)}
+                className="relative rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+                aria-label="Abrir carrito"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                </svg>
+                {count > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-bold text-white">
+                    {count > 99 ? '99+' : count}
+                  </span>
+                )}
+              </button>
+            )}
 
             {user && (
               <>
@@ -80,7 +83,7 @@ export function PrivateHeader() {
         </div>
       </div>
 
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      {canUseCart && <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />}
     </header>
   )
 }

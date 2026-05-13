@@ -34,24 +34,18 @@ function EditModal({ usuario, onClose }: EditModalProps) {
   const [nombre, setNombre] = useState(usuario.nombre)
   const [apellido, setApellido] = useState(usuario.apellido)
   const [email, setEmail] = useState(usuario.email)
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(usuario.roles)
+  const [selectedRole, setSelectedRole] = useState(usuario.roles[0] ?? 'CLIENT')
   const [error, setError] = useState<string | null>(null)
 
   const isPending = editarUsuario.isPending || cambiarRoles.isPending
-
-  const toggleRol = (rol: string) => {
-    setSelectedRoles((prev) =>
-      prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]
-    )
-  }
 
   const handleSave = async () => {
     setError(null)
     try {
       const data: UsuarioUpdateRequest = { nombre, apellido, email }
       await editarUsuario.mutateAsync({ id: usuario.id, data })
-      if (JSON.stringify(selectedRoles.sort()) !== JSON.stringify([...usuario.roles].sort())) {
-        await cambiarRoles.mutateAsync({ id: usuario.id, data: { roles: selectedRoles } })
+      if (selectedRole !== (usuario.roles[0] ?? '')) {
+        await cambiarRoles.mutateAsync({ id: usuario.id, data: { roles: [selectedRole] } })
       }
       addToast({ type: 'success', message: 'Usuario actualizado.' })
       onClose()
@@ -82,20 +76,21 @@ function EditModal({ usuario, onClose }: EditModalProps) {
           ))}
 
           <div>
-            <p className="text-xs font-medium text-gray-600">Roles</p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <label htmlFor="usuario-rol" className="text-xs font-medium text-gray-600">
+              Rol
+            </label>
+            <select
+              id="usuario-rol"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="mt-1 w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
+            >
               {ALL_ROLES.map((rol) => (
-                <label key={rol} className="flex cursor-pointer items-center gap-1.5 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedRoles.includes(rol)}
-                    onChange={() => toggleRol(rol)}
-                    className="h-4 w-4"
-                  />
+                <option key={rol} value={rol}>
                   {rol}
-                </label>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
         </div>
 
@@ -114,7 +109,7 @@ function EditModal({ usuario, onClose }: EditModalProps) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={isPending || selectedRoles.length === 0}
+            disabled={isPending || !selectedRole}
             className="rounded bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:bg-gray-300"
           >
             {isPending ? 'Guardando...' : 'Guardar'}

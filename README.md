@@ -49,6 +49,8 @@ uvicorn app.main:app --reload --port 8000
 
 ## 3. 🌐 Webhooks MercadoPago con ngrok
 
+https://www.mercadopago.com.ar/developers/panel/app
+
 Este paso es necesario cuando querés que MercadoPago pueda llamar a tu backend local, por ejemplo para probar `POST /api/v1/pagos/webhook`.
 
 ### Instalar ngrok

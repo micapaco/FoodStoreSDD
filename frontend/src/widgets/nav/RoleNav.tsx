@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 
 interface NavItem {
   to: string
@@ -42,7 +42,7 @@ function getNavItems(roles: string[]): NavItem[] {
 
 export function RoleNav() {
   const user = useAuthStore((s) => s.user)
-  const items = user ? getNavItems(user.roles) : CLIENT_ITEMS
+  const items = user ? getNavItems(getSafeUserRoles(user)) : CLIENT_ITEMS
 
   return (
     <nav

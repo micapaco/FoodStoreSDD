@@ -1,5 +1,8 @@
-## ADDED Requirements
+# frontend-http-client Specification
 
+## Purpose
+Define the shared frontend HTTP client behavior, including base URL resolution, JWT request headers, and automatic token refresh on 401 responses.
+## Requirements
 ### Requirement: Axios instance centralized with base URL from environment
 The system SHALL provide a single Axios instance at `shared/api/axios.ts` that uses `VITE_API_BASE_URL` as its `baseURL`, so all HTTP calls share the same configuration.
 
@@ -56,3 +59,21 @@ The system SHALL intercept 401 responses and attempt a token refresh before retr
 - **WHEN** the refresh endpoint call returns 401
 - **THEN** the interceptor does NOT attempt another refresh (avoids infinite loop)
 - **THEN** logout is called immediately
+
+### Requirement: API base URL fallback for local development
+The system SHALL use `VITE_API_BASE_URL` when it is defined and SHALL fall back to `/api/v1` when it is not defined.
+The fallback SHALL allow Vite's development proxy to route frontend API calls to the backend without requiring a local `frontend/.env` file.
+
+#### Scenario: Environment API base URL exists
+- **WHEN** `import.meta.env.VITE_API_BASE_URL` is defined
+- **THEN** the shared Axios instance uses that value as its `baseURL`
+
+#### Scenario: Environment API base URL is missing
+- **WHEN** `import.meta.env.VITE_API_BASE_URL` is undefined
+- **THEN** the shared Axios instance uses `/api/v1` as its `baseURL`
+- **THEN** login calls are sent to `/api/v1/auth/login`, not `/auth/login`
+
+#### Scenario: Refresh uses same base URL resolution
+- **WHEN** the response interceptor attempts token refresh
+- **THEN** it calls `${API_BASE_URL}/auth/refresh` using the same resolved API base URL
+

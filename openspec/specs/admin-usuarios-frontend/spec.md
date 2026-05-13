@@ -48,19 +48,18 @@ Al guardar: optimistic update + invalidación del query.
 ---
 
 ### Requirement: Cambio de roles de usuario
-El modal de edición SHALL incluir un selector de roles (multi-select o checkboxes).
+El modal de edición SHALL incluir un selector de rol único.
 Los roles disponibles son: ADMIN, STOCK, PEDIDOS, CLIENT.
-No debe permitir quitar todos los roles (al menos uno requerido).
+No debe permitir guardar sin rol seleccionado.
 
-#### Scenario: Cambio de roles exitoso
-- **WHEN** ADMIN modifica los roles y guarda
-- **THEN** el sistema actualiza los roles y muestra los nuevos badges en la tabla
+#### Scenario: Cambio de rol exitoso
+- **WHEN** ADMIN modifica el rol y guarda
+- **THEN** el frontend envía `{ roles: [rolSeleccionado] }`
+- **AND** el sistema actualiza el rol y muestra el nuevo badge en la tabla
 
-#### Scenario: Intento de quitar último ADMIN
+#### Scenario: Protección del último ADMIN
 - **WHEN** ADMIN intenta quitar el rol ADMIN al único administrador
-- **THEN** el modal muestra el error HTTP 409 del backend sin cerrarse
-
----
+- **THEN** el backend rechaza la operación y el frontend muestra el error
 
 ### Requirement: Activar / desactivar usuario
 La tabla SHALL mostrar un toggle (o botón) para activar/desactivar cada usuario.

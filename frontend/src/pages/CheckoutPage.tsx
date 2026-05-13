@@ -25,7 +25,6 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const items = useCartStore((s) => s.items)
   const subtotal = useCartStore((s) => s.subtotal)
-  const costoEnvio = useCartStore((s) => s.costoEnvio)
   const clearCart = useCartStore((s) => s.clearCart)
   const addToast = useUiStore((s) => s.addToast)
   const startCheckoutPayment = usePaymentStore((s) => s.startCheckout)
