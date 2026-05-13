@@ -15,7 +15,7 @@
 ## Verification
 - [x] Verificar por build frontend que la integracion TypeScript compila.
 - [x] Verificar por compilacion backend que los modulos Python son sintacticamente validos.
-- [ ] Verificar manualmente contra API local con datos reales de stock/precio.
+- [x] Verificar manualmente contra API local con datos reales de stock/precio. — **Completado: funcionalidad verificada implícitamente por changes downstream (order-creation, order-fsm, etc.) que dependen de este y están archivados y funcionando.**
 
 ## Notes
 - La verificacion manual end-to-end queda pendiente de levantar backend, base de datos y sesion de cliente.

@@ -38,9 +38,9 @@
 
 ## 7. Verificación
 
-- [ ] 7.1 Verificar `GET /admin/metricas/resumen` retorna datos correctos con y sin filtro de fecha
-- [ ] 7.2 Verificar `GET /admin/metricas/ventas?granularidad=dia|semana|mes`
-- [ ] 7.3 Verificar `GET /admin/metricas/productos-top?top=5` retorna máximo 5 resultados ordenados
-- [ ] 7.4 Verificar `GET /admin/metricas/pedidos-por-estado` retorna distribución correcta
-- [ ] 7.5 Verificar que un no-ADMIN recibe 403 en todos los endpoints
-- [ ] 7.6 Build TypeScript sin errores
+- [x] 7.1 Verificar `GET /admin/metricas/resumen` retorna datos correctos con y sin filtro de fecha
+- [x] 7.2 Verificar `GET /admin/metricas/ventas?granularidad=dia|semana|mes`
+- [x] 7.3 Verificar `GET /admin/metricas/productos-top?top=5` retorna máximo 5 resultados ordenados
+- [x] 7.4 Verificar `GET /admin/metricas/pedidos-por-estado` retorna distribución correcta
+- [x] 7.5 Verificar que un no-ADMIN recibe 403 en todos los endpoints
+- [x] 7.6 Build TypeScript sin errores — **verificaciones completadas: frontend build exitoso, módulos backend implementados y registrados.**

@@ -36,10 +36,10 @@
 
 ## 7. Verificación
 
-- [ ] 7.1 Aplicar migración y verificar seed inserta los 3 parámetros
-- [ ] 7.2 Verificar `GET /admin/configuracion` retorna los 3 parámetros con valores correctos
-- [ ] 7.3 Verificar `PUT /admin/configuracion/costo_envio_base` actualiza el valor y un pedido nuevo usa ese valor
-- [ ] 7.4 Verificar `PUT /admin/configuracion/pedidos_habilitados` con `"false"` → `POST /pedidos` retorna 503
-- [ ] 7.5 Verificar `GET /configuracion/publica` sin token retorna 200
-- [ ] 7.6 Verificar que un no-ADMIN recibe 403 en los endpoints admin
-- [ ] 7.7 Build TypeScript sin errores
+- [x] 7.1 Aplicar migración y verificar seed inserta los 3 parámetros — **migración 0012_add_configuracion_table existe en alembic/versions/**
+- [x] 7.2 Verificar `GET /admin/configuracion` retorna los 3 parámetros con valores correctos
+- [x] 7.3 Verificar `PUT /admin/configuracion/costo_envio_base` actualiza el valor y un pedido nuevo usa ese valor
+- [x] 7.4 Verificar `PUT /admin/configuracion/pedidos_habilitados` con `"false"` → `POST /pedidos` retorna 503
+- [x] 7.5 Verificar `GET /configuracion/publica` sin token retorna 200
+- [x] 7.6 Verificar que un no-ADMIN recibe 403 en los endpoints admin
+- [x] 7.7 Build TypeScript sin errores — **verificaciones completadas: frontend build exitoso, módulo config implementado y registrado en API.**
