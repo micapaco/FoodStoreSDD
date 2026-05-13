@@ -1,18 +1,23 @@
-## ADDED Requirements
+# categorias-api Specification
 
+## Purpose
+Define the REST contract for hierarchical product categories.
+## Requirements
 ### Requirement: Category CRUD
 The system SHALL allow ADMIN and STOCK users to create, read, update, and soft-delete categories.
+The system SHALL persist category timestamps with values compatible with the configured PostgreSQL column types.
 
 #### Scenario: Create category
-- **WHEN** an ADMIN sends `POST /api/v1/categorias` with valid `nombre` and optional `categoria_padre_id`
+- **WHEN** an ADMIN sends `POST /api/v1/categorias` with valid `nombre` and optional `parent_id`
 - **THEN** the system returns `201 Created` with the created category
+- **AND** the response includes valid `created_at` and `updated_at` values
 
 #### Scenario: Create category with invalid parent
-- **WHEN** an ADMIN sends `POST /api/v1/categorias` with a `categoria_padre_id` that does not exist or is soft-deleted
+- **WHEN** an ADMIN sends `POST /api/v1/categorias` with a `parent_id` that does not exist or is soft-deleted
 - **THEN** the system returns `422 Unprocessable Entity` with validation error
 
 #### Scenario: List categories (paginated)
-- **WHEN** any authenticated user sends `GET /api/v1/categorias`
+- **WHEN** any user sends `GET /api/v1/categorias`
 - **THEN** the system returns `200 OK` with a paginated list of active categories
 
 #### Scenario: Get category by ID
@@ -22,14 +27,15 @@ The system SHALL allow ADMIN and STOCK users to create, read, update, and soft-d
 #### Scenario: Update category
 - **WHEN** an ADMIN sends `PUT /api/v1/categorias/{id}` with updated fields
 - **THEN** the system returns `200 OK` with the updated category
+- **AND** the response includes a valid `updated_at` value
 
 #### Scenario: Update creates circular hierarchy
-- **WHEN** an ADMIN sends `PUT /api/v1/categorias/{id}` setting `categoria_padre_id` to a descendant of the current node
+- **WHEN** an ADMIN sends `PUT /api/v1/categorias/{id}` setting `parent_id` to a descendant of the current node
 - **THEN** the system returns `422 Unprocessable Entity` with code "CIRCULAR_REFERENCE"
 
 #### Scenario: Soft-delete category
 - **WHEN** an ADMIN sends `DELETE /api/v1/categorias/{id}`
-- **THEN** the system returns `204 No Content` and the category is soft-deleted (deleted_at set)
+- **THEN** the system returns `204 No Content` and the category is soft-deleted
 
 #### Scenario: Delete non-existent category
 - **WHEN** an ADMIN sends `DELETE /api/v1/categorias/{id}` with an invalid ID
@@ -43,8 +49,6 @@ The system SHALL allow ADMIN and STOCK users to create, read, update, and soft-d
 - **WHEN** a CLIENT user sends POST, PUT, or DELETE on categories
 - **THEN** the system returns `403 Forbidden`
 
----
-
 ### Requirement: Category tree (public)
 The system SHALL expose a public endpoint that returns the full category tree structure.
 
@@ -56,13 +60,13 @@ The system SHALL expose a public endpoint that returns the full category tree st
 - **WHEN** no categories exist and a user requests the tree
 - **THEN** the system returns `200 OK` with an empty array
 
----
-
 ### Requirement: Category schema
 The system SHALL accept the following fields for category operations:
 - `nombre`: string, required, 1-100 chars, unique
-- `categoria_padre_id`: integer, optional, must reference an active (non-deleted) category
+- `parent_id`: integer, optional, must reference an active non-deleted category
 
 #### Scenario: CategoryRead response shape
 - **WHEN** the system returns category data
-- **THEN** the response SHALL contain `{ id, nombre, categoria_padre_id, children (optional list), created_at, updated_at }` and SHALL NOT include `deleted_at` for active categories
+- **THEN** the response SHALL contain `{ id, nombre, parent_id, children, created_at, updated_at }`
+- **AND** the response SHALL NOT include `deleted_at` for active categories
+

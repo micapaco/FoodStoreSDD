@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios'
 import { meApi } from '@/shared/api/auth'
 import { updateProfileApi, changePasswordApi } from '@/shared/api/profile'
 import type { UpdateProfilePayload, ChangePasswordPayload } from '@/shared/api/profile'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 
 const PROFILE_KEY = ['profile', 'me'] as const
@@ -38,7 +38,7 @@ export function useUpdateProfile() {
             apellido: user.apellido,
             telefono: user.telefono ?? null,
             email: user.email,
-            roles: user.roles,
+            roles: getSafeUserRoles(user),
           },
         )
       }

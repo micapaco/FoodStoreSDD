@@ -2,8 +2,10 @@ import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/shared/stores/authStore'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
 })
 
 // Refresh queue to prevent concurrent 401s from triggering multiple refresh calls
@@ -60,7 +62,7 @@ axiosInstance.interceptors.response.use(
 
     try {
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
+        `${API_BASE_URL}/auth/refresh`,
         { refresh_token: refreshToken },
       )
       const newTokens = { accessToken: data.access_token, refreshToken: data.refresh_token }

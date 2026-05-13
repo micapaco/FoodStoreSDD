@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import type { PedidoRead, ValidarCarritoResponse } from '@/entities/pedidos/types'
+import { Link, useNavigate } from 'react-router-dom'
+import type { ValidarCarritoResponse } from '@/entities/pedidos/types'
 import { useAddressesQuery } from '@/features/direcciones/hooks/useDirecciones'
-import { MercadoPagoCardPayment } from '@/features/pagos/MercadoPagoCardPayment'
 import { parseHttpError } from '@/shared/lib/http/parseHttpError'
 import { useCrearPedido } from '@/shared/hooks/usePedidos'
 import { useValidarCheckout } from '@/shared/hooks/useValidarCheckout'
+import { useConfigPublica } from '@/shared/hooks/useConfig'
 import { useCartStore } from '@/shared/stores/cartStore'
 import { usePaymentStore } from '@/shared/stores/paymentStore'
 import { useUiStore } from '@/shared/stores/uiStore'
@@ -20,14 +20,11 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
 }
 
-function toNumber(value: string): number {
-  return Number.parseFloat(value)
-}
 
 export function CheckoutPage() {
+  const navigate = useNavigate()
   const items = useCartStore((s) => s.items)
   const subtotal = useCartStore((s) => s.subtotal)
-  const costoEnvio = useCartStore((s) => s.costoEnvio)
   const clearCart = useCartStore((s) => s.clearCart)
   const addToast = useUiStore((s) => s.addToast)
   const startCheckoutPayment = usePaymentStore((s) => s.startCheckout)
@@ -36,6 +33,7 @@ export function CheckoutPage() {
   const validarCheckout = useValidarCheckout()
   const crearPedido = useCrearPedido()
   const addressesQuery = useAddressesQuery({ page: 1, page_size: 100 })
+  const { data: configPublica } = useConfigPublica()
 
   const [resultado, setResultado] = useState<ValidarCarritoResponse | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
@@ -43,13 +41,13 @@ export function CheckoutPage() {
   const [modoEntrega, setModoEntrega] = useState<'delivery' | 'pickup'>('delivery')
   const [direccionId, setDireccionId] = useState<string>('')
   const [notas, setNotas] = useState('')
-  const [pedidoCreado, setPedidoCreado] = useState<PedidoRead | null>(null)
 
   const direcciones = addressesQuery.data?.items ?? []
   const hasItems = items.length > 0
   const hasBlockingIssues = resultado && !resultado.valido
   const isPending = validarCheckout.isPending || crearPedido.isPending
-  const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : costoEnvio()
+  const configCosto = configPublica?.costo_envio_base ?? 50
+  const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : configCosto
   const checkoutTotal = subtotal() + checkoutCostoEnvio
 
   const selectedDireccionId = useMemo(() => {
@@ -70,7 +68,6 @@ export function CheckoutPage() {
   const handleCrearPedido = async () => {
     setRequestError(null)
     setResultado(null)
-    setPedidoCreado(null)
     resetPayment()
 
     if (modoEntrega === 'delivery' && selectedDireccionId === null) {
@@ -95,54 +92,16 @@ export function CheckoutPage() {
       })
 
       clearCart()
-      setPedidoCreado(pedido)
       if (formaPagoCodigo === 'MERCADOPAGO') {
         startCheckoutPayment()
       }
       addToast({ type: 'success', message: 'Pedido creado correctamente.' })
+      navigate(`/pedidos/${pedido.id}/confirmacion`)
     } catch (error) {
       const parsed = parseHttpError(error)
       setRequestError(parsed.message)
       addToast({ type: 'error', message: parsed.message })
     }
-  }
-
-  if (pedidoCreado) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-lg border border-green-200 bg-white p-8 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-wide text-green-700">Pedido creado</p>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">Pedido #{pedidoCreado.id}</h1>
-          <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">Estado</dt>
-              <dd className="mt-1 text-sm font-semibold text-gray-900">{pedidoCreado.estadoCodigo}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">Envio</dt>
-              <dd className="mt-1 text-sm font-semibold text-gray-900">
-                {formatCurrency(toNumber(pedidoCreado.costoEnvio))}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase text-gray-500">Total</dt>
-              <dd className="mt-1 text-sm font-semibold text-orange-600">
-                {formatCurrency(toNumber(pedidoCreado.total))}
-              </dd>
-            </div>
-          </dl>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/productos"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
-            >
-              Volver al catalogo
-            </Link>
-          </div>
-          {formaPagoCodigo === 'MERCADOPAGO' && <MercadoPagoCardPayment pedido={pedidoCreado} />}
-        </div>
-      </div>
-    )
   }
 
   return (

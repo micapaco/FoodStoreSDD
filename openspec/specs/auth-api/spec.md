@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Authentication API for Food Store — provides register, login, token refresh, logout, and profile endpoints. All tokens use JWT (access: 30 min, refresh: 30 days with rotation). Rate limiting applies to login (5 attempts / 15 min per IP). Inactive accounts (`activo = false`) are blocked at login with HTTP 403.
+
+## Requirements
 
 ### Requirement: Register endpoint
 The system SHALL expose `POST /api/v1/auth/register` to create new accounts.
@@ -30,9 +33,10 @@ The system SHALL expose `POST /api/v1/auth/login` to authenticate existing users
 The body SHALL be `{ email, password }`.
 On success: HTTP 200 + `TokenResponse` (access_token, refresh_token, token_type="bearer", expires_in=1800).
 On invalid credentials: HTTP 401. The error message MUST NOT differentiate "email not found" from "wrong password".
+On inactive account (`activo = false`): HTTP 403 with message "Cuenta desactivada".
 
 #### Scenario: Successful login
-- **WHEN** valid credentials are submitted
+- **WHEN** valid credentials are submitted for an active user
 - **THEN** the system returns HTTP 200 with a TokenResponse containing both access and refresh tokens
 
 #### Scenario: Invalid credentials
@@ -42,6 +46,10 @@ On invalid credentials: HTTP 401. The error message MUST NOT differentiate "emai
 #### Scenario: Rate limit exceeded
 - **WHEN** more than 5 login attempts from the same IP occur within 15 minutes
 - **THEN** the system returns HTTP 429 with `Retry-After` header and message "Demasiados intentos, reintenta en X minutos"
+
+#### Scenario: Cuenta desactivada
+- **WHEN** valid credentials are submitted for a user with `activo = false`
+- **THEN** the system returns HTTP 403 with message "Cuenta desactivada"
 
 ---
 

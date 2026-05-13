@@ -102,6 +102,9 @@ class AuthService:
         if usuario is None or not pwd_context.verify(data.password, usuario.password_hash):
             raise UnauthorizedError(_GENERIC_ERROR)
 
+        if not usuario.activo:
+            raise ForbiddenError("Cuenta desactivada.")
+
         result = await uow.usuarios.get_with_roles(usuario.id)
         roles = result[1] if result else []
 

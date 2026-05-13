@@ -6,6 +6,11 @@ from sqlalchemy import BigInteger, CheckConstraint, Column, DateTime, ForeignKey
 from sqlmodel import Field, Relationship, SQLModel
 
 
+def _utc_now_naive() -> datetime:
+    """Return UTC without tzinfo for timestamp columns bound as timezone-naive."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class Categoria(SQLModel, table=True):
     __tablename__ = "categoria"
 
@@ -20,11 +25,11 @@ class Categoria(SQLModel, table=True):
     )
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=_utc_now_naive,
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=_utc_now_naive,
         nullable=False,
     )
 
@@ -47,11 +52,11 @@ class Ingrediente(SQLModel, table=True):
     es_alergeno: bool = Field(default=False, nullable=False)
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=_utc_now_naive,
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=_utc_now_naive,
         nullable=False,
     )
 

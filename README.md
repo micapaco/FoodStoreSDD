@@ -3,6 +3,8 @@
 Para levantar la aplicación correctamente, necesitás abrir **tres terminales separadas** y seguir estos pasos en orden. Para probar webhooks de MercadoPago en local, usá una **cuarta terminal** con ngrok.
 
 ---
+## 0. Antes denada, se debe hacer una copiar de los ".env.example" respectivos del backend y frontend, y pegarlos en su mismo directorio sin el final ".example"
+
 
 ## 1. 🗄️ Base de Datos (PostgreSQL en Docker)
 
@@ -48,6 +50,8 @@ uvicorn app.main:app --reload --port 8000
 ---
 
 ## 3. 🌐 Webhooks MercadoPago con ngrok
+
+https://www.mercadopago.com.ar/developers/panel/app
 
 Este paso es necesario cuando querés que MercadoPago pueda llamar a tu backend local, por ejemplo para probar `POST /api/v1/pagos/webhook`.
 

@@ -71,4 +71,4 @@ Implementation checklist. Each task is atomic and independently verifiable. Grou
 ## 9. Specs sync
 
 - [x] 9.1 Cuando todas las tasks anteriores estén verdes, correr `/opsx:verify frontend-shell`. — verify-report.md generado, veredicto: READY FOR ARCHIVE.
-- [ ] 9.2 Si la verificación pasa, archivar el change con `/opsx:archive frontend-shell` (sincroniza specs nuevas a `openspec/specs/`).
+- [x] 9.2 Si la verificación pasa, archivar el change con `/opsx:archive frontend-shell` (sincroniza specs nuevas a `openspec/specs/`). — **Completado: el change ya está archivado y funcionando en producción.**

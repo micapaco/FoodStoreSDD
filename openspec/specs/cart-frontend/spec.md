@@ -1,16 +1,21 @@
-## ADDED Requirements
+# cart-frontend Specification
 
+## Purpose
+Define client cart UI behavior and cart state feedback.
+## Requirements
 ### Requirement: Indicador visual de items en el carrito
-El sistema SHALL mostrar un badge con la cantidad total de items en el carrito, visible en el header de la aplicacion para usuarios autenticados.
+El sistema SHALL mostrar un badge con la cantidad total de items en el carrito, visible en el header de la aplicacion solo para usuarios con rol unico `CLIENT`.
 
 #### Scenario: Badge en el header
-- **WHEN** el carrito tiene items
+- **WHEN** el carrito tiene items y el usuario autenticado tiene rol unico `CLIENT`
 - **THEN** el header muestra un badge con la cantidad total de items
 - **THEN** el badge se actualiza inmediatamente cuando se agrega, quita o modifica un item
 - **WHEN** el carrito esta vacio
 - **THEN** el badge no se muestra (o muestra 0)
 
----
+#### Scenario: Operational role does not see cart button
+- **WHEN** an ADMIN, STOCK, or PEDIDOS user is authenticated
+- **THEN** the private header does not show the cart button or cart drawer trigger
 
 ### Requirement: Feedback al agregar productos
 El sistema SHALL mostrar una notificacion cuando un producto se agrega al carrito desde el catalogo o desde el detalle.
@@ -30,8 +35,6 @@ El sistema SHALL mostrar una notificacion cuando un producto se agrega al carrit
 - **WHEN** el usuario intenta agregar un producto cuya cantidad restante ya esta en el carrito
 - **THEN** se muestra una advertencia indicando que ya agrego todo el stock disponible
 - **THEN** el boton de agregado queda deshabilitado cuando no hay stock restante
-
----
 
 ### Requirement: Drawer lateral del carrito
 El sistema SHALL proveer un drawer lateral (panel deslizante desde la derecha) que muestre el contenido completo del carrito.
@@ -68,8 +71,6 @@ El sistema SHALL proveer un drawer lateral (panel deslizante desde la derecha) q
 - **WHEN** el usuario hace clic fuera del drawer o en el boton de cerrar
 - **THEN** el drawer se cierra
 
----
-
 ### Requirement: Modal de personalizacion antes de agregar
 El sistema SHALL mostrar un modal/dropdown con los ingredientes removibles del producto antes de agregarlo al carrito.
 
@@ -82,3 +83,4 @@ El sistema SHALL mostrar un modal/dropdown con los ingredientes removibles del p
 #### Scenario: Agregar sin exclusiones
 - **WHEN** el producto no tiene ingredientes removibles
 - **THEN** se agrega directamente al carrito sin mostrar el modal de personalizacion
+

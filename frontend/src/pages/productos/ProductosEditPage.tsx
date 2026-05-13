@@ -1,7 +1,7 @@
 import { useParams, useNavigate, Navigate } from 'react-router-dom'
 import { useProducto, useUpdateProducto, useCategorias, useIngredientes } from '@/features/productos/hooks/useProductos'
 import { ProductoForm, type ProductoFormValues } from '@/features/productos/components/ProductoForm'
-import { useAuthStore } from '@/shared/stores/authStore'
+import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { ProductoUpdate } from '@/entities/productos/types'
 
@@ -11,7 +11,7 @@ export function ProductosEditPage() {
   const navigate = useNavigate()
   const addToast = useUiStore((s) => s.addToast)
   const user = useAuthStore((s) => s.user)
-  const isAdmin = user?.roles.includes('ADMIN') ?? false
+  const isAdmin = getSafeUserRoles(user).includes('ADMIN')
 
   const { data: producto, isLoading: prodLoading, isError } = useProducto(productId)
   const { data: categorias, isLoading: catLoading } = useCategorias()

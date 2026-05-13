@@ -4,12 +4,17 @@
 Define el contrato frontend para crear pedidos desde checkout, consultar vistas de pedidos y operar pedidos desde admin alineado con los contratos backend aprobados.
 ## Requirements
 ### Requirement: Checkout crea pedido real
-El frontend SHALL permitir que un cliente autenticado cree un pedido real desde la pantalla de checkout consumiendo `POST /api/v1/pedidos`.
+El frontend SHALL permitir que un cliente autenticado cree un pedido real desde checkout consumiendo `POST /api/v1/pedidos`, y SHALL reflejar la modalidad de entrega elegida en el resumen previo a confirmar.
 
-#### Scenario: Crear pedido desde checkout
-- **WHEN** el cliente confirma checkout con carrito valido, forma de pago y direccion seleccionada si corresponde
-- **THEN** el frontend envia los items del carrito al backend usando el contrato de creacion de pedidos
-- **THEN** muestra estado de carga mientras la mutacion esta pendiente
+#### Scenario: Crear pedido de entrega a domicilio
+- **WHEN** el cliente confirma checkout con direccion de entrega seleccionada
+- **THEN** el frontend envia esa direccion en el contrato de creacion de pedidos
+- **THEN** muestra costo de envio y total coherentes con la modalidad de entrega
+
+#### Scenario: Crear pedido de retiro en local
+- **WHEN** el cliente selecciona retiro en local
+- **THEN** el frontend envia `direccionId=null`
+- **THEN** muestra costo de envio `0` y un total coherente con el subtotal antes de confirmar
 
 #### Scenario: Confirmacion exitosa
 - **WHEN** el backend responde `201 Created`
@@ -53,12 +58,16 @@ El frontend SHALL reemplazar el placeholder de `/pedidos` por una vista funciona
 ---
 
 ### Requirement: Vista de detalle de pedido propio
-El frontend SHALL reemplazar el placeholder de `/pedidos/:id` por una vista de detalle conectada al contrato backend.
+El frontend SHALL reemplazar el placeholder de `/pedidos/:id` por una vista de detalle conectada al contrato backend y coherente con la modalidad del pedido.
 
-#### Scenario: Cliente consulta detalle valido
-- **WHEN** un cliente navega a `/pedidos/{id}` de un pedido propio
-- **THEN** la pagina consulta `GET /api/v1/pedidos/{id}`
-- **THEN** muestra items snapshot, direccion snapshot, estado actual, total, historial y estado de pago
+#### Scenario: Cliente consulta detalle con entrega a domicilio
+- **WHEN** un cliente navega a `/pedidos/{id}` de un pedido propio con direccion de entrega
+- **THEN** la pagina muestra items snapshot, direccion snapshot, estado actual, costo de envio, total, historial y estado de pago
+
+#### Scenario: Cliente consulta detalle de retiro en local
+- **WHEN** un cliente navega a `/pedidos/{id}` de un pedido propio con `direccionSnapshot=NULL`
+- **THEN** la pagina comunica `Retiro en local`
+- **THEN** muestra costo de envio `0` y el total persistido por backend
 
 #### Scenario: Cliente no puede ver detalle ajeno
 - **WHEN** el backend responde `403 Forbidden`
@@ -71,22 +80,20 @@ El frontend SHALL reemplazar el placeholder de `/pedidos/:id` por una vista de d
 ---
 
 ### Requirement: Panel operativo de pedidos
-El frontend SHALL reemplazar el placeholder de `/admin/pedidos` por una vista funcional para `ADMIN` y `PEDIDOS`, incluyendo acciones coherentes con la forma de pago del pedido.
+El frontend SHALL reemplazar el placeholder de `/admin/pedidos` por una vista funcional para `ADMIN` y `PEDIDOS`, incluyendo acciones coherentes con forma de pago y modalidad de cumplimiento.
 
-#### Scenario: Operador confirma pago offline elegible
-- **WHEN** el detalle operativo muestra un pedido `PENDIENTE` con `formaPagoCodigo=EFECTIVO|TRANSFERENCIA`
-- **THEN** la interfaz ofrece una accion visible para confirmar el pago offline
-- **THEN** al completarse la mutacion se refrescan listado y detalle
+#### Scenario: Operador ve avance de entrega a domicilio
+- **WHEN** el detalle operativo muestra un pedido `EN_PREP` con direccion de entrega
+- **THEN** la interfaz ofrece la accion para avanzar a `EN_CAMINO`
 
-#### Scenario: Operador no ve confirmacion offline en MercadoPago
-- **WHEN** el detalle operativo muestra un pedido `MERCADOPAGO`
-- **THEN** la interfaz no ofrece la accion de confirmacion offline
+#### Scenario: Operador ve cierre directo de retiro en local
+- **WHEN** el detalle operativo muestra un pedido `EN_PREP` con retiro en local
+- **THEN** la interfaz no ofrece `EN_CAMINO`
+- **THEN** ofrece la accion compatible para cerrar el pedido en `ENTREGADO`
 
-#### Scenario: Operador recibe feedback de error
-- **WHEN** la confirmacion offline falla por permisos, estado invalido o conflicto de negocio
-- **THEN** la interfaz muestra un mensaje accionable sin desincronizar la vista
-
----
+#### Scenario: Operador recibe feedback de error por transicion incompatible
+- **WHEN** el backend rechaza una transicion por modalidad invalida
+- **THEN** la interfaz muestra un mensaje accionable y refresca la vista sin quedar desincronizada
 
 ### Requirement: Frontend de pedidos consume contratos definidos
 El frontend SHALL consumir solamente los campos establecidos por `pedidos-api` para listados y detalles.

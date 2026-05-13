@@ -17,8 +17,8 @@ interface CartState {
   clearCart: () => void
   itemCount: () => number
   subtotal: () => number
-  costoEnvio: () => number
-  total: () => number
+  costoEnvio: (precioBase?: number) => number
+  total: (precioBase?: number) => number
   getItem: (productoId: number, personalizacion: Personalizacion) => CartItem | undefined
 }
 
@@ -86,9 +86,9 @@ export const useCartStore = create<CartState>()(
 
       subtotal: () => get().items.reduce((acc, i) => acc + i.producto.precio * i.cantidad, 0),
 
-      costoEnvio: () => (get().items.length > 0 ? 50 : 0),
+      costoEnvio: (precioBase = 50) => (get().items.length > 0 ? precioBase : 0),
 
-      total: () => get().subtotal() + get().costoEnvio(),
+      total: (precioBase = 50) => get().subtotal() + get().costoEnvio(precioBase),
 
       getItem: (productoId, personalizacion) => get().items.find((i) => matchItem(i, productoId, personalizacion)),
     }),

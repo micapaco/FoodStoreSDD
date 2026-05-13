@@ -25,11 +25,13 @@ import { CartPage } from '@/pages/CartPage'
 import { CheckoutPage } from '@/pages/CheckoutPage'
 import { OrdersListPage } from '@/pages/OrdersListPage'
 import { OrderDetailPage } from '@/pages/OrderDetailPage'
+import { OrderConfirmationPage } from '@/pages/OrderConfirmationPage'
 
 // Pages — admin
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { CategoriesAdminPage } from '@/pages/admin/CategoriesAdminPage'
 import { OrdersAdminPage } from '@/pages/admin/OrdersAdminPage'
+import { SystemConfigPage } from '@/pages/admin/SystemConfigPage'
 import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
 
 // Pages — productos (admin)
@@ -88,6 +90,7 @@ export const router = createBrowserRouter([
               { path: '/checkout', element: <CheckoutPage /> },
               { path: '/pedidos', element: <OrdersListPage /> },
               { path: '/pedidos/:id', element: <OrderDetailPage /> },
+              { path: '/pedidos/:id/confirmacion', element: <OrderConfirmationPage /> },
             ],
           },
         ],
@@ -103,6 +106,7 @@ export const router = createBrowserRouter([
               { path: '/admin', element: <AdminDashboardPage /> },
               { path: '/admin/categorias', element: <CategoriesAdminPage /> },
               { path: '/admin/usuarios', element: <UsersAdminPage /> },
+              { path: '/admin/configuracion', element: <SystemConfigPage /> },
             ],
           },
         ],

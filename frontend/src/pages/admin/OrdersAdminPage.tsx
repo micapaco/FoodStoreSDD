@@ -11,6 +11,23 @@ import { useUiStore } from '@/shared/stores/uiStore'
 import type { EstadoPedidoOperativo } from '@/entities/pedidos/types'
 
 const ESTADOS = ['', 'PENDIENTE', 'CONFIRMADO', 'EN_PREP', 'EN_CAMINO', 'ENTREGADO', 'CANCELADO']
+
+const ESTADO_COLORS: Record<string, string> = {
+  PENDIENTE:  'bg-amber-100 text-amber-700',
+  CONFIRMADO: 'bg-blue-100 text-blue-700',
+  EN_PREP:    'bg-purple-100 text-purple-700',
+  EN_CAMINO:  'bg-cyan-100 text-cyan-700',
+  ENTREGADO:  'bg-green-100 text-green-700',
+  CANCELADO:  'bg-red-100 text-red-700',
+}
+
+function EstadoBadge({ estado }: { estado: string }) {
+  return (
+    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${ESTADO_COLORS[estado] ?? 'bg-gray-100 text-gray-600'}`}>
+      {estado}
+    </span>
+  )
+}
 function resolveNextState(
   estado: EstadoPedidoOperativo,
   isPickup: boolean,
@@ -249,13 +266,13 @@ export function OrdersAdminPage() {
                     <tr key={pedido.id} className="hover:bg-gray-50">
                       <td className="px-4 py-4 text-sm">
                         <p className="font-semibold text-gray-900">#{pedido.id}</p>
-                        <p className="mt-1 text-xs text-gray-500">{formatDate(pedido.createdAt)}</p>
+                        <p className="mt-1 whitespace-nowrap text-xs text-gray-500">{formatDate(pedido.createdAt)}</p>
                       </td>
                       <td className="px-4 py-4 text-sm">
                         <p className="font-medium text-gray-900">{pedido.clienteNombre}</p>
                         <p className="mt-1 text-xs text-gray-500">{pedido.clienteEmail}</p>
                       </td>
-                      <td className="px-4 py-4 text-sm font-semibold text-gray-800">{pedido.estadoCodigo}</td>
+                      <td className="px-4 py-4"><EstadoBadge estado={pedido.estadoCodigo} /></td>
                       <td className="px-4 py-4 text-sm font-semibold text-orange-600">{formatCurrency(pedido.total)}</td>
                       <td className="px-4 py-4 text-right">
                         <button
@@ -344,7 +361,7 @@ export function OrdersAdminPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-gray-500">Estado</p>
-                  <p className="mt-1 font-semibold text-gray-900">{detailQuery.data.estadoCodigo}</p>
+                  <div className="mt-1"><EstadoBadge estado={detailQuery.data.estadoCodigo} /></div>
                 </div>
                 <div>
                   <p className="text-gray-500">Total</p>

@@ -8,7 +8,7 @@ Lógica de negocio para gestión de ingredientes y alérgenos:
 - Listado de alérgenos
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from math import ceil
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
@@ -24,6 +24,11 @@ from app.modules.ingredientes.schemas import (
 
 class IngredienteService:
     """Servicio stateless de ingredientes. La transacción la maneja el UoW."""
+
+    @staticmethod
+    def _utc_now_naive() -> datetime:
+        """UTC sin tzinfo para columnas timestamp sin zona horaria."""
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
     async def create(uow: UnitOfWork, data: IngredienteCreate) -> IngredienteRead:
@@ -83,7 +88,7 @@ class IngredienteService:
         if not changed:
             raise ValidationAppError("No se enviaron campos para actualizar.")
 
-        ingrediente.updated_at = datetime.now(datetime.timezone.utc)
+        ingrediente.updated_at = IngredienteService._utc_now_naive()
         ingrediente = await uow.ingredientes.update(ingrediente)
 
         return IngredienteRead(

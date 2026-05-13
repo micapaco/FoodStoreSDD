@@ -27,6 +27,7 @@ class Usuario(SQLModel, table=True):
     )
     email: str = Field(unique=True, max_length=254)
     password_hash: str = Field(sa_column=Column(String(60), nullable=False))
+    activo: bool = Field(default=True, nullable=False)
     deleted_at: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(
         default_factory=datetime.utcnow,

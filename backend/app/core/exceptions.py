@@ -94,3 +94,12 @@ class RateLimitedError(AppError):
 
     def __init__(self, detail: str = "Demasiadas solicitudes. Intentá más tarde.", **kwargs: Any) -> None:
         super().__init__(detail, **kwargs)
+
+
+class ServiceUnavailableError(AppError):
+    status_code = 503
+    code = "SERVICE_UNAVAILABLE"
+    title = "Service Unavailable"
+
+    def __init__(self, detail: str = "El servicio no está disponible en este momento.", **kwargs: Any) -> None:
+        super().__init__(detail, **kwargs)
