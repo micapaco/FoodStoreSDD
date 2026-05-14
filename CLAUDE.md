@@ -63,6 +63,12 @@ Reglas obligatorias:
 - Cambiar un contrato requiere: proponer el change en backend → definir el contrato con claridad → frontend consume cuando ese contrato está acordado.
 - Frontend nunca fuerza un cambio de contrato.
 
+## Herramientas de diseño
+
+**Google Stitch MCP** está configurado como referencia visual para el frontend.
+Regla global: Stitch orienta la UI — colores, tipografía, layout. Las specs en `openspec/` son la fuente de verdad del dominio. Si hay conflicto, la spec gana.
+Ver reglas detalladas en `frontend/CLAUDE.md`.
+
 ## Convenciones globales
 
 ### Naming
