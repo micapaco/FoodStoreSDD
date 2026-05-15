@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from '@tanstack/react-form'
 import { useProfile, useUpdateProfile, useChangePassword } from '@/shared/hooks/useProfile'
 
@@ -6,20 +7,20 @@ import { useProfile, useUpdateProfile, useChangePassword } from '@/shared/hooks/
 
 function inputCls(error: boolean) {
   return [
-    'w-full rounded-lg border px-3 py-2 text-gray-900 placeholder-gray-400 transition-colors',
-    'focus:outline-none focus:ring-2 focus:ring-indigo-500',
+    'w-full rounded-lg border px-3 py-2 text-ink placeholder-ink-muted bg-surface-low transition-colors',
+    'focus:outline-none focus:ring-2 focus:ring-brand/50',
     error
-      ? 'border-red-400 focus:ring-red-400'
-      : 'border-gray-300',
+      ? 'border-danger focus:ring-danger/30'
+      : 'border-line-subtle focus:border-brand',
   ].join(' ')
 }
 
 function labelCls() {
-  return 'block text-sm font-medium text-gray-700'
+  return 'block text-sm font-medium text-ink-muted'
 }
 
 function errorMsg(msg: string | undefined) {
-  return msg ? <p className="mt-1 text-sm text-red-500">{msg}</p> : null
+  return msg ? <p className="mt-1 text-sm text-danger">{msg}</p> : null
 }
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -28,7 +29,7 @@ function SkeletonBlock({ lines = 3 }: { lines?: number }) {
   return (
     <div className="animate-pulse space-y-3">
       {Array.from({ length: lines }).map((_, i) => (
-        <div key={i} className="h-4 rounded bg-gray-200" style={{ width: `${70 + i * 15}%` }} />
+        <div key={i} className="h-4 rounded bg-surface-higher" style={{ width: `${70 + i * 15}%` }} />
       ))}
     </div>
   )
@@ -37,6 +38,7 @@ function SkeletonBlock({ lines = 3 }: { lines?: number }) {
 // ─── ProfilePage ─────────────────────────────────────────────────────────────
 
 export function ProfilePage() {
+  const navigate = useNavigate()
   const { data: profile, isLoading, isError, refetch } = useProfile()
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
@@ -125,8 +127,8 @@ export function ProfilePage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-xl bg-white p-8 shadow-sm">
-          <div className="mb-6 h-7 w-40 rounded bg-gray-200" />
+        <div className="rounded-xl border border-line-subtle bg-surface-base p-8 shadow-card-sm">
+          <div className="mb-6 h-7 w-40 rounded bg-surface-higher" />
           <SkeletonBlock lines={4} />
         </div>
       </div>
@@ -137,12 +139,12 @@ export function ProfilePage() {
   if (isError) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">No se pudieron cargar los datos del perfil.</p>
+        <div className="rounded-xl border border-line-subtle bg-surface-base p-8 text-center shadow-card-sm">
+          <p className="text-ink-muted">No se pudieron cargar los datos del perfil.</p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-on hover:bg-brand-dim"
           >
             Reintentar
           </button>
@@ -155,14 +157,24 @@ export function ProfilePage() {
   if (!editing) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-6 flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Volver
+        </button>
         {/* Datos personales */}
-        <div className="rounded-xl bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-line-subtle bg-surface-base p-8 shadow-card-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-800">Datos personales</h2>
+            <h2 className="text-xl font-semibold text-ink">Datos personales</h2>
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-on hover:bg-brand-dim"
             >
               Editar
             </button>
@@ -171,22 +183,22 @@ export function ProfilePage() {
           <dl className="mt-6 space-y-4">
             <div>
               <dt className={labelCls()}>Nombre</dt>
-              <dd className="mt-1 text-gray-900">{profile?.nombre} {profile?.apellido}</dd>
+              <dd className="mt-1 text-ink">{profile?.nombre} {profile?.apellido}</dd>
             </div>
             <div>
               <dt className={labelCls()}>Email</dt>
-              <dd className="mt-1 text-gray-900">{profile?.email}</dd>
+              <dd className="mt-1 text-ink">{profile?.email}</dd>
             </div>
             <div>
               <dt className={labelCls()}>Teléfono</dt>
-              <dd className="mt-1 text-gray-900">{profile?.telefono ?? <span className="text-gray-400">—</span>}</dd>
+              <dd className="mt-1 text-ink">{profile?.telefono ?? <span className="text-ink-muted">—</span>}</dd>
             </div>
           </dl>
         </div>
 
         {/* Cambiar contraseña */}
-        <div className="mt-8 rounded-xl bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-800">Cambiar contraseña</h2>
+        <div className="mt-8 rounded-xl border border-line-subtle bg-surface-base p-8 shadow-card-sm">
+          <h2 className="text-xl font-semibold text-ink">Cambiar contraseña</h2>
 
           <form
             onSubmit={(e) => {
@@ -285,12 +297,12 @@ export function ProfilePage() {
               {({ errors, canSubmit, isSubmitting }) => (
                 <>
                   {errors.length > 0 && (
-                    <p className="text-sm text-red-500">{errors.join(', ')}</p>
+                    <p className="text-sm text-danger">{errors.join(', ')}</p>
                   )}
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-on hover:bg-brand-dim disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSubmitting ? 'Guardando…' : 'Cambiar contraseña'}
                   </button>
@@ -306,8 +318,18 @@ export function ProfilePage() {
   // ── Edit mode ───────────────────────────────────────────────────────────
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-xl bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-800">Editar perfil</h2>
+      <button
+        type="button"
+        onClick={() => setEditing(false)}
+        className="mb-6 flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Volver al perfil
+      </button>
+      <div className="rounded-xl border border-line-subtle bg-surface-base p-8 shadow-card-sm">
+        <h2 className="text-xl font-semibold text-ink">Editar perfil</h2>
 
         <form
           onSubmit={(e) => {
@@ -425,14 +447,14 @@ export function ProfilePage() {
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-on hover:bg-brand-dim disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSubmitting ? 'Guardando…' : 'Guardar cambios'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink hover:bg-surface-high"
                 >
                   Cancelar
                 </button>

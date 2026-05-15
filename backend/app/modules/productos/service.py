@@ -54,6 +54,7 @@ class ProductoService:
             precio_base=producto.precio_base,
             stock_cantidad=producto.stock_cantidad,
             disponible=producto.disponible,
+            imagen_url=producto.imagen_url,
             created_at=producto.created_at,  # type: ignore[arg-type]
             updated_at=producto.updated_at,  # type: ignore[arg-type]
             categoria_ids=categoria_ids,
@@ -110,6 +111,7 @@ class ProductoService:
             precio_base=base.precio_base,
             stock_cantidad=base.stock_cantidad,
             disponible=base.disponible,
+            imagen_url=base.imagen_url,
             created_at=base.created_at,
             updated_at=base.updated_at,
             categoria_ids=base.categoria_ids,
@@ -187,6 +189,7 @@ class ProductoService:
             precio_base=data.precio_base,
             stock_cantidad=data.stock_cantidad,
             disponible=data.disponible,
+            imagen_url=data.imagen_url,
         )
         producto = await uow.productos.create(producto)
         producto_id = producto.id  # type: ignore[arg-type]
@@ -245,6 +248,10 @@ class ProductoService:
 
         if data.disponible is not None and data.disponible != producto.disponible:
             producto.disponible = data.disponible
+            changed = True
+
+        if "imagen_url" in data.model_dump(exclude_unset=True):
+            producto.imagen_url = data.imagen_url
             changed = True
 
         # Sincronizar categorías si se enviaron

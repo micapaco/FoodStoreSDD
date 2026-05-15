@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { DireccionRead } from '@/entities/direcciones/types'
 import {
@@ -12,14 +13,14 @@ import { DireccionForm } from '@/features/direcciones/components/DireccionForm'
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-xl border border-gray-200 bg-white p-5">
-      <div className="h-4 w-24 rounded bg-gray-200" />
+    <div className="animate-pulse rounded-xl border border-line-subtle bg-surface-base p-5">
+      <div className="h-4 w-24 rounded bg-surface-higher" />
       <div className="mt-3 space-y-2">
-        <div className="h-4 w-3/4 rounded bg-gray-200" />
-        <div className="h-4 w-2/3 rounded bg-gray-200" />
-        <div className="h-4 w-1/2 rounded bg-gray-200" />
+        <div className="h-4 w-3/4 rounded bg-surface-higher" />
+        <div className="h-4 w-2/3 rounded bg-surface-higher" />
+        <div className="h-4 w-1/2 rounded bg-surface-higher" />
       </div>
-      <div className="mt-4 h-8 w-40 rounded bg-gray-200" />
+      <div className="mt-4 h-8 w-40 rounded bg-surface-higher" />
     </div>
   )
 }
@@ -29,6 +30,7 @@ function formatDireccion(d: DireccionRead) {
 }
 
 export function DireccionesPage() {
+  const navigate = useNavigate()
   const addToast = useUiStore((s) => s.addToast)
   const [page, setPage] = useState(1)
   const page_size = 10
@@ -57,10 +59,14 @@ export function DireccionesPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+      <button type="button" onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        Volver
+      </button>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mis direcciones</h1>
-          <p className="mt-1 text-sm text-gray-500">Gestioná tus direcciones de entrega</p>
+          <h1 className="text-2xl font-bold text-ink">Mis direcciones</h1>
+          <p className="mt-1 text-sm text-ink-muted">Gestioná tus direcciones de entrega</p>
         </div>
         <button
           type="button"
@@ -68,7 +74,7 @@ export function DireccionesPage() {
             setMode('create')
             setEditTarget(null)
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-brand-on hover:bg-brand-dim transition-colors"
         >
           Nueva dirección
         </button>
@@ -76,15 +82,15 @@ export function DireccionesPage() {
 
       {/* Create / Edit panel */}
       {mode !== 'closed' && (
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-xl border border-line-subtle bg-surface-base p-6 shadow-card-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-ink">
               {mode === 'create' ? 'Crear dirección' : 'Editar dirección'}
             </h2>
             <button
               type="button"
               onClick={closeForm}
-              className="text-sm font-medium text-gray-500 hover:text-gray-700"
+              className="text-sm font-medium text-ink-muted hover:text-ink"
             >
               Cerrar
             </button>
@@ -121,18 +127,18 @@ export function DireccionesPage() {
 
       {/* Delete confirm */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-900">Confirmar eliminación</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              ¿Eliminar <strong>{deleteTarget.alias}</strong>? Esta acción no se puede deshacer.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-sm rounded-lg border border-line-subtle bg-surface-base p-6 shadow-dropdown">
+            <h3 className="text-lg font-semibold text-ink">Confirmar eliminación</h3>
+            <p className="mt-2 text-sm text-ink-muted">
+              ¿Eliminar <strong className="text-ink">{deleteTarget.alias}</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleteMut.isPending}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50 transition-colors"
               >
                 Cancelar
               </button>
@@ -148,7 +154,7 @@ export function DireccionesPage() {
                   })
                 }}
                 disabled={deleteMut.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-danger-container px-4 py-2 text-sm font-semibold text-danger hover:opacity-90 disabled:opacity-50 transition-colors"
               >
                 {deleteMut.isPending ? 'Eliminando…' : 'Eliminar'}
               </button>
@@ -169,12 +175,12 @@ export function DireccionesPage() {
         )}
 
         {isError && (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
-            <p className="text-gray-600">No se pudieron cargar tus direcciones.</p>
+          <div className="rounded-xl border border-line-subtle bg-surface-base p-8 text-center">
+            <p className="text-ink-muted">No se pudieron cargar tus direcciones.</p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-on hover:bg-brand-dim"
             >
               Reintentar
             </button>
@@ -182,13 +188,13 @@ export function DireccionesPage() {
         )}
 
         {!isLoading && !isError && items.length === 0 && (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <h3 className="text-lg font-semibold text-gray-900">Todavía no tenés direcciones</h3>
-            <p className="mt-2 text-sm text-gray-600">Creá una para poder usarla en el checkout.</p>
+          <div className="rounded-xl border border-dashed border-line-subtle bg-surface-base p-10 text-center">
+            <h3 className="text-lg font-semibold text-ink">Todavía no tenés direcciones</h3>
+            <p className="mt-2 text-sm text-ink-muted">Creá una para poder usarla en el checkout.</p>
             <button
               type="button"
               onClick={() => setMode('create')}
-              className="mt-6 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="mt-6 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-brand-on hover:bg-brand-dim"
             >
               Crear mi primera dirección
             </button>
@@ -198,20 +204,20 @@ export function DireccionesPage() {
         {!isLoading && !isError && items.length > 0 && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {items.map((d) => (
-              <div key={d.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div key={d.id} className="rounded-xl border border-line-subtle bg-surface-base p-5 shadow-card-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-gray-900">{d.alias}</h3>
+                      <h3 className="text-base font-semibold text-ink">{d.alias}</h3>
                       {d.es_principal && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                        <span className="inline-flex items-center rounded-full bg-success/20 px-2 py-0.5 text-xs font-semibold text-success ring-1 ring-success/30">
                           Principal
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 text-sm text-gray-700">{formatDireccion(d)}</p>
-                    <p className="mt-1 text-sm text-gray-700">{d.ciudad}, {d.provincia} ({d.codigo_postal})</p>
-                    <p className="mt-1 text-sm text-gray-500">{d.notas}</p>
+                    <p className="mt-2 text-sm text-ink-muted">{formatDireccion(d)}</p>
+                    <p className="mt-1 text-sm text-ink-muted">{d.ciudad}, {d.provincia} ({d.codigo_postal})</p>
+                    <p className="mt-1 text-sm text-ink-muted/70">{d.notas}</p>
                   </div>
                 </div>
 
@@ -226,7 +232,7 @@ export function DireccionesPage() {
                         })
                       }}
                       disabled={principalMut.isPending}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                      className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50 transition-colors"
                     >
                       Marcar como principal
                     </button>
@@ -238,14 +244,14 @@ export function DireccionesPage() {
                       setEditTarget(d)
                       setMode('edit')
                     }}
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-high transition-colors"
                   >
                     Editar
                   </button>
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(d)}
-                    className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors"
+                    className="rounded-lg border border-danger/30 px-3 py-1.5 text-sm font-semibold text-danger hover:bg-danger/10 transition-colors"
                   >
                     Eliminar
                   </button>
@@ -258,7 +264,7 @@ export function DireccionesPage() {
         {/* Pagination */}
         {!isLoading && !isError && total > page_size && (
           <div className="mt-6 flex items-center justify-between">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-ink-muted">
               Página {page} de {totalPages}{isFetching ? ' (actualizando...)' : ''}
             </p>
             <div className="flex items-center gap-2">
@@ -266,7 +272,7 @@ export function DireccionesPage() {
                 type="button"
                 onClick={() => canPrev && setPage((p) => p - 1)}
                 disabled={!canPrev}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50"
               >
                 Anterior
               </button>
@@ -274,7 +280,7 @@ export function DireccionesPage() {
                 type="button"
                 onClick={() => canNext && setPage((p) => p + 1)}
                 disabled={!canNext}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50"
               >
                 Siguiente
               </button>

@@ -61,7 +61,7 @@ export function CheckoutPage() {
       productoId: item.productoId,
       cantidad: item.cantidad,
       precioEsperado: item.producto.precio,
-      exclusiones: item.personalizacion.ingredientesExcluidos,
+      exclusiones: item.personalizacion?.ingredientesExcluidos ?? [],
     })),
   }
 
@@ -84,7 +84,7 @@ export function CheckoutPage() {
         items: items.map((item) => ({
           productoId: item.productoId,
           cantidad: item.cantidad,
-          personalizacion: item.personalizacion.ingredientesExcluidos,
+          personalizacion: item.personalizacion?.ingredientesExcluidos ?? [],
         })),
         formaPagoCodigo,
         direccionId: selectedDireccionId,
@@ -106,14 +106,18 @@ export function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
+      <button type="button" onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        Volver
+      </button>
+      <h1 className="text-2xl font-bold text-ink">Checkout</h1>
 
       {!hasItems ? (
-        <div className="mt-10 rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-sm font-medium text-gray-700">Tu carrito esta vacio</p>
+        <div className="mt-10 rounded-lg border border-line-subtle bg-surface-base p-6 text-center shadow-card-sm">
+          <p className="text-sm font-medium text-ink">Tu carrito esta vacio</p>
           <Link
             to="/productos"
-            className="mt-4 inline-flex rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+            className="mt-4 inline-flex rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-dim"
           >
             Ir al catalogo
           </Link>
@@ -122,18 +126,18 @@ export function CheckoutPage() {
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
           <section className="space-y-6 lg:col-span-2">
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Productos</h2>
-              <ul className="mt-4 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
+              <h2 className="text-base font-semibold text-ink">Productos</h2>
+              <ul className="mt-4 divide-y divide-line-subtle rounded-lg border border-line-subtle bg-surface-base">
                 {items.map((item) => (
                   <li
-                    key={`${item.productoId}-${item.personalizacion.ingredientesExcluidos.slice().sort().join('-')}`}
+                    key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}`}
                     className="flex items-center justify-between gap-4 p-4"
                   >
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{item.producto.nombre}</p>
-                      <p className="mt-1 text-xs text-gray-500">Cantidad: {item.cantidad}</p>
+                      <p className="text-sm font-medium text-ink">{item.producto.nombre}</p>
+                      <p className="mt-1 text-xs text-ink-muted">Cantidad: {item.cantidad}</p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-ink">
                       {formatCurrency(item.producto.precio * item.cantidad)}
                     </span>
                   </li>
@@ -141,10 +145,10 @@ export function CheckoutPage() {
               </ul>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-base font-semibold text-gray-900">Entrega</h2>
+            <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+              <h2 className="text-base font-semibold text-ink">Entrega</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-3 text-sm">
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-line-subtle p-3 text-sm text-ink">
                   <input
                     type="radio"
                     name="modoEntrega"
@@ -155,7 +159,7 @@ export function CheckoutPage() {
                   />
                   Enviar a domicilio
                 </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-3 text-sm">
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-line-subtle p-3 text-sm text-ink">
                   <input
                     type="radio"
                     name="modoEntrega"
@@ -170,7 +174,7 @@ export function CheckoutPage() {
 
               {modoEntrega === 'delivery' && (
                 <div className="mt-4">
-                  <label htmlFor="direccionId" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="direccionId" className="text-sm font-medium text-ink-muted">
                     Direccion
                   </label>
                   <select
@@ -178,7 +182,7 @@ export function CheckoutPage() {
                     value={direccionId}
                     onChange={(event) => setDireccionId(event.target.value)}
                     disabled={addressesQuery.isLoading}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink"
                   >
                     <option value="">Seleccionar direccion</option>
                     {direcciones.map((direccion) => (
@@ -188,9 +192,9 @@ export function CheckoutPage() {
                     ))}
                   </select>
                   {!addressesQuery.isLoading && direcciones.length === 0 && (
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-ink-muted">
                       No tenes direcciones cargadas.{' '}
-                      <Link to="/direcciones" className="font-semibold text-orange-600 hover:underline">
+                      <Link to="/direcciones" className="font-semibold text-brand hover:underline">
                         Crear direccion
                       </Link>
                     </p>
@@ -199,18 +203,18 @@ export function CheckoutPage() {
               )}
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-base font-semibold text-gray-900">Pago y notas</h2>
+            <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+              <h2 className="text-base font-semibold text-ink">Pago y notas</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="formaPago" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="formaPago" className="text-sm font-medium text-ink-muted">
                     Forma de pago
                   </label>
                   <select
                     id="formaPago"
                     value={formaPagoCodigo}
                     onChange={(event) => setFormaPagoCodigo(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink"
                   >
                     {FORMAS_PAGO.map((forma) => (
                       <option key={forma.codigo} value={forma.codigo}>
@@ -220,7 +224,7 @@ export function CheckoutPage() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="notas" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="notas" className="text-sm font-medium text-ink-muted">
                     Notas
                   </label>
                   <input
@@ -228,7 +232,7 @@ export function CheckoutPage() {
                     value={notas}
                     onChange={(event) => setNotas(event.target.value)}
                     maxLength={500}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
                     placeholder="Opcional"
                   />
                 </div>
@@ -236,23 +240,23 @@ export function CheckoutPage() {
             </div>
 
             {requestError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <div className="rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">
                 {requestError}
               </div>
             )}
 
             {hasBlockingIssues && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <h3 className="text-sm font-semibold text-amber-900">Revisa el carrito</h3>
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                <h3 className="text-sm font-semibold text-warning">Revisa el carrito</h3>
                 {resultado.errores.length > 0 && (
-                  <ul className="mt-3 space-y-2 text-sm text-amber-800">
+                  <ul className="mt-3 space-y-2 text-sm text-warning/80">
                     {resultado.errores.map((error) => (
                       <li key={`${error.productoId}-${error.tipo}`}>{error.mensaje}</li>
                     ))}
                   </ul>
                 )}
                 {resultado.preciosActualizados.length > 0 && (
-                  <ul className="mt-3 space-y-2 text-sm text-amber-800">
+                  <ul className="mt-3 space-y-2 text-sm text-warning/80">
                     {resultado.preciosActualizados.map((precio) => (
                       <li key={precio.productoId}>
                         El producto #{precio.productoId} cambio de {formatCurrency(precio.precioViejo)} a{' '}
@@ -266,21 +270,21 @@ export function CheckoutPage() {
           </section>
 
           <aside>
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-base font-semibold text-gray-900">Resumen</h2>
+            <div className="rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
+              <h2 className="text-base font-semibold text-ink">Resumen</h2>
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(subtotal())}</span>
+                  <span className="text-ink-muted">Subtotal</span>
+                  <span className="font-medium text-ink">{formatCurrency(subtotal())}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Costo de envio</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(checkoutCostoEnvio)}</span>
+                  <span className="text-ink-muted">Costo de envio</span>
+                  <span className="font-medium text-ink">{formatCurrency(checkoutCostoEnvio)}</span>
                 </div>
-                <div className="border-t border-gray-200 pt-3">
+                <div className="border-t border-line-subtle pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-semibold text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-orange-600">{formatCurrency(checkoutTotal)}</span>
+                    <span className="text-base font-semibold text-ink">Total</span>
+                    <span className="text-lg font-bold text-brand">{formatCurrency(checkoutTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -289,7 +293,7 @@ export function CheckoutPage() {
                 type="button"
                 onClick={handleCrearPedido}
                 disabled={isPending || !hasItems}
-                className="mt-6 flex w-full items-center justify-center rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+                className="mt-6 flex w-full items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-dim disabled:cursor-not-allowed disabled:bg-surface-higher disabled:text-ink-muted"
               >
                 {isPending ? 'Creando pedido...' : 'Crear pedido'}
               </button>

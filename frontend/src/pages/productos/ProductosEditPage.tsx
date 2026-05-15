@@ -30,6 +30,7 @@ export function ProductosEditPage() {
       precio_base: values.precio_base,
       stock_cantidad: values.stock_cantidad,
       disponible: values.disponible,
+      imagen_url: values.imagen_url || null,
       categoria_ids: values.categoria_ids,
       ingredientes: values.ingredientes,
     }
@@ -54,11 +55,11 @@ export function ProductosEditPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded bg-gray-200" />
-          <div className="h-4 w-64 rounded bg-gray-200" />
+          <div className="h-8 w-48 rounded bg-surface-higher" />
+          <div className="h-4 w-64 rounded bg-surface-higher" />
           <div className="mt-8 space-y-6">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-12 rounded-lg bg-gray-100" />
+              <div key={i} className="h-12 rounded-lg bg-surface-high" />
             ))}
           </div>
         </div>
@@ -69,13 +70,13 @@ export function ProductosEditPage() {
   if (isError || !producto) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
-          <p className="text-lg font-medium text-red-700">Producto no encontrado</p>
-          <p className="mt-1 text-sm text-red-500">El producto que buscás no existe o fue eliminado.</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/10 p-8 text-center">
+          <p className="text-lg font-medium text-danger">Producto no encontrado</p>
+          <p className="mt-1 text-sm text-danger/70">El producto que buscás no existe o fue eliminado.</p>
           <button
             type="button"
             onClick={() => navigate('/admin/productos')}
-            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+            className="mt-4 rounded-lg bg-danger-container px-4 py-2 text-sm font-medium text-danger hover:opacity-90 transition-colors"
           >
             Volver al listado
           </button>
@@ -90,6 +91,7 @@ export function ProductosEditPage() {
     precio_base: Number(producto.precio_base),
     stock_cantidad: producto.stock_cantidad,
     disponible: producto.disponible,
+    imagen_url: producto.imagen_url ?? '',
     categoria_ids: producto.categoria_ids,
     ingredientes: producto.ingredientes.map((i) => ({
       ingrediente_id: i.id,
@@ -100,11 +102,11 @@ export function ProductosEditPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Editar producto</h1>
-        <p className="mt-1 text-sm text-gray-500">Modificá los datos del producto</p>
+        <h1 className="text-2xl font-bold text-ink">Editar producto</h1>
+        <p className="mt-1 text-sm text-ink-muted">Modificá los datos del producto</p>
       </div>
 
-      <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+      <div className="mt-8 rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
         <ProductoForm
           initialValues={initialValues}
           categorias={categorias ?? []}

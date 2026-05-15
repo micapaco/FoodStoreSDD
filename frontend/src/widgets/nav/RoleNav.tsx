@@ -13,7 +13,6 @@ interface NavItem {
  * Active link gets aria-current="page" (set by NavLink) and a highlighted style.
  */
 const CLIENT_ITEMS: NavItem[] = [
-  { to: '/', label: 'Inicio', end: true },
   { to: '/productos', label: 'Catálogo' },
   { to: '/carrito', label: 'Mi carrito' },
   { to: '/pedidos', label: 'Mis pedidos' },
@@ -46,13 +45,12 @@ export function RoleNav() {
 
   return (
     <nav
-      className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8"
+      className="bg-surface-low border-b border-line-subtle px-4 sm:px-6 lg:px-8"
       aria-label="Navegación de sección"
     >
       <ul className="flex flex-wrap gap-1 py-2">
         {items.map((item) => (
           <li key={item.to}>
-            {/* NavLink automatically sets aria-current="page" when active */}
             <NavLink
               to={item.to}
               end={item.end}
@@ -60,8 +58,8 @@ export function RoleNav() {
                 [
                   'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-orange-50 text-orange-600 font-semibold'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                    ? 'bg-brand/10 text-brand font-semibold'
+                    : 'text-ink-muted hover:bg-surface-high hover:text-ink',
                 ].join(' ')
               }
             >

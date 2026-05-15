@@ -11,25 +11,22 @@ export function PublicHeader() {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? 'text-orange-600 font-semibold'
-      : 'text-gray-700 hover:text-orange-500 transition-colors'
+      ? 'text-brand font-semibold'
+      : 'text-ink-muted hover:text-brand transition-colors'
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-surface-low border-b border-line-subtle shadow-card-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Brand */}
           <NavLink to="/" className="flex items-center gap-2">
-            <span className="text-xl font-extrabold text-orange-500 tracking-tight">
+            <span className="text-xl font-extrabold text-brand tracking-tight">
               Food Store
             </span>
           </NavLink>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6" aria-label="Navegación principal">
-            <NavLink to="/" className={linkClass} end>
-              Inicio
-            </NavLink>
             <NavLink to="/productos" className={linkClass}>
               Catálogo
             </NavLink>
@@ -44,7 +41,7 @@ export function PublicHeader() {
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="md:hidden rounded-md p-2 text-gray-600 hover:bg-gray-100"
+            className="md:hidden rounded-md p-2 text-ink-muted hover:bg-surface-high"
             aria-expanded={menuOpen}
             aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
             onClick={() => setMenuOpen((prev) => !prev)}
@@ -67,9 +64,6 @@ export function PublicHeader() {
               className="md:hidden pb-4 flex flex-col gap-3"
               aria-label="Navegación mobile"
             >
-              <NavLink to="/" className={linkClass} end onClick={() => setMenuOpen(false)}>
-                Inicio
-              </NavLink>
               <NavLink to="/productos" className={linkClass} onClick={() => setMenuOpen(false)}>
                 Catálogo
               </NavLink>

@@ -22,6 +22,7 @@ export interface ProductoRead {
   precio_base: number
   stock_cantidad: number
   disponible: boolean
+  imagen_url?: string | null
   created_at: string
   updated_at: string
   categoria_ids: number[]
@@ -44,6 +45,7 @@ export interface ProductoCreate {
   precio_base: number
   stock_cantidad: number
   disponible: boolean
+  imagen_url?: string | null
   categoria_ids: number[]
   ingredientes: IngredienteAsignacion[]
 }
@@ -54,6 +56,7 @@ export interface ProductoUpdate {
   precio_base?: number
   stock_cantidad?: number
   disponible?: boolean
+  imagen_url?: string | null
   categoria_ids?: number[]
   ingredientes?: IngredienteAsignacion[]
 }

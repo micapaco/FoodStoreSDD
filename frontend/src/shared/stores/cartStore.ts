@@ -23,7 +23,7 @@ interface CartState {
 }
 
 function matchItem(i: CartItem, productoId: number, p: Personalizacion) {
-  return i.productoId === productoId && sameExclusiones(i.personalizacion.ingredientesExcluidos, p.ingredientesExcluidos)
+  return i.productoId === productoId && sameExclusiones(i.personalizacion?.ingredientesExcluidos ?? [], p?.ingredientesExcluidos ?? [])
 }
 
 function productQuantity(items: CartItem[], productoId: number): number {

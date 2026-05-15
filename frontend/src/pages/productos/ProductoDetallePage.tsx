@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useProductoPublic } from '@/features/productos/hooks/useProductos'
 import { useCartStore } from '@/shared/stores/cartStore'
+import { useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 import { PersonalizarProductoModal } from '@/features/store/components/PersonalizarProductoModal'
 import type { Personalizacion } from '@/shared/types/cart'
@@ -14,16 +15,16 @@ function DetailSkeleton() {
   return (
     <div className="animate-pulse">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="aspect-[4/3] rounded-lg bg-gray-200" />
+        <div className="aspect-[4/3] rounded-lg bg-surface-higher" />
         <div className="space-y-4">
-          <div className="h-8 w-3/4 rounded bg-gray-200" />
-          <div className="h-6 w-1/4 rounded bg-gray-200" />
-          <div className="h-20 w-full rounded bg-gray-100" />
+          <div className="h-8 w-3/4 rounded bg-surface-higher" />
+          <div className="h-6 w-1/4 rounded bg-surface-higher" />
+          <div className="h-20 w-full rounded bg-surface-high" />
           <div className="flex gap-2">
-            <div className="h-6 w-20 rounded-full bg-gray-200" />
-            <div className="h-6 w-24 rounded-full bg-gray-200" />
+            <div className="h-6 w-20 rounded-full bg-surface-higher" />
+            <div className="h-6 w-24 rounded-full bg-surface-higher" />
           </div>
-          <div className="h-12 w-48 rounded-lg bg-gray-200" />
+          <div className="h-12 w-48 rounded-lg bg-surface-higher" />
         </div>
       </div>
     </div>
@@ -34,6 +35,8 @@ export function ProductoDetallePage() {
   const { id } = useParams<{ id: string }>()
   const productId = Number(id)
   const navigate = useNavigate()
+  const location = useLocation()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedQuantity, setSelectedQuantity] = useState(1)
   const addItem = useCartStore((s) => s.addItem)
@@ -54,6 +57,10 @@ export function ProductoDetallePage() {
   }, [selectedQuantityMax])
 
   const handleAddToCart = (personalizacion: Personalizacion) => {
+    if (!isAuthenticated) {
+      navigate(`/login?from=${encodeURIComponent(location.pathname)}`)
+      return
+    }
     if (!producto) return
     if (stockRestante <= 0) {
       addToast({ type: 'warning', message: 'Ya agregaste todo el stock disponible de este producto.' })
@@ -67,6 +74,7 @@ export function ProductoDetallePage() {
         nombre: producto.nombre,
         precio: producto.precio_base,
         stockDisponible: producto.stock_cantidad,
+        imagen: producto.imagen_url ?? undefined,
       },
       quantityToAdd,
       personalizacion,
@@ -75,10 +83,8 @@ export function ProductoDetallePage() {
     setModalOpen(false)
     addToast({
       type: 'success',
-      message: quantityToAdd > 1 ? `${quantityToAdd} productos agregados al carrito.` : 'Producto agregado al carrito.',
-      actionLabel: 'Ir a mi carrito',
-      actionTo: '/carrito',
-      duration: 7000,
+      message: quantityToAdd > 1 ? `${quantityToAdd}× ${producto.nombre} agregados` : `${producto.nombre} agregado al carrito`,
+      duration: 3000,
     })
   }
 
@@ -103,26 +109,26 @@ export function ProductoDetallePage() {
   if (isError || !producto) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
-          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="rounded-lg border border-danger/30 bg-danger/10 p-8 text-center">
+          <svg className="mx-auto h-12 w-12 text-danger/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <p className="mt-4 text-lg font-medium text-red-700">Producto no encontrado</p>
-          <p className="mt-1 text-sm text-red-500">
+          <p className="mt-4 text-lg font-medium text-danger">Producto no encontrado</p>
+          <p className="mt-1 text-sm text-danger/70">
             El producto que buscás no está disponible o fue eliminado.
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => refetch()}
-              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+              className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
             >
               Reintentar
             </button>
             <button
               type="button"
               onClick={() => navigate('/productos')}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+              className="rounded-lg bg-danger-container px-4 py-2 text-sm font-medium text-danger hover:opacity-90 transition-colors"
             >
               Volver al catálogo
             </button>
@@ -146,64 +152,86 @@ export function ProductoDetallePage() {
         cantidad={selectedQuantity}
       />
 
-      <nav className="mb-6 text-sm text-gray-500">
+      <nav className="mb-6 text-sm text-ink-muted">
         <button
           type="button"
           onClick={() => navigate('/productos')}
-          className="hover:text-orange-600 transition-colors"
+          className="hover:text-brand transition-colors"
         >
           Catálogo
         </button>
         <span className="mx-2">/</span>
-        <span className="text-gray-900 font-medium">{producto.nombre}</span>
+        <span className="text-ink font-medium">{producto.nombre}</span>
       </nav>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-gradient-to-br from-orange-50 to-amber-50">
-          <svg className="h-24 w-24 text-orange-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+        <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-surface-high">
+          {producto.imagen_url ? (
+            <>
+              <img
+                src={producto.imagen_url}
+                alt={producto.nombre}
+                className="w-full h-full object-cover rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  const placeholder = e.currentTarget.nextElementSibling as HTMLElement | null
+                  if (placeholder) placeholder.style.display = 'flex'
+                }}
+              />
+              <div className="hidden h-full w-full items-center justify-center">
+                <svg className="h-24 w-24 text-brand/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <svg className="h-24 w-24 text-brand/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold text-gray-900">{producto.nombre}</h1>
+          <h1 className="text-3xl font-bold text-ink">{producto.nombre}</h1>
 
-          <p className="mt-3 text-3xl font-bold text-orange-600">
+          <p className="mt-3 text-3xl font-bold text-brand">
             {formatCurrency(producto.precio_base)}
           </p>
 
           <div className="mt-4">
             {producto.disponible ? (
               stockRestante > 0 ? (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                <span className="inline-flex items-center rounded-full bg-success/20 px-3 py-1 text-xs font-semibold text-success">
                   Disponible ({stockRestante} en stock)
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                <span className="inline-flex items-center rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning">
                   Sin stock
                 </span>
               )
             ) : (
-              <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+              <span className="inline-flex items-center rounded-full bg-danger/20 px-3 py-1 text-xs font-semibold text-danger">
                 No disponible
               </span>
             )}
           </div>
 
           {producto.descripcion && (
-            <p className="mt-6 text-gray-600 leading-relaxed">{producto.descripcion}</p>
+            <p className="mt-6 text-ink-muted leading-relaxed">{producto.descripcion}</p>
           )}
 
           {producto.categorias.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-2">
                 Categorías
               </h3>
               <div className="flex flex-wrap gap-1.5">
                 {producto.categorias.map((cat) => (
                   <span
                     key={cat.id}
-                    className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600"
+                    className="inline-flex items-center rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand"
                   >
                     {cat.nombre}
                   </span>
@@ -213,7 +241,7 @@ export function ProductoDetallePage() {
           )}
 
           {hasAlergenos && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-700">
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-warning/10 px-4 py-2 text-sm text-warning">
               <span>⚠️</span>
               <span>Este producto contiene ingredientes que pueden ser alérgenos.</span>
             </div>
@@ -222,27 +250,27 @@ export function ProductoDetallePage() {
           <div className="mt-8">
             {isAvailable && (
               <div className="mb-4 flex flex-wrap items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Cantidad</span>
-                <div className="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white">
+                <span className="text-sm font-medium text-ink-muted">Cantidad</span>
+                <div className="inline-flex h-10 items-center rounded-lg border border-line-subtle bg-surface-low">
                   <button
                     type="button"
                     onClick={handleDecrementQuantity}
                     disabled={selectedQuantity <= 1}
-                    className="flex h-10 w-10 items-center justify-center rounded-l-lg text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-10 items-center justify-center rounded-l-lg text-ink-muted hover:bg-surface-high disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Reducir cantidad"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                     </svg>
                   </button>
-                  <span className="flex h-10 min-w-12 items-center justify-center border-x border-gray-300 px-4 text-sm font-semibold text-gray-900">
+                  <span className="flex h-10 min-w-12 items-center justify-center border-x border-line-subtle px-4 text-sm font-semibold text-ink">
                     {selectedQuantity}
                   </span>
                   <button
                     type="button"
                     onClick={handleIncrementQuantity}
                     disabled={selectedQuantity >= stockRestante}
-                    className="flex h-10 w-10 items-center justify-center rounded-r-lg text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-10 items-center justify-center rounded-r-lg text-ink-muted hover:bg-surface-high disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Aumentar cantidad"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -262,12 +290,12 @@ export function ProductoDetallePage() {
                   handleAddToCart({ ingredientesExcluidos: [] })
                 }
               }}
-              className="w-full rounded-lg bg-orange-500 px-8 py-3 text-base font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:w-auto"
+              className="w-full rounded-lg bg-brand px-8 py-3 text-base font-semibold text-brand-on hover:bg-brand-dim disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:w-auto"
             >
               {selectedQuantity > 1 ? `Agregar ${selectedQuantity} al carrito` : 'Agregar al carrito'}
             </button>
             {!isAvailable && (
-              <p className="mt-2 text-xs text-gray-400">
+              <p className="mt-2 text-xs text-ink-muted">
                 Producto no disponible en este momento
               </p>
             )}
@@ -277,23 +305,23 @@ export function ProductoDetallePage() {
 
       {producto.ingredientes.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-lg font-semibold text-gray-900">Ingredientes</h2>
+          <h2 className="text-lg font-semibold text-ink">Ingredientes</h2>
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {producto.ingredientes.map((ing) => (
               <div
                 key={ing.id}
-                className="flex items-center justify-between rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm"
+                className="flex items-center justify-between rounded-lg border border-line-subtle bg-surface-base px-4 py-3 shadow-card-sm"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">{ing.nombre}</span>
+                  <span className="text-sm text-ink">{ing.nombre}</span>
                   {ing.es_alergeno && (
-                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
+                    <span className="inline-flex items-center rounded-full bg-warning/20 px-2 py-0.5 text-xs font-medium text-warning">
                       ⚠ Alérgeno
                     </span>
                   )}
                 </div>
                 {ing.es_removible && (
-                  <span className="text-xs text-gray-400">Removible</span>
+                  <span className="text-xs text-ink-muted">Removible</span>
                 )}
               </div>
             ))}

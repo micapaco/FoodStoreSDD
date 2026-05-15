@@ -103,6 +103,10 @@ class Producto(SQLModel, table=True):
     )
     stock_cantidad: int = Field(default=0, nullable=False)
     disponible: bool = Field(default=True, nullable=False)
+    imagen_url: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String(500), nullable=True),
+    )
     deleted_at: Optional[datetime] = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True),

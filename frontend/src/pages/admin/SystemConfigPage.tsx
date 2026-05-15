@@ -8,8 +8,8 @@ import { useConfigAdmin, useUpdateConfig } from '@/shared/hooks/useConfig'
 function FieldSkeleton() {
   return (
     <div className="animate-pulse space-y-2">
-      <div className="h-4 w-32 rounded bg-gray-200" />
-      <div className="h-10 w-full rounded bg-gray-200" />
+      <div className="h-4 w-32 rounded bg-surface-higher" />
+      <div className="h-10 w-full rounded bg-surface-higher" />
     </div>
   )
 }
@@ -47,18 +47,18 @@ function ConfigField({ clave, label, initialValue, onSave, isPending, children }
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-      <label className="block text-sm font-semibold text-gray-700">{label}</label>
+    <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+      <label className="block text-sm font-semibold text-ink">{label}</label>
       <div className="mt-3">{children(value, setValue)}</div>
       {error && (
-        <p className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="mt-2 rounded bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
       )}
       <div className="mt-4 flex justify-end">
         <button
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="rounded bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:bg-gray-300"
+          className="rounded bg-brand px-4 py-2 text-sm font-semibold text-brand-on hover:bg-brand-dim disabled:bg-surface-higher disabled:text-ink-muted"
         >
           {isPending ? 'Guardando...' : 'Guardar'}
         </button>
@@ -89,17 +89,17 @@ export function SystemConfigPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-gray-900">Configuración del sistema</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-2xl font-bold text-ink">Configuración del sistema</h1>
+      <p className="mt-1 text-sm text-ink-muted">
         Administrá los parámetros operativos del local.
       </p>
 
       {/* Warning banner when orders are disabled */}
       {!isLoading && !isError && data && !pedidosHabilitados && (
-        <div className="mt-4 flex items-start gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-yellow-800">
+        <div className="mt-4 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-warning">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600"
+            className="mt-0.5 h-5 w-5 shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -118,7 +118,7 @@ export function SystemConfigPage() {
       )}
 
       {isError && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-6 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
           Error al cargar la configuración. Recargá la página.
         </div>
       )}
@@ -148,7 +148,7 @@ export function SystemConfigPage() {
                     step="0.01"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    className="w-full rounded border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
                     placeholder="50.00"
                   />
                 )}
@@ -170,8 +170,8 @@ export function SystemConfigPage() {
                       aria-checked={value.toLowerCase() !== 'false'}
                       onClick={() => onChange(value.toLowerCase() === 'false' ? 'true' : 'false')}
                       className={[
-                        'relative inline-flex h-6 w-11 cursor-pointer rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1',
-                        value.toLowerCase() !== 'false' ? 'bg-orange-500' : 'bg-gray-300',
+                        'relative inline-flex h-6 w-11 cursor-pointer rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-1 focus:ring-offset-surface-base',
+                        value.toLowerCase() !== 'false' ? 'bg-brand' : 'bg-surface-higher',
                       ].join(' ')}
                     >
                       <span
@@ -182,7 +182,7 @@ export function SystemConfigPage() {
                         ].join(' ')}
                       />
                     </button>
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-ink-muted">
                       {value.toLowerCase() !== 'false' ? 'Habilitado' : 'Deshabilitado'}
                     </span>
                   </div>
@@ -202,7 +202,7 @@ export function SystemConfigPage() {
                     type="text"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    className="w-full rounded border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
                     placeholder="Ej: Cerrado por vacaciones"
                     maxLength={200}
                   />

@@ -26,6 +26,7 @@ export function ProductosCreatePage() {
       precio_base: values.precio_base,
       stock_cantidad: values.stock_cantidad,
       disponible: values.disponible,
+      imagen_url: values.imagen_url || null,
       categoria_ids: values.categoria_ids,
       ingredientes: values.ingredientes,
     }
@@ -45,11 +46,11 @@ export function ProductosCreatePage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded bg-gray-200" />
-          <div className="h-4 w-64 rounded bg-gray-200" />
+          <div className="h-8 w-48 rounded bg-surface-higher" />
+          <div className="h-4 w-64 rounded bg-surface-higher" />
           <div className="mt-8 space-y-6">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-12 rounded-lg bg-gray-100" />
+              <div key={i} className="h-12 rounded-lg bg-surface-high" />
             ))}
           </div>
         </div>
@@ -60,11 +61,11 @@ export function ProductosCreatePage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Nuevo producto</h1>
-        <p className="mt-1 text-sm text-gray-500">Completá los datos para crear un nuevo producto</p>
+        <h1 className="text-2xl font-bold text-ink">Nuevo producto</h1>
+        <p className="mt-1 text-sm text-ink-muted">Completá los datos para crear un nuevo producto</p>
       </div>
 
-      <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+      <div className="mt-8 rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
         <ProductoForm
           categorias={categorias ?? []}
           ingredientes={ingredientes ?? []}

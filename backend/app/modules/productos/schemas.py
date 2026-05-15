@@ -59,6 +59,7 @@ class ProductoCreate(BaseModel):
     )
     stock_cantidad: int = Field(default=0, ge=0)
     disponible: bool = Field(default=True)
+    imagen_url: Optional[str] = Field(default=None, max_length=500)
     categoria_ids: list[int] = Field(default_factory=list)
     ingredientes: list[IngredienteAsignacion] = Field(default_factory=list)
 
@@ -82,6 +83,7 @@ class ProductoUpdate(BaseModel):
     )
     stock_cantidad: Optional[int] = Field(default=None, ge=0)
     disponible: Optional[bool] = None
+    imagen_url: Optional[str] = Field(default=None, max_length=500)
     categoria_ids: Optional[list[int]] = None
     ingredientes: Optional[list[IngredienteAsignacion]] = None
 
@@ -95,6 +97,7 @@ class ProductoRead(BaseModel):
     precio_base: Decimal
     stock_cantidad: int
     disponible: bool
+    imagen_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     categoria_ids: list[int] = Field(default_factory=list)
