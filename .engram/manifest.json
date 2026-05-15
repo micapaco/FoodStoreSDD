@@ -48,6 +48,14 @@
       "sessions": 3,
       "memories": 3,
       "prompts": 24
+    },
+    {
+      "id": "5c90097a",
+      "created_by": "mikap",
+      "created_at": "2026-05-15T13:25:49Z",
+      "sessions": 0,
+      "memories": 18,
+      "prompts": 0
     }
   ]
 }
