@@ -17,6 +17,7 @@ const CLIENT_ITEMS: NavItem[] = [
   { to: '/productos', label: 'Catálogo' },
   { to: '/carrito', label: 'Mi carrito' },
   { to: '/pedidos', label: 'Mis pedidos' },
+  { to: '/direcciones', label: 'Mis direcciones' },
   { to: '/perfil', label: 'Mi perfil' },
 ]
 
