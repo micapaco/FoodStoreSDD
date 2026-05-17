@@ -48,14 +48,19 @@ Al guardar: optimistic update + invalidación del query.
 ---
 
 ### Requirement: Cambio de roles de usuario
-El modal de edición SHALL incluir un selector de rol único.
-Los roles disponibles son: ADMIN, STOCK, PEDIDOS, CLIENT.
+El modal de edición SHALL incluir un selector de asignación de rol.
+Las opciones disponibles son: ADMIN, STOCK, PEDIDOS, STOCK+PEDIDOS, CLIENT.
 No debe permitir guardar sin rol seleccionado.
 
 #### Scenario: Cambio de rol exitoso
 - **WHEN** ADMIN modifica el rol y guarda
 - **THEN** el frontend envía `{ roles: [rolSeleccionado] }`
 - **AND** el sistema actualiza el rol y muestra el nuevo badge en la tabla
+
+#### Scenario: Cambio a rol operativo combinado
+- **WHEN** ADMIN selecciona `STOCK+PEDIDOS` y guarda
+- **THEN** el frontend envia `{ roles: ["STOCK", "PEDIDOS"] }`
+- **AND** el sistema actualiza ambos badges en la tabla
 
 #### Scenario: Protección del último ADMIN
 - **WHEN** ADMIN intenta quitar el rol ADMIN al único administrador
@@ -76,4 +81,12 @@ El propio admin autenticado no puede desactivarse a sí mismo desde la UI.
 #### Scenario: Intento de desactivar al único ADMIN
 - **WHEN** ADMIN intenta desactivar al único administrador
 - **THEN** la UI muestra el error HTTP 409 del backend
+
+### Requirement: Badges de roles diferenciables
+La interfaz de administracion SHALL mostrar badges de roles con colores distinguibles entre si.
+
+#### Scenario: ADMIN usa color violeta
+- **WHEN** se muestra el rol `ADMIN` en navbar o gestion de usuarios
+- **THEN** el badge usa una variante violeta/morada
+- **AND** no comparte el color amarillo usado para `PEDIDOS`
 

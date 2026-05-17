@@ -10,7 +10,7 @@ pero si el usuario es ADMIN ven datos extendidos (productos no disponibles, etc)
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile, status
 
 from app.core.deps import get_current_user, get_optional_current_user, require_role
 from app.core.uow import UnitOfWork
@@ -19,6 +19,7 @@ from app.modules.productos.schemas import (
     ProductoCreate,
     ProductoDetail,
     ProductoDisponibilidadUpdate,
+    ProductoImagenUploadResponse,
     ProductoList,
     ProductoRead,
     ProductoStockUpdate,
@@ -96,6 +97,23 @@ async def list_productos(
             order=order,
             admin=is_admin,
         )
+
+@router.post(
+    "/imagenes",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ProductoImagenUploadResponse,
+)
+async def upload_producto_imagen(
+    request: Request,
+    file: UploadFile = File(...),
+    _admin: Usuario = Depends(require_role(["ADMIN"])),
+) -> ProductoImagenUploadResponse:
+    """Sube una imagen local de producto. Requiere rol ADMIN."""
+    imagen_url = await ProductoService.guardar_imagen_producto(
+        file,
+        str(request.base_url),
+    )
+    return ProductoImagenUploadResponse(imagen_url=imagen_url)
 
 
 @router.get("/{producto_id}", response_model=ProductoDetail)

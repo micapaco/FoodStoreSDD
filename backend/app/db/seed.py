@@ -10,7 +10,9 @@ Requiere que `alembic upgrade head` haya sido ejecutado previamente.
 """
 
 import asyncio
+import shutil
 import sys
+from pathlib import Path
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -20,6 +22,32 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import get_settings
 
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+SEED_IMAGE_SOURCE_DIR = Path(__file__).resolve().parents[1] / "modules" / "productos" / "imagenes"
+SEED_IMAGE_TARGET_DIR = Path(__file__).resolve().parents[1] / "static" / "uploads" / "productos" / "seed"
+SEED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif")
+SEED_IMAGE_URL_PREFIX = "/static/uploads/productos/seed/"
+
+
+def _prepare_seed_image(asset_name: str) -> str | None:
+    """Publica una imagen seed si existe y retorna una URL local servida por FastAPI."""
+    for extension in SEED_IMAGE_EXTENSIONS:
+        source = SEED_IMAGE_SOURCE_DIR / f"{asset_name}{extension}"
+        if not source.exists():
+            continue
+        SEED_IMAGE_TARGET_DIR.mkdir(parents=True, exist_ok=True)
+        target = SEED_IMAGE_TARGET_DIR / source.name
+        if not target.exists() or target.stat().st_size != source.stat().st_size:
+            shutil.copy2(source, target)
+        return f"{SEED_IMAGE_URL_PREFIX}{source.name}"
+    return None
+
+
+def _can_replace_seed_image(current_url: str | None) -> bool:
+    """Evita pisar una imagen cargada manualmente por un admin."""
+    if not current_url:
+        return True
+    return SEED_IMAGE_URL_PREFIX in current_url
 
 
 async def seed(session: AsyncSession) -> None:
@@ -140,13 +168,18 @@ async def seed(session: AsyncSession) -> None:
         {"nombre": "Empanadas", "parent_id": root_ids["Comidas"]},
     ]
     for sub in subcategorias:
+        existing = await session.execute(
+            text("SELECT id FROM categoria WHERE lower(btrim(nombre)) = lower(btrim(:nombre)) AND deleted_at IS NULL"),
+            {"nombre": sub["nombre"]},
+        )
+        if existing.fetchone() is not None:
+            continue
         await session.execute(
             text(
                 "INSERT INTO categoria (nombre, parent_id, "
                 "created_at, updated_at) "
                 "VALUES (:nombre, :parent_id, "
-                "NOW() AT TIME ZONE 'utc', NOW() AT TIME ZONE 'utc') "
-                "ON CONFLICT ON CONSTRAINT uq_categoria_nombre DO NOTHING"
+                "NOW() AT TIME ZONE 'utc', NOW() AT TIME ZONE 'utc')"
             ),
             sub,
         )
@@ -219,6 +252,7 @@ async def seed(session: AsyncSession) -> None:
             "precio_base": 1200.00,
             "stock_cantidad": 50,
             "disponible": True,
+            "imagen_asset": "pizza",
             "categorias": ["Pizzas"],
             "ingredientes": [
                 {"nombre": "Queso", "es_removible": False},
@@ -231,6 +265,7 @@ async def seed(session: AsyncSession) -> None:
             "precio_base": 850.00,
             "stock_cantidad": 30,
             "disponible": True,
+            "imagen_asset": "hamburguesa",
             "categorias": ["Hamburguesas"],
             "ingredientes": [
                 {"nombre": "Queso", "es_removible": True},
@@ -245,6 +280,7 @@ async def seed(session: AsyncSession) -> None:
             "precio_base": 250.00,
             "stock_cantidad": 100,
             "disponible": True,
+            "imagen_asset": "cocacola",
             "categorias": ["Gaseosas"],
             "ingredientes": [],
         },
@@ -254,6 +290,7 @@ async def seed(session: AsyncSession) -> None:
             "precio_base": 200.00,
             "stock_cantidad": 80,
             "disponible": True,
+            "imagen_asset": "agua",
             "categorias": ["Aguas"],
             "ingredientes": [],
         },
@@ -263,6 +300,7 @@ async def seed(session: AsyncSession) -> None:
             "precio_base": 400.00,
             "stock_cantidad": 60,
             "disponible": True,
+            "imagen_asset": "papas",
             "categorias": ["Snacks"],
             "ingredientes": [],
         },
@@ -272,29 +310,41 @@ async def seed(session: AsyncSession) -> None:
             "precio_base": 500.00,
             "stock_cantidad": 20,
             "disponible": True,
+            "imagen_asset": "flan",
             "categorias": ["Postres"],
             "ingredientes": [],
         },
     ]
 
     for prod in productos_seed:
+        imagen_url = _prepare_seed_image(str(prod["imagen_asset"]))
+
         # Idempotent: skip if producto.nombre already exists
         existing = await session.execute(
-            text("SELECT id FROM producto WHERE nombre = :nombre"),
+            text("SELECT id, imagen_url FROM producto WHERE nombre = :nombre"),
             {"nombre": prod["nombre"]},
         )
         existing_row = existing.fetchone()
         if existing_row is not None:
+            if imagen_url and _can_replace_seed_image(existing_row.imagen_url):
+                await session.execute(
+                    text(
+                        "UPDATE producto SET imagen_url = :imagen_url, "
+                        "updated_at = NOW() AT TIME ZONE 'utc' "
+                        "WHERE id = :id"
+                    ),
+                    {"id": existing_row.id, "imagen_url": imagen_url},
+                )
             continue
 
         # Insert producto
         result = await session.execute(
             text(
                 "INSERT INTO producto (nombre, descripcion, precio_base, "
-                "stock_cantidad, disponible, "
+                "stock_cantidad, disponible, imagen_url, "
                 "created_at, updated_at) "
                 "VALUES (:nombre, :descripcion, :precio_base, "
-                ":stock_cantidad, :disponible, "
+                ":stock_cantidad, :disponible, :imagen_url, "
                 "NOW() AT TIME ZONE 'utc', NOW() AT TIME ZONE 'utc') RETURNING id"
             ),
             {
@@ -303,6 +353,7 @@ async def seed(session: AsyncSession) -> None:
                 "precio_base": prod["precio_base"],
                 "stock_cantidad": prod["stock_cantidad"],
                 "disponible": prod["disponible"],
+                "imagen_url": imagen_url,
             },
         )
         producto_id = result.scalar_one()

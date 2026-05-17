@@ -85,6 +85,10 @@ class DetallePedido(SQLModel, table=True):
         default=None,
         sa_column=Column(ARRAY(Integer), nullable=True),
     )
+    personalizacion_snapshot: Optional[list[dict]] = Field(
+        default=None,
+        sa_column=Column(JSONB, nullable=True),
+    )
 
 
 class HistorialEstadoPedido(SQLModel, table=True):

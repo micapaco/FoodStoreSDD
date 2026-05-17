@@ -19,6 +19,7 @@ export function CartPage() {
   const { data: ingredientes } = useIngredientes()
   const { data: configPublica } = useConfigPublica()
   const configCosto = configPublica?.costo_envio_base ?? 50
+  const pedidosHabilitados = configPublica?.pedidos_habilitados !== false
   const ingredientNameMap = new Map(ingredientes?.map((i) => [i.id, i.nombre]) ?? [])
 
   return (
@@ -79,6 +80,11 @@ export function CartPage() {
           <div>
             <div className="rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
               <h2 className="text-base font-semibold text-ink">Resumen de compra</h2>
+              {!pedidosHabilitados && (
+                <div className="mt-3 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+                  El local no esta aceptando pedidos en este momento. Podes conservar y editar el carrito.
+                </div>
+              )}
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-ink-muted">Subtotal</span>

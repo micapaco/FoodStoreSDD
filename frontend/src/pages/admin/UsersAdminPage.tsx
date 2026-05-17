@@ -37,7 +37,7 @@ function SkeletonRows() {
 
 function RoleBadge({ rol }: { rol: string }) {
   const colors: Record<string, string> = {
-    ADMIN: 'bg-brand/20 text-brand',
+    ADMIN: 'bg-violet-500/20 text-violet-300',
     STOCK: 'bg-success/20 text-success',
     PEDIDOS: 'bg-warning/20 text-warning',
     CLIENT: 'bg-surface-high text-ink-muted',

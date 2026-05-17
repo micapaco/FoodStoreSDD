@@ -26,6 +26,16 @@ function describePaymentStatus(formaPagoCodigo: string, estadoCodigo: string, mp
   return 'Pago gestionado fuera de MercadoPago'
 }
 
+function formatExclusiones(item: { personalizacion: number[]; personalizacionDetalle: { nombre: string }[] }): string | null {
+  if (item.personalizacionDetalle.length > 0) {
+    return item.personalizacionDetalle.map((exclusion) => exclusion.nombre).join(', ')
+  }
+  if (item.personalizacion.length > 0) {
+    return item.personalizacion.map((id) => `Ingrediente #${id}`).join(', ')
+  }
+  return null
+}
+
 export function OrderDetailPage() {
   const params = useParams<{ id: string }>()
   const pedidoId = params.id && Number.isFinite(Number(params.id)) ? Number(params.id) : null
@@ -110,9 +120,9 @@ export function OrderDetailPage() {
                       <p className="mt-1 text-sm text-ink-muted">
                         Cantidad {item.cantidad} · {formatCurrency(item.precioSnapshot)} cada uno
                       </p>
-                      {item.personalizacion.length > 0 && (
+                      {formatExclusiones(item) && (
                         <p className="mt-1 text-sm text-ink-muted">
-                          Exclusiones: {item.personalizacion.join(', ')}
+                          Sin {formatExclusiones(item)}
                         </p>
                       )}
                     </div>

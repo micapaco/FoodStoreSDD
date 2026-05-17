@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductosPublic, useCategorias } from '@/features/productos/hooks/useProductos'
 import type { ProductoFilters, ProductoRead } from '@/entities/productos/types'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
@@ -49,7 +50,7 @@ function ProductCard({ producto, categoriaNames }: ProductCardProps) {
         {producto.imagen_url ? (
           <>
             <img
-              src={producto.imagen_url}
+              src={resolveImageUrl(producto.imagen_url)}
               alt={producto.nombre}
               className="w-full h-full object-cover"
               onError={(e) => {

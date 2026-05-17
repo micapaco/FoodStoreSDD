@@ -11,6 +11,7 @@ interface NavItem {
 const ADMIN_ITEMS: NavItem[] = [
   { to: '/admin', label: 'Panel admin', end: true },
   { to: '/admin/productos', label: 'Productos' },
+  { to: '/admin/ingredientes', label: 'Ingredientes' },
   { to: '/admin/categorias', label: 'Categorías' },
   { to: '/admin/pedidos', label: 'Pedidos' },
   { to: '/admin/usuarios', label: 'Usuarios' },
@@ -19,11 +20,13 @@ const ADMIN_ITEMS: NavItem[] = [
 
 const STOCK_PEDIDOS_ITEMS: NavItem[] = [
   { to: '/admin/productos', label: 'Productos' },
+  { to: '/admin/ingredientes', label: 'Ingredientes' },
   { to: '/admin/pedidos', label: 'Pedidos' },
 ]
 
 const STOCK_ITEMS: NavItem[] = [
   { to: '/admin/productos', label: 'Productos' },
+  { to: '/admin/ingredientes', label: 'Ingredientes' },
 ]
 
 const PEDIDOS_ITEMS: NavItem[] = [

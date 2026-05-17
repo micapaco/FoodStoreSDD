@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { PrivateHeader } from '@/widgets/header/PrivateHeader'
 import { AdminSidebar } from '@/widgets/nav/AdminSidebar'
 import { RoleNav } from '@/widgets/nav/RoleNav'
@@ -6,23 +6,29 @@ import { Footer } from '@/widgets/footer/Footer'
 import { Toaster } from '@/widgets/toaster/Toaster'
 import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useConfigPublica } from '@/shared/hooks/useConfig'
+import { isClientViewPath } from '@/shared/lib/auth/roles'
 import { RootErrorBoundary } from './RootErrorBoundary'
 
 function SystemMessageBanner() {
   const { data } = useConfigPublica()
   const mensaje = data?.mensaje_sistema ?? ''
-  if (!mensaje) return null
+  const pedidosDeshabilitados = data?.pedidos_habilitados === false
+  if (!mensaje && !pedidosDeshabilitados) return null
   return (
     <div className="border-b border-brand/20 bg-brand/10 px-4 py-2 text-center text-sm font-medium text-brand">
-      {mensaje}
+      {pedidosDeshabilitados ? 'El local no esta aceptando pedidos en este momento' : mensaje}
+      {pedidosDeshabilitados && mensaje ? ` - ${mensaje}` : ''}
     </div>
   )
 }
 
 export function PrivateLayout() {
+  const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const roles = user ? getSafeUserRoles(user) : []
-  const isClient = !roles.includes('ADMIN') && !roles.includes('STOCK') && !roles.includes('PEDIDOS')
+  const isClientRole = !roles.includes('ADMIN') && !roles.includes('STOCK') && !roles.includes('PEDIDOS')
+  const isAdminClientView = roles.includes('ADMIN') && isClientViewPath(location.pathname)
+  const isClient = isClientRole || isAdminClientView
 
   if (isClient) {
     return (

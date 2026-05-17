@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
+import { isClientViewPath } from '@/shared/lib/auth/roles'
 
 interface NavItem {
   to: string
@@ -22,17 +23,24 @@ const CLIENT_ITEMS: NavItem[] = [
 const ADMIN_ITEMS: NavItem[] = [
   { to: '/admin', label: 'Panel admin', end: true },
   { to: '/admin/productos', label: 'Productos' },
+  { to: '/admin/ingredientes', label: 'Ingredientes' },
   { to: '/admin/categorias', label: 'Categorías' },
   { to: '/admin/pedidos', label: 'Pedidos' },
   { to: '/admin/usuarios', label: 'Usuarios' },
   { to: '/admin/configuracion', label: 'Configuración' },
 ]
 
-const STOCK_ITEMS: NavItem[] = [{ to: '/admin/productos', label: 'Productos' }]
+const STOCK_ITEMS: NavItem[] = [
+  { to: '/admin/productos', label: 'Productos' },
+  { to: '/admin/ingredientes', label: 'Ingredientes' },
+]
 
 const PEDIDOS_ITEMS: NavItem[] = [{ to: '/admin/pedidos', label: 'Pedidos' }]
 
-function getNavItems(roles: string[]): NavItem[] {
+function getNavItems(roles: string[], path: string): NavItem[] {
+  if (roles.includes('ADMIN') && isClientViewPath(path)) {
+    return [...CLIENT_ITEMS, { to: '/admin', label: 'Panel admin', end: true }]
+  }
   if (roles.includes('ADMIN')) return ADMIN_ITEMS
   if (roles.includes('STOCK')) return STOCK_ITEMS
   if (roles.includes('PEDIDOS')) return PEDIDOS_ITEMS
@@ -40,8 +48,9 @@ function getNavItems(roles: string[]): NavItem[] {
 }
 
 export function RoleNav() {
+  const location = useLocation()
   const user = useAuthStore((s) => s.user)
-  const items = user ? getNavItems(getSafeUserRoles(user)) : CLIENT_ITEMS
+  const items = user ? getNavItems(getSafeUserRoles(user), location.pathname) : CLIENT_ITEMS
 
   return (
     <nav

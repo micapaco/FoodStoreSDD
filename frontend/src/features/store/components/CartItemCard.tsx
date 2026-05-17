@@ -1,4 +1,5 @@
 import type { CartItem } from '@/shared/types/cart'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 import { useCartStore } from '@/shared/stores/cartStore'
 
 interface CartItemCardProps {
@@ -44,7 +45,7 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
     <div className="flex gap-3 py-4">
       <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-surface-high">
         {item.producto.imagen ? (
-          <img src={item.producto.imagen} alt={item.producto.nombre} className="h-full w-full object-cover" />
+          <img src={resolveImageUrl(item.producto.imagen)} alt={item.producto.nombre} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center">
             <svg className="h-8 w-8 text-ink-muted/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">

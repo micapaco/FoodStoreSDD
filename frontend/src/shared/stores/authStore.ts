@@ -67,10 +67,7 @@ export const useAuthStore = create<AuthState>()(
         const normalizedUser = normalizeUser(user)
         if (!normalizedUser) return
         set({ ...tokens, user: normalizedUser, isAuthenticated: true, navigateAfterLogout: null })
-        // Non-client roles (ADMIN, STOCK, PEDIDOS) should never see a previous client's cart
-        if (!normalizedUser.roles.includes('CLIENT')) {
-          useCartStore.getState().clearCart()
-        }
+        useCartStore.getState().setOwner(normalizedUser.id)
       },
       logout: () =>
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false }),

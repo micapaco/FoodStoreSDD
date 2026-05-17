@@ -1,5 +1,6 @@
-## ADDED Requirements
-
+## Purpose
+Define la experiencia frontend para administrar productos y completar los formularios de catalogo.
+## Requirements
 ### Requirement: Listado de productos (admin)
 El sistema SHALL mostrar una tabla paginada de productos con filtros para los roles ADMIN y STOCK.
 
@@ -18,54 +19,58 @@ El sistema SHALL mostrar una tabla paginada de productos con filtros para los ro
 - **THEN** el sistema filtra productos cuyo nombre o descripción coinciden con el texto
 
 ### Requirement: Crear producto
-El sistema SHALL proveer un formulario para crear productos con soporte de imagen.
+El sistema SHALL proveer un formulario para crear productos con soporte de imagen por upload local.
 
-#### Scenario: Formulario de creación
+#### Scenario: Formulario de creacion
 - **WHEN** un usuario ADMIN navega a `/admin/productos/nuevo`
-- **THEN** el sistema muestra un formulario con campos: nombre, descripción, precio_base, stock_cantidad, disponible (toggle), imagen_url (URL de imagen, opcional), selector de categorías, selector de ingredientes con toggle es_removible
+- **THEN** el sistema muestra un formulario con campos: nombre, descripcion, precio_base, stock_cantidad, disponible, imagen, selector de categorias, selector de ingredientes con toggle es_removible
 
-#### Scenario: Campo imagen_url en formulario
+#### Scenario: Sin campo manual de URL
 - **WHEN** un usuario ADMIN navega a `/admin/productos/nuevo`
-- **THEN** el sistema muestra el campo de texto `imagen_url` con label "Imagen (URL)"
+- **THEN** el sistema no muestra un campo libre para escribir `imagen_url`
+- **AND** la imagen se carga mediante selector de archivo local
+
+#### Scenario: Upload de imagen local en creacion
+- **WHEN** un usuario ADMIN selecciona una imagen local valida desde el formulario real de creacion
+- **THEN** el sistema llama `POST /api/v1/productos/imagenes`
+- **AND** coloca la `imagen_url` retornada en el formulario
+- **AND** usa esa `imagen_url` al enviar `POST /api/v1/productos`
+
+#### Scenario: Estado de subida
+- **WHEN** la imagen local se esta subiendo
+- **THEN** el sistema muestra un estado de carga y evita guardar el producto hasta finalizar el upload
+
+#### Scenario: Error de subida
+- **WHEN** el upload de imagen falla
+- **THEN** el sistema muestra un error claro y no reemplaza `imagen_url` con un valor invalido
+
+#### Scenario: Formato de imagen soportado
+- **WHEN** un usuario ADMIN selecciona una imagen `jpg`, `jpeg`, `png`, `webp`, `gif` o `avif`
+- **THEN** el formulario permite intentar el upload
 
 #### Scenario: Preview de imagen en tiempo real
-- **WHEN** el usuario escribe una URL válida en el campo `imagen_url`
+- **WHEN** el usuario sube una imagen valida
 - **THEN** el sistema muestra una preview de la imagen debajo del campo en tiempo real
 
-#### Scenario: Preview con URL inválida
-- **WHEN** el usuario escribe una URL que no carga una imagen
-- **THEN** el sistema muestra un placeholder en el área de preview sin errores de UI
-
-#### Scenario: Validación de longitud
-- **WHEN** el usuario ingresa una URL de más de 500 caracteres
-- **THEN** el sistema muestra un error de validación "La URL no puede superar los 500 caracteres" sin enviar el request
-
-#### Scenario: Validación de campos
-- **WHEN** el usuario envía el formulario con datos inválidos (precio negativo, nombre vacío)
-- **THEN** el sistema muestra errores de validación sin enviar el request
-
-#### Scenario: Creación exitosa con imagen
-- **WHEN** el usuario completa el formulario con `imagen_url` válida y confirma
-- **THEN** el sistema envía `POST /api/v1/productos` con el campo `imagen_url` incluido y redirige al listado con toast de éxito
+#### Scenario: Preview falla sin romper formulario
+- **WHEN** la URL interna de imagen no carga
+- **THEN** el sistema muestra un placeholder y permite continuar editando el formulario
 
 ### Requirement: Editar producto
-El sistema SHALL proveer un formulario para editar productos existentes con soporte de imagen.
+El sistema SHALL proveer un formulario para editar productos existentes con soporte de imagen por upload local.
 
-#### Scenario: Formulario de edición
+#### Scenario: Formulario de edicion
 - **WHEN** un usuario ADMIN navega a `/admin/productos/{id}/editar`
-- **THEN** el sistema carga los datos del producto y los muestra en el mismo formulario de creación precargados, incluyendo el campo `imagen_url`
+- **THEN** el sistema carga los datos del producto y los muestra en el mismo formulario de creacion precargados, incluyendo el campo `imagen_url`
 
-#### Scenario: Formulario de edición con imagen precargada
-- **WHEN** un usuario ADMIN navega a `/admin/productos/{id}/editar`
-- **THEN** el sistema precarga el valor de `imagen_url` en el campo correspondiente y muestra la preview actual
+#### Scenario: Reemplazar imagen por upload en edicion
+- **WHEN** un usuario ADMIN sube una nueva imagen local en edicion
+- **THEN** el sistema obtiene una nueva `imagen_url` via upload
+- **AND** envia esa URL en `PUT /api/v1/productos/{id}`
 
-#### Scenario: Limpiar imagen en edición
+#### Scenario: Limpiar imagen en edicion
 - **WHEN** el usuario borra el contenido del campo `imagen_url` y guarda
-- **THEN** el sistema envía `imagen_url: null` y el producto queda sin imagen
-
-#### Scenario: Edición exitosa
-- **WHEN** el usuario modifica datos y confirma
-- **THEN** el sistema envía `PUT /api/v1/productos/{id}` y redirige al listado con un toast de éxito
+- **THEN** el sistema envia `imagen_url: null` y el producto queda sin imagen
 
 ### Requirement: Detalle de producto (admin)
 El sistema SHALL mostrar el detalle completo de un producto, incluyendo imagen.
@@ -147,3 +152,14 @@ El sistema SHALL manejar estados de carga, vacío y error en todas las vistas de
 #### Scenario: Error de carga
 - **WHEN** falla la carga de productos
 - **THEN** el sistema muestra un mensaje de error con botón "Reintentar"
+
+### Requirement: Catalogo con imagenes seed
+El sistema SHALL mostrar las imagenes locales de seed cuando los productos las tengan asociadas.
+
+#### Scenario: Producto seed con imagen local
+- **WHEN** un cliente navega al catalogo y un producto seed tiene `imagen_url`
+- **THEN** el sistema muestra la imagen servida por backend
+
+#### Scenario: Producto seed sin imagen local disponible
+- **WHEN** un cliente navega al catalogo y el producto no tiene `imagen_url` porque falto el asset de seed
+- **THEN** el sistema muestra el placeholder existente sin romper la card ni el detalle

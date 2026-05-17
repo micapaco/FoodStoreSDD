@@ -125,6 +125,12 @@ class ProductoDisponibilidadUpdate(BaseModel):
     disponible: bool
 
 
+class ProductoImagenUploadResponse(BaseModel):
+    """Respuesta del upload de imagen de producto."""
+
+    imagen_url: str
+
+
 class ProductoList(BaseModel):
     """Schema para listado paginado de productos."""
 

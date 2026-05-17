@@ -69,6 +69,10 @@ export interface ProductoDisponibilidadUpdate {
   disponible: boolean
 }
 
+export interface ProductoImagenUploadResponse {
+  imagen_url: string
+}
+
 export interface ProductoFilters {
   page: number
   size: number

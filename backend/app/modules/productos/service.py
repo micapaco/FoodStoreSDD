@@ -10,7 +10,11 @@ Lógica de negocio para la gestión de productos del catálogo:
 
 from datetime import datetime, timezone
 from math import ceil
+from pathlib import Path
 from typing import Optional
+from uuid import uuid4
+
+from fastapi import UploadFile
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.core.uow import UnitOfWork
@@ -25,6 +29,16 @@ from app.modules.productos.schemas import (
     ProductoRead,
     ProductoUpdate,
 )
+
+ALLOWED_IMAGE_CONTENT_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+    "image/avif": ".avif",
+}
+MAX_PRODUCT_IMAGE_BYTES = 1_000_000
+PRODUCT_IMAGE_DIR = Path(__file__).resolve().parents[2] / "static" / "uploads" / "productos"
 
 
 class ProductoService:
@@ -420,3 +434,24 @@ class ProductoService:
 
         es_removible_map = await ProductoService._load_es_removible(uow, producto)
         return ProductoService._build_producto_detail(producto, es_removible_map)
+
+    @staticmethod
+    async def guardar_imagen_producto(file: UploadFile, base_url: str) -> str:
+        """Guarda una imagen de producto y retorna una URL absoluta."""
+        suffix = ALLOWED_IMAGE_CONTENT_TYPES.get(file.content_type or "")
+        if suffix is None:
+            raise ValidationAppError("La imagen debe ser JPG, PNG, WEBP, GIF o AVIF.")
+
+        content = await file.read()
+        if not content:
+            raise ValidationAppError("La imagen no puede estar vacia.")
+        if len(content) > MAX_PRODUCT_IMAGE_BYTES:
+            raise ValidationAppError("La imagen no puede superar 1 MB.")
+
+        PRODUCT_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+        filename = f"{uuid4().hex}{suffix}"
+        path = PRODUCT_IMAGE_DIR / filename
+        path.write_bytes(content)
+
+        relative_url = f"/static/uploads/productos/{filename}"
+        return f"{base_url.rstrip('/')}{relative_url}"

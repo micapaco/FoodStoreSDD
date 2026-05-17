@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest import IsolatedAsyncioTestCase, TestCase
 
+from app.core.exceptions import ConflictError
 from app.core.repository import BaseRepository
 from app.db.models.catalogo import Categoria, Ingrediente
 from app.modules.categorias.schemas import CategoriaUpdate
@@ -23,12 +24,25 @@ class FakeSession:
 class FakeCategoriaRepository:
     def __init__(self) -> None:
         self.categoria = Categoria(id=1, nombre="Bebidas", parent_id=None)
+        self.active_duplicate: Categoria | None = None
+        self.created: Categoria | None = None
 
     async def get_by_id(self, _categoria_id: int) -> Categoria:
         return self.categoria
 
     async def get_by_nombre(self, _nombre: str) -> Categoria | None:
         return None
+
+    async def get_active_by_nombre_normalized(self, _nombre: str) -> Categoria | None:
+        return self.active_duplicate
+
+    async def validate_parent_exists(self, _parent_id: int) -> bool:
+        return True
+
+    async def create(self, categoria: Categoria) -> Categoria:
+        categoria.id = 2
+        self.created = categoria
+        return categoria
 
     async def update(self, categoria: Categoria) -> Categoria:
         self.categoria = categoria
@@ -104,3 +118,24 @@ class CatalogTimestampServiceTests(IsolatedAsyncioTestCase):
 
         self.assertIsNotNone(categoria.deleted_at)
         self.assertIsNone(categoria.deleted_at.tzinfo)
+
+    async def test_categoria_create_ignores_soft_deleted_name_conflicts(self) -> None:
+        from app.modules.categorias.schemas import CategoriaCreate
+
+        uow = FakeCategoriaUow()
+        data = CategoriaCreate(nombre="  Bebidas  ")
+
+        result = await CategoriaService.create(uow, data)  # type: ignore[arg-type]
+
+        self.assertEqual("Bebidas", result.nombre)
+        self.assertEqual("Bebidas", uow.categorias.created.nombre)
+
+    async def test_categoria_create_rejects_active_duplicate_name(self) -> None:
+        from app.modules.categorias.schemas import CategoriaCreate
+
+        uow = FakeCategoriaUow()
+        uow.categorias.active_duplicate = Categoria(id=9, nombre="bebidas")
+        data = CategoriaCreate(nombre=" Bebidas ")
+
+        with self.assertRaises(ConflictError):
+            await CategoriaService.create(uow, data)  # type: ignore[arg-type]

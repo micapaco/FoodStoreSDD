@@ -46,6 +46,15 @@ export function parseHttpError(error: unknown): AppHttpError {
       }
     }
 
+    if (status === 409) {
+      return {
+        status: 409,
+        code: 'CONFLICT',
+        message: typeof data?.detail === 'string' ? data.detail : 'Conflicto con el estado actual',
+        detail: data,
+      }
+    }
+
     if (status === 422) {
       // Backend detail can be a string or FastAPI validation array
       const backendMessage =

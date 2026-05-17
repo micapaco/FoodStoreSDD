@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useCartStore } from '@/shared/stores/cartStore'
 import { CartDrawer } from '@/features/store/components/CartDrawer'
+import { isClientViewPath } from '@/shared/lib/auth/roles'
 
 function getPrimaryRole(roles: string[]): string {
   if (roles.includes('ADMIN')) return 'ADMIN'
@@ -11,7 +13,7 @@ function getPrimaryRole(roles: string[]): string {
 }
 
 const roleBadgeClass: Record<string, string> = {
-  ADMIN: 'bg-danger-container/40 text-danger',
+  ADMIN: 'bg-violet-500/20 text-violet-300',
   STOCK: 'bg-surface-higher text-ink-muted',
   PEDIDOS: 'bg-warning/20 text-warning',
   CLIENT: 'bg-success/20 text-success',
@@ -19,8 +21,10 @@ const roleBadgeClass: Record<string, string> = {
 
 export function PrivateHeader() {
   const [cartOpen, setCartOpen] = useState(false)
+  const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const logoutAndRedirect = useAuthStore((s) => s.logoutAndRedirect)
+  const setCartOwner = useCartStore((s) => s.setOwner)
   const count = useCartStore((s) => s.items.reduce((acc, item) => acc + item.cantidad, 0))
 
   const handleLogout = () => {
@@ -28,9 +32,16 @@ export function PrivateHeader() {
   }
 
   const roles = user ? getSafeUserRoles(user) : []
+  const userId = user?.id
   const primaryRole = user ? getPrimaryRole(roles) : 'CLIENT'
-  const canUseCart = roles.length === 1 && roles[0] === 'CLIENT'
+  const canUseCart = roles.includes('CLIENT') || (roles.includes('ADMIN') && isClientViewPath(location.pathname))
   const badgeClass = roleBadgeClass[primaryRole] ?? 'bg-surface-higher text-ink-muted'
+
+  useEffect(() => {
+    if (userId) {
+      setCartOwner(userId)
+    }
+  }, [setCartOwner, userId])
 
   return (
     <header className="bg-surface-low border-b border-line-subtle shadow-card-sm">

@@ -1,15 +1,15 @@
 """
-Módulo ingredientes — router HTTP.
+Modulo ingredientes - router HTTP.
 
 Responsabilidad: parsear request, abrir UoW, delegar al servicio, serializar respuesta.
-Sin lógica de negocio — eso pertenece a IngredienteService.
+Sin logica de negocio; eso pertenece a IngredienteService.
 """
 
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.core.deps import get_current_user, require_role
+from app.core.deps import require_role
 from app.core.uow import UnitOfWork
 from app.db.models.identidad import Usuario
 from app.modules.ingredientes.schemas import (
@@ -23,28 +23,29 @@ from app.modules.ingredientes.service import IngredienteService
 router = APIRouter(prefix="/ingredientes", tags=["ingredientes"])
 
 
-# ── Endpoints públicos ─────────────────────────────────────────────────────
-
-
 @router.get("", response_model=IngredienteList)
 async def list_ingredientes(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    alergeno: Optional[bool] = Query(None, description="Filtrar solo alérgenos"),
+    alergeno: Optional[bool] = Query(None, description="Filtrar solo alergenos"),
+    q: Optional[str] = Query(None, max_length=100, description="Buscar por nombre"),
 ) -> IngredienteList:
-    """Lista ingredientes activos con paginación y filtro opcional de alérgenos. Público."""
+    """Lista ingredientes activos con paginacion, busqueda y filtros opcionales."""
     async with UnitOfWork() as uow:
-        return await IngredienteService.list_all(uow, page=page, size=size, alergeno=alergeno)
+        return await IngredienteService.list_all(
+            uow,
+            page=page,
+            size=size,
+            alergeno=alergeno,
+            q=q,
+        )
 
 
 @router.get("/{ingrediente_id}", response_model=IngredienteRead)
 async def get_ingrediente(ingrediente_id: int) -> IngredienteRead:
-    """Detalle de un ingrediente por ID. Público."""
+    """Detalle de un ingrediente por ID. Publico."""
     async with UnitOfWork() as uow:
         return await IngredienteService.get_by_id(uow, ingrediente_id)
-
-
-# ── Endpoints protegidos (ADMIN / STOCK) ───────────────────────────────────
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=IngredienteRead)
