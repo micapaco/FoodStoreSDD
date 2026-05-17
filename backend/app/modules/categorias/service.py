@@ -32,6 +32,24 @@ class CategoriaService:
         return datetime.now(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
+    def _normalize_nombre(nombre: str) -> str:
+        """Normaliza espacios sin cambiar la capitalizacion elegida."""
+        return " ".join(nombre.strip().split())
+
+    @staticmethod
+    async def _ensure_nombre_activo_disponible(
+        uow: UnitOfWork,
+        nombre: str,
+        *,
+        ignore_id: int | None = None,
+    ) -> None:
+        existing = await uow.categorias.get_active_by_nombre_normalized(nombre)
+        if existing is not None and existing.id != ignore_id:
+            raise ConflictError(
+                f"Ya existe una categoria activa con el nombre '{nombre}'."
+            )
+
+    @staticmethod
     async def _build_tree(categorias: list[Categoria]) -> list[CategoriaRead]:
         """Construye el árbol jerárquico desde una lista plana ordenada por profundidad.
 
@@ -67,10 +85,8 @@ class CategoriaService:
 
         Valida que el padre exista y esté activo si se proporciona parent_id.
         """
-        # Validar nombre único
-        existing = await uow.categorias.get_by_nombre(data.nombre)
-        if existing is not None:
-            raise ConflictError(f"Ya existe una categoría con el nombre '{data.nombre}'.")
+        nombre = CategoriaService._normalize_nombre(data.nombre)
+        await CategoriaService._ensure_nombre_activo_disponible(uow, nombre)
 
         if data.parent_id is not None:
             exists = await uow.categorias.validate_parent_exists(data.parent_id)
@@ -79,7 +95,7 @@ class CategoriaService:
                     f"La categoría padre {data.parent_id} no existe o está eliminada."
                 )
 
-        categoria = Categoria(nombre=data.nombre, parent_id=data.parent_id)
+        categoria = Categoria(nombre=nombre, parent_id=data.parent_id)
         categoria = await uow.categorias.create(categoria)
 
         return CategoriaRead(
@@ -109,15 +125,16 @@ class CategoriaService:
         # Actualizar campos presentes en el request
         changed = False
 
-        if data.nombre is not None and data.nombre != categoria.nombre:
-            # Validar que el nuevo nombre no esté en uso
-            existing = await uow.categorias.get_by_nombre(data.nombre)
-            if existing is not None and existing.id != categoria_id:
-                raise ConflictError(
-                    f"Ya existe una categoría con el nombre '{data.nombre}'."
+        if data.nombre is not None:
+            nombre = CategoriaService._normalize_nombre(data.nombre)
+            if nombre != categoria.nombre:
+                await CategoriaService._ensure_nombre_activo_disponible(
+                    uow,
+                    nombre,
+                    ignore_id=categoria_id,
                 )
-            categoria.nombre = data.nombre
-            changed = True
+                categoria.nombre = nombre
+                changed = True
 
         # Si se especificó parent_id explícitamente None → convertir en raíz
         # Si se especificó un valor → cambiar de padre (con validaciones)

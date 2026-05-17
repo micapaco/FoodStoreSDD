@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -22,7 +22,7 @@ import {
   useMetricasVentas,
 } from '@/shared/hooks/useMetricas'
 
-const PIE_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#a855f7', '#ef4444', '#eab308']
+const PIE_COLORS = ['#f2ca50', '#58e7aa', '#4285F4', '#9C27B0', '#ffb4ab', '#d4af37']
 
 const ESTADO_LABELS: Record<string, string> = {
   PENDIENTE: 'Pendiente',
@@ -67,23 +67,23 @@ const PRESETS = [
 function KpiCard({ label, value, loading }: { label: string; value: string; loading: boolean }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-        <div className="mt-2 h-8 w-28 animate-pulse rounded bg-gray-200" />
+      <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+        <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</p>
+        <div className="mt-2 h-8 w-28 animate-pulse rounded bg-surface-higher" />
       </div>
     )
   }
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-ink">{value}</p>
     </div>
   )
 }
 
 function EmptyChart({ message }: { message: string }) {
   return (
-    <div className="flex h-48 items-center justify-center text-sm text-gray-400">{message}</div>
+    <div className="flex h-48 items-center justify-center text-sm text-ink-muted">{message}</div>
   )
 }
 
@@ -92,7 +92,10 @@ export function AdminDashboardPage() {
   const [granularidad, setGranularidad] = useState<Granularidad>('dia')
   const [activePreset, setActivePreset] = useState('30d')
 
-  const params = { desde: range.desde, hasta: range.hasta }
+  const params = useMemo(
+    () => ({ desde: range.desde, hasta: range.hasta }),
+    [range.desde, range.hasta],
+  )
 
   const resumen = useMetricasResumen(params)
   const ventas = useMetricasVentas({ ...params, granularidad })
@@ -107,7 +110,7 @@ export function AdminDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
         <div className="flex gap-2">
           {PRESETS.map((p) => (
             <button
@@ -116,8 +119,8 @@ export function AdminDashboardPage() {
               onClick={() => handlePreset(p)}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                 activePreset === p.label
-                  ? 'border-orange-500 bg-orange-500 text-white'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'border-brand bg-brand text-brand-on'
+                  : 'border-line-subtle bg-surface-base text-ink hover:bg-surface-high'
               }`}
             >
               {p.label}
@@ -151,15 +154,15 @@ export function AdminDashboardPage() {
       </div>
 
       {resumen.isError && (
-        <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="mt-3 rounded bg-danger/10 px-3 py-2 text-sm text-danger">
           Error al cargar métricas de resumen.
         </p>
       )}
 
       {/* Ventas — LineChart */}
-      <div className="mt-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mt-8 rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-gray-900">Evolución de ventas</h2>
+          <h2 className="text-base font-semibold text-ink">Evolución de ventas</h2>
           <div className="flex gap-2">
             {(['dia', 'semana', 'mes'] as const).map((g) => (
               <button
@@ -168,8 +171,8 @@ export function AdminDashboardPage() {
                 onClick={() => setGranularidad(g)}
                 className={`rounded border px-2.5 py-1 text-xs font-medium transition-colors ${
                   granularidad === g
-                    ? 'border-orange-500 bg-orange-500 text-white'
-                    : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    ? 'border-brand bg-brand text-brand-on'
+                    : 'border-line-subtle text-ink-muted hover:bg-surface-high'
                 }`}
               >
                 {g === 'dia' ? 'Día' : g === 'semana' ? 'Semana' : 'Mes'}
@@ -178,7 +181,7 @@ export function AdminDashboardPage() {
           </div>
         </div>
         <div className="mt-4">
-          {ventas.isLoading && <div className="h-48 animate-pulse rounded bg-gray-100" />}
+          {ventas.isLoading && <div className="h-48 animate-pulse rounded bg-surface-high" />}
           {ventas.isError && <EmptyChart message="Error al cargar datos de ventas." />}
           {ventas.data && ventas.data.puntos.length === 0 && (
             <EmptyChart message="Sin ventas en el período seleccionado." />
@@ -186,20 +189,21 @@ export function AdminDashboardPage() {
           {ventas.data && ventas.data.puntos.length > 0 && (
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={ventas.data.puntos} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="fecha" tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#4d4635" />
+                <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: '#d0c5af' }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#d0c5af' }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#d0c5af' }} />
                 <Tooltip
+                  contentStyle={{ background: '#192029', border: '1px solid #4d4635', color: '#dce3f0' }}
                   formatter={(value, name) =>
                     name === 'total_ventas'
                       ? [formatCurrency(toNumber(value)), 'Ventas']
                       : [toNumber(value), 'Pedidos']
                   }
                 />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="total_ventas" stroke="#f97316" name="Ventas ($)" dot={false} />
-                <Line yAxisId="right" type="monotone" dataKey="cantidad_pedidos" stroke="#3b82f6" name="Pedidos" dot={false} />
+                <Legend wrapperStyle={{ color: '#d0c5af' }} />
+                <Line yAxisId="left" type="monotone" dataKey="total_ventas" stroke="#f2ca50" name="Ventas ($)" dot={false} />
+                <Line yAxisId="right" type="monotone" dataKey="cantidad_pedidos" stroke="#58e7aa" name="Pedidos" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -209,10 +213,10 @@ export function AdminDashboardPage() {
       {/* Bottom row: BarChart + PieChart */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Top productos — BarChart */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">Top productos</h2>
+        <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+          <h2 className="text-base font-semibold text-ink">Top productos</h2>
           <div className="mt-4">
-            {topProductos.isLoading && <div className="h-48 animate-pulse rounded bg-gray-100" />}
+            {topProductos.isLoading && <div className="h-48 animate-pulse rounded bg-surface-high" />}
             {topProductos.isError && <EmptyChart message="Error al cargar top productos." />}
             {topProductos.data && topProductos.data.productos.length === 0 && (
               <EmptyChart message="Sin productos vendidos en el período." />
@@ -224,11 +228,14 @@ export function AdminDashboardPage() {
                   data={topProductos.data.productos}
                   margin={{ top: 4, right: 8, left: 8, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="nombre" tick={{ fontSize: 11 }} width={100} />
-                  <Tooltip formatter={(value) => [toNumber(value), 'Unidades']} />
-                  <Bar dataKey="cantidad_vendida" fill="#f97316" radius={[0, 4, 4, 0]} name="Unidades" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#4d4635" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#d0c5af' }} />
+                  <YAxis type="category" dataKey="nombre" tick={{ fontSize: 11, fill: '#d0c5af' }} width={100} />
+                  <Tooltip
+                    contentStyle={{ background: '#192029', border: '1px solid #4d4635', color: '#dce3f0' }}
+                    formatter={(value) => [toNumber(value), 'Unidades']}
+                  />
+                  <Bar dataKey="cantidad_vendida" fill="#f2ca50" radius={[0, 4, 4, 0]} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -236,10 +243,10 @@ export function AdminDashboardPage() {
         </div>
 
         {/* Pedidos por estado — PieChart */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">Distribución por estado</h2>
+        <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
+          <h2 className="text-base font-semibold text-ink">Distribución por estado</h2>
           <div className="mt-4">
-            {porEstado.isLoading && <div className="h-48 animate-pulse rounded bg-gray-100" />}
+            {porEstado.isLoading && <div className="h-48 animate-pulse rounded bg-surface-high" />}
             {porEstado.isError && <EmptyChart message="Error al cargar distribución." />}
             {porEstado.data && porEstado.data.estados.length === 0 && (
               <EmptyChart message="Sin pedidos en el período seleccionado." />
@@ -265,6 +272,7 @@ export function AdminDashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
+                    contentStyle={{ background: '#192029', border: '1px solid #4d4635', color: '#dce3f0' }}
                     formatter={(value, name) => {
                       const estado = toStringValue(name)
                       return [toNumber(value), ESTADO_LABELS[estado] ?? estado]

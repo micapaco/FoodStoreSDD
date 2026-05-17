@@ -15,19 +15,19 @@ export function CartSummary() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-600">Subtotal</span>
-        <span className="font-medium text-gray-900">{formatCurrency(subtotal())}</span>
+        <span className="text-ink-muted">Subtotal</span>
+        <span className="font-medium text-ink">{formatCurrency(subtotal())}</span>
       </div>
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-600">Costo de envío</span>
-        <span className="font-medium text-gray-900">
+        <span className="text-ink-muted">Costo de envío</span>
+        <span className="font-medium text-ink">
           {costoEnvio(configCosto) === 0 ? '—' : formatCurrency(costoEnvio(configCosto))}
         </span>
       </div>
-      <div className="border-t border-gray-200 pt-3">
+      <div className="border-t border-line-subtle pt-3">
         <div className="flex items-center justify-between">
-          <span className="text-base font-semibold text-gray-900">Total</span>
-          <span className="text-base font-semibold text-orange-600">{formatCurrency(total(configCosto))}</span>
+          <span className="text-base font-semibold text-ink">Total</span>
+          <span className="text-base font-semibold text-brand">{formatCurrency(total(configCosto))}</span>
         </div>
       </div>
     </div>

@@ -18,7 +18,10 @@ class Categoria(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), primary_key=True, autoincrement=True),
     )
-    nombre: str = Field(max_length=100, nullable=False, unique=True)
+    nombre: str = Field(
+        max_length=100,
+        sa_column=Column(String(100), nullable=False),
+    )
     parent_id: Optional[int] = Field(
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("categoria.id"), nullable=True),
@@ -103,6 +106,10 @@ class Producto(SQLModel, table=True):
     )
     stock_cantidad: int = Field(default=0, nullable=False)
     disponible: bool = Field(default=True, nullable=False)
+    imagen_url: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String(500), nullable=True),
+    )
     deleted_at: Optional[datetime] = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True),

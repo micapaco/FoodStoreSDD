@@ -15,6 +15,16 @@
 
 ---
 
+## Estado real de archivo (2026-05-17)
+
+`openspec list` no muestra changes activos. El repo tiene archivados 31 changes reales: `01` a `15`, los ajustes `15.5` y `15.6`, y la numeracion continua `16` a `29`.
+
+La linea historica no separa "correctivos" o "refinamientos" en una seccion aparte: despues del `19` se continua con `20`, `21`, `22`, etc. para mantener referencias claras y estables.
+
+Antes de proponer un nuevo change, verificar el estado real con `npx.cmd -y openspec list` y revisar `openspec/changes/archive/`.
+
+---
+
 ## Changes del proyecto
 
 ### `01` — `infra-backend-core`
@@ -266,6 +276,90 @@ Panel y backend para parámetros operativos globales administrables sin tocar c�
 **Depende de**: `auth`, `frontend-shell`
 
 > Aunque sea de prioridad baja, merece un change separado porque no comparte el mismo foco que usuarios, catálogo o métricas.
+
+---
+
+### `20` — `admin-categories-ui`
+
+**Funcionalidad**: Implementa la vista administrativa de categorias y reemplaza placeholders de UI para gestionar el catalogo desde el panel.
+
+**Depende de**: `catalog-categories-ingredients`, `frontend-shell`
+
+---
+
+### `21` — `catalog-timestamp-hotfix`
+
+**Funcionalidad**: Corrige inconsistencias de timestamps del catalogo detectadas en runtime y tests.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`
+
+---
+
+### `22` — `frontend-runtime-stabilization`
+
+**Funcionalidad**: Estabiliza errores de runtime del frontend, rutas, stores o integraciones necesarias para que la app compile y navegue correctamente.
+
+**Depende de**: `frontend-shell`
+
+---
+
+### `23` — `single-role-and-client-cart-hotfix`
+
+**Funcionalidad**: Ajuste correctivo sobre roles y carrito cliente para alinear UI, RBAC y persistencia del carrito con el comportamiento real esperado.
+
+**Depende de**: `auth`, `cart`, `frontend-shell`
+
+---
+
+### `24` — `product-image-url`
+
+**Funcionalidad**: Agrega soporte para URL de imagen en productos, con contrato backend/frontend para mostrar imagenes de catalogo y administracion.
+
+**Depende de**: `catalog-products`
+
+---
+
+### `25` — `stitch-visual-redesign`
+
+**Funcionalidad**: Refinamiento visual transversal de la experiencia frontend ya implementada, sin redefinir reglas de negocio.
+
+**Depende de**: `frontend-shell`, `catalog-products`, `order-views`, `admin-users`, `admin-metrics`, `system-config`
+
+---
+
+### `26` — `admin-ux-roles-refinement`
+
+**Funcionalidad**: Refinamiento UX del panel admin: sidebar, visualizacion explicita de metodo de pago en pedidos y soporte para asignacion operativa combinada `STOCK+PEDIDOS`.
+
+**Depende de**: `admin-users`, `order-views`, `frontend-shell`
+
+---
+
+### `27` — `catalog-order-admin-ux-hardening`
+
+**Funcionalidad**: Endurecimiento correctivo del catalogo, pedidos, pagos y UX admin/cliente. Incluye unicidad activa para categorias con soft delete, exclusiones de ingredientes por nombre, upload local de imagen de producto, bloqueo coherente por configuracion, checkout MercadoPago antes de confirmacion, motivos de cancelacion en admin, vista cliente completa para `ADMIN` y carrito aislado por usuario.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`, `cart`, `order-creation`, `payment-integration`, `order-fsm`, `order-views`, `admin-users`, `system-config`, `frontend-shell`
+
+---
+
+### `28` — `product-image-local-upload-integration`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-17-product-image-local-upload-integration/`.
+
+**Funcionalidad**: Integra de forma real el upload local de imagen en el formulario activo de crear/editar productos, reemplazando la carga manual por URL. Reutiliza el endpoint `POST /api/v1/productos/imagenes`, conserva `imagen_url` como contrato persistido, amplia formatos soportados, asigna imagenes locales a productos seed y limpia duplicacion/huerfandad de UI relacionada.
+
+**Depende de**: `catalog-order-admin-ux-hardening`, `catalog-products`
+
+---
+
+### `29` — `admin-ingredients-management-ui`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-17-admin-ingredients-management-ui/`.
+
+**Funcionalidad**: Completa la administracion web de ingredientes para `ADMIN` y `STOCK`: vista dedicada, CRUD, paginacion real, buscador por nombre, filtro de alergenos, selector de ingredientes paginado/buscable en productos y sincronizacion de caches para que los ingredientes gestionados queden disponibles al crear o editar productos.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`, `frontend-shell`
 
 ---
 

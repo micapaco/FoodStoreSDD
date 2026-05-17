@@ -2,7 +2,13 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados (16/21):**
+**Estado real verificado (2026-05-17):**
+- `openspec list` no muestra changes activos.
+- Ultimo change archivado: `2026-05-17-admin-ingredients-management-ui`.
+- `openspec/changes/archive/` contiene 31 changes archivados reales, documentados con numeracion continua en `docs/CHANGES.md`.
+- Antes de iniciar cualquier nuevo trabajo, ejecutar `npx.cmd -y openspec list` y revisar `openspec/changes/archive/`; este bloque describe la foto actual, no reemplaza la verificacion.
+
+**Linea historica archivada:**
 - `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
 - `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
 - `03` `infra-frontend-core` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
@@ -20,7 +26,26 @@
 - `15` `order-views` ✅ archivado (`openspec/changes/archive/2026-05-12-order-views/`)
 - `15.5` `offline-payment-order-flow` ✅ archivado (`openspec/changes/archive/2026-05-12-offline-payment-order-flow/`)
 
-**Próximo change:** `15.6 — pickup-fulfillment-flow` (ver `docs/CHANGES.md`).
+- `15.6` `pickup-fulfillment-flow` archivado (`openspec/changes/archive/2026-05-13-pickup-fulfillment-flow/`)
+- `16` `order-feedback` archivado (`openspec/changes/archive/2026-05-13-order-feedback/`)
+- `17` `admin-users` archivado (`openspec/changes/archive/2026-05-13-admin-users/`)
+- `18` `admin-metrics` archivado (`openspec/changes/archive/2026-05-13-admin-metrics/`)
+- `19` `system-config` archivado (`openspec/changes/archive/2026-05-13-system-config/`)
+
+- `20` `admin-categories-ui` archivado (`openspec/changes/archive/2026-05-13-admin-categories-ui/`)
+- `21` `catalog-timestamp-hotfix` archivado (`openspec/changes/archive/2026-05-13-catalog-timestamp-hotfix/`)
+- `22` `frontend-runtime-stabilization` archivado (`openspec/changes/archive/2026-05-13-frontend-runtime-stabilization/`)
+- `23` `single-role-and-client-cart-hotfix` archivado (`openspec/changes/archive/2026-05-13-single-role-and-client-cart-hotfix/`)
+- `24` `product-image-url` archivado (`openspec/changes/archive/2026-05-15-product-image-url/`)
+- `25` `stitch-visual-redesign` archivado (`openspec/changes/archive/2026-05-15-stitch-visual-redesign/`)
+- `26` `admin-ux-roles-refinement` archivado (`openspec/changes/archive/2026-05-15-admin-ux-roles-refinement/`)
+- `27` `catalog-order-admin-ux-hardening` archivado (`openspec/changes/archive/2026-05-17-catalog-order-admin-ux-hardening/`)
+- `28` `product-image-local-upload-integration` archivado (`openspec/changes/archive/2026-05-17-product-image-local-upload-integration/`)
+- `29` `admin-ingredients-management-ui` archivado (`openspec/changes/archive/2026-05-17-admin-ingredients-management-ui/`)
+
+**Change activo propuesto:** ninguno.
+
+**Siguiente accion operativa:** no hay change activo. Cualquier trabajo posterior requiere revisar el estado real y, si corresponde, proponer un nuevo change.
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción

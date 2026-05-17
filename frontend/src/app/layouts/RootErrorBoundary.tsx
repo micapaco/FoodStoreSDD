@@ -40,14 +40,14 @@ export class RootErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 text-center">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-ink">
               Algo salió mal
             </h2>
-            <p className="text-gray-500 max-w-md">
+            <p className="text-ink-muted max-w-md">
               Ocurrió un error inesperado en la aplicación. Podés intentar recargar la página.
             </p>
             {this.state.error && (
-              <p className="text-xs text-gray-400 font-mono mt-1">
+              <p className="text-xs text-ink-muted/60 font-mono mt-1">
                 {this.state.error.message}
               </p>
             )}
@@ -55,7 +55,7 @@ export class RootErrorBoundary extends Component<Props, State> {
           <button
             type="button"
             onClick={this.handleReload}
-            className="rounded-md bg-orange-500 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-orange-600 transition-colors"
+            className="rounded-md bg-brand px-5 py-2 text-sm font-semibold text-brand-on shadow hover:bg-brand-dim transition-colors"
           >
             Recargar
           </button>

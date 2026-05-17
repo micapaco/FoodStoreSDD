@@ -1,4 +1,5 @@
 import type { CartItem } from '@/shared/types/cart'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 import { useCartStore } from '@/shared/stores/cartStore'
 
 interface CartItemCardProps {
@@ -21,6 +22,8 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
   )
   const maxCantidad = Math.max(1, stockDisponible - otherProductQuantity)
 
+  const excludedIds = item.personalizacion?.ingredientesExcluidos ?? []
+
   const handleDecrement = () => {
     if (item.cantidad <= 1) {
       removeItem(item.productoId, item.personalizacion)
@@ -40,12 +43,12 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
 
   return (
     <div className="flex gap-3 py-4">
-      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-orange-50 to-amber-50">
+      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-surface-high">
         {item.producto.imagen ? (
-          <img src={item.producto.imagen} alt={item.producto.nombre} className="h-full w-full object-cover" />
+          <img src={resolveImageUrl(item.producto.imagen)} alt={item.producto.nombre} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <svg className="h-8 w-8 text-orange-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-8 w-8 text-ink-muted/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -54,18 +57,18 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
 
       <div className="flex flex-1 flex-col justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-900">{item.producto.nombre}</h3>
-          <p className="mt-0.5 text-sm text-gray-500">{formatCurrency(item.producto.precio)}</p>
+          <h3 className="text-sm font-medium text-ink">{item.producto.nombre}</h3>
+          <p className="mt-0.5 text-sm text-ink-muted">{formatCurrency(item.producto.precio)}</p>
         </div>
 
-        {item.personalizacion.ingredientesExcluidos.length > 0 && (
+        {excludedIds.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
-            {item.personalizacion.ingredientesExcluidos.map((id) => {
+            {excludedIds.map((id) => {
               const name = ingredientNameMap?.get(id)
               return (
                 <span
                   key={id}
-                  className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600"
+                  className="inline-flex items-center rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger"
                 >
                   Sin {name ?? `#${id}`}
                 </span>
@@ -78,21 +81,21 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
           <button
             type="button"
             onClick={handleDecrement}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-subtle text-ink-muted hover:bg-surface-high transition-colors"
             aria-label="Disminuir cantidad"
           >
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
           </button>
-          <span className="min-w-[1.5rem] text-center text-sm font-medium text-gray-900">
+          <span className="min-w-[1.5rem] text-center text-sm font-medium text-ink">
             {item.cantidad}
           </span>
           <button
             type="button"
             onClick={handleIncrement}
             disabled={item.cantidad >= maxCantidad}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-subtle text-ink-muted hover:bg-surface-high disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label="Aumentar cantidad"
           >
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,15 +103,15 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
             </svg>
           </button>
           {item.cantidad >= maxCantidad && (
-            <span className="text-xs text-gray-400">Stock máximo</span>
+            <span className="text-xs text-ink-muted/50">Stock máximo</span>
           )}
-          <span className="ml-auto text-sm font-medium text-gray-900">
+          <span className="ml-auto text-sm font-medium text-ink">
             {formatCurrency(item.producto.precio * item.cantidad)}
           </span>
           <button
             type="button"
             onClick={handleRemove}
-            className="ml-2 rounded-md p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            className="ml-2 rounded-md p-1 text-ink-muted/50 hover:text-danger hover:bg-danger/10 transition-colors"
             aria-label="Eliminar producto"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

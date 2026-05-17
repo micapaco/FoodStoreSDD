@@ -111,7 +111,7 @@ def require_role(roles: list[str]) -> Callable:
             raise UnauthorizedError("Usuario no encontrado o inactivo.")
 
         _, user_roles = result
-        if not any(role in user_roles for role in roles):
+        if "ADMIN" not in user_roles and not any(role in user_roles for role in roles):
             raise ForbiddenError(
                 f"Se requiere uno de los siguientes roles: {', '.join(roles)}."
             )

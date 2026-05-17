@@ -1,7 +1,20 @@
+import type { CrearPedidoRequest, PedidoRead } from '@/entities/pedidos/types'
+
 export type PagoStatus = 'pending' | 'approved' | 'rejected' | 'in_process' | 'cancelled'
 
 export interface CrearPagoRequest {
   pedidoId: number
+  cardToken: string
+  paymentMethodId: string
+  issuerId?: string | null
+  installments: number
+  payerEmail?: string | null
+  payerIdentificationType?: string | null
+  payerIdentificationNumber?: string | null
+}
+
+export interface CrearPedidoMercadoPagoRequest {
+  pedido: CrearPedidoRequest
   cardToken: string
   paymentMethodId: string
   issuerId?: string | null
@@ -30,4 +43,9 @@ export interface PagoStatusResponse {
   estadoPedido: string
   intentos: PagoRead[]
   ultimoIntento: PagoRead | null
+}
+
+export interface PedidoMercadoPagoResponse {
+  pedido: PedidoRead
+  pago: PagoRead
 }

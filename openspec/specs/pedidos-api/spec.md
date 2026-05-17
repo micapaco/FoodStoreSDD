@@ -43,6 +43,12 @@ El sistema SHALL capturar snapshots de datos volatiles al crear el pedido.
 - **THEN** el sistema guarda `nombre_snapshot` y `precio_snapshot` con los valores vigentes del producto
 - **THEN** cambios posteriores del producto no alteran el detalle historico
 
+#### Scenario: Snapshot de exclusiones de ingredientes
+- **WHEN** se crea cada `DetallePedido` con ingredientes excluidos
+- **THEN** el sistema guarda `personalizacion` como lista de IDs para compatibilidad tecnica
+- **AND** guarda `personalizacion_snapshot` con `{ ingredienteId, nombre }` para cada ingrediente excluido
+- **THEN** cambios posteriores del ingrediente no alteran los nombres de exclusiones del pedido historico
+
 #### Scenario: Snapshot de direccion
 - **WHEN** el pedido usa direccion de entrega
 - **THEN** el sistema guarda `direccion_snapshot` con los datos completos de la direccion al momento de crear el pedido
@@ -52,8 +58,6 @@ El sistema SHALL capturar snapshots de datos volatiles al crear el pedido.
 - **WHEN** el request usa `direccionId=null`
 - **THEN** el sistema permite crear el pedido como retiro en local
 - **THEN** `direccion_snapshot` queda `NULL`
-
----
 
 ### Requirement: Reglas de calculo del pedido
 El sistema SHALL calcular el total del pedido con precios snapshot y un costo de envio coherente con la modalidad de cumplimiento.
@@ -221,12 +225,18 @@ El sistema SHALL exponer `GET /api/v1/pedidos` para que un usuario autenticado c
 
 ### Requirement: Consultar detalle de pedido propio
 El sistema SHALL exponer `GET /api/v1/pedidos/{pedido_id}` para que un cliente consulte el detalle completo de un pedido propio.
+Los items de detalle SHALL incluir `personalizacion` como IDs y `personalizacionDetalle` como lista legible de ingredientes excluidos.
 
 #### Scenario: Cliente consulta detalle propio
 - **WHEN** el propietario consulta `GET /api/v1/pedidos/{pedido_id}`
 - **THEN** el sistema responde `200 OK`
-- **THEN** retorna items con snapshots, cantidades y personalizacion
+- **THEN** retorna items con snapshots, cantidades, `personalizacion` y `personalizacionDetalle`
 - **THEN** retorna direccion snapshot, estado actual, total, historial cronologico y estado de pago visible
+
+#### Scenario: Cliente consulta pedido antiguo sin snapshot de exclusiones
+- **WHEN** el detalle contiene IDs en `personalizacion` pero no tiene `personalizacion_snapshot`
+- **THEN** el sistema intenta resolver nombres actuales de ingredientes por ID
+- **AND** si un nombre no puede resolverse, retorna una etiqueta fallback `Ingrediente #<id>`
 
 #### Scenario: Cliente no consulta pedido ajeno
 - **WHEN** un cliente solicita el detalle de un pedido que no le pertenece
@@ -236,8 +246,6 @@ El sistema SHALL exponer `GET /api/v1/pedidos/{pedido_id}` para que un cliente c
 - **WHEN** se consulta un pedido inexistente o no visible para el actor
 - **THEN** el sistema responde `404 Not Found` cuando corresponda al contrato de lectura segura
 
----
-
 ### Requirement: Listar pedidos para operacion
 El sistema SHALL exponer `GET /api/v1/admin/pedidos` para usuarios `ADMIN` o `PEDIDOS`, con filtros y paginacion orientados a gestion operativa.
 
@@ -245,6 +253,7 @@ El sistema SHALL exponer `GET /api/v1/admin/pedidos` para usuarios `ADMIN` o `PE
 - **WHEN** un usuario `ADMIN` o `PEDIDOS` solicita `GET /api/v1/admin/pedidos`
 - **THEN** el sistema responde `200 OK`
 - **THEN** retorna pedidos de todos los clientes
+- **THEN** cada item incluye `formaPagoCodigo` para distinguir MercadoPago, efectivo o transferencia sin consultar el detalle
 
 #### Scenario: Filtros operativos
 - **WHEN** el operador envia filtros por `estado`, `desde`, `hasta` o busqueda por numero de pedido o nombre de cliente
@@ -258,11 +267,12 @@ El sistema SHALL exponer `GET /api/v1/admin/pedidos` para usuarios `ADMIN` o `PE
 
 ### Requirement: Consultar detalle operativo de cualquier pedido
 El sistema SHALL exponer `GET /api/v1/admin/pedidos/{pedido_id}` para que usuarios `ADMIN` o `PEDIDOS` consulten el detalle completo de cualquier pedido.
+Los items de detalle SHALL incluir exclusiones legibles para evitar ambiguedad operativa.
 
 #### Scenario: Operador consulta detalle completo
 - **WHEN** un usuario `ADMIN` o `PEDIDOS` solicita el detalle de un pedido existente
 - **THEN** el sistema responde `200 OK`
-- **THEN** retorna snapshots de items, direccion snapshot, historial completo, datos del cliente y estado de pago
+- **THEN** retorna snapshots de items, `personalizacionDetalle`, direccion snapshot, historial completo, datos del cliente y estado de pago
 
 #### Scenario: Operador consulta pedido inexistente
 - **WHEN** el pedido solicitado no existe

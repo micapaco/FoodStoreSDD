@@ -16,7 +16,7 @@ function SkeletonRow() {
     <tr className="animate-pulse">
       {Array.from({ length: 6 }).map((_, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 rounded bg-gray-200" style={{ width: `${60 + Math.random() * 30}%` }} />
+          <div className="h-4 rounded bg-surface-higher" style={{ width: `${60 + Math.random() * 30}%` }} />
         </td>
       ))}
     </tr>
@@ -34,18 +34,18 @@ interface DeleteModalProps {
 function DeleteModal({ open, productName, onConfirm, onCancel, loading }: DeleteModalProps) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
-        <h3 className="text-lg font-semibold text-gray-900">Confirmar eliminación</h3>
-        <p className="mt-2 text-sm text-gray-600">
-          ¿Estás seguro de eliminar <strong>{productName}</strong>? Esta acción no se puede deshacer.
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="w-full max-w-sm rounded-lg border border-line-subtle bg-surface-base p-6 shadow-dropdown">
+        <h3 className="text-lg font-semibold text-ink">Confirmar eliminación</h3>
+        <p className="mt-2 text-sm text-ink-muted">
+          ¿Estás seguro de eliminar <strong className="text-ink">{productName}</strong>? Esta acción no se puede deshacer.
         </p>
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50 transition-colors"
           >
             Cancelar
           </button>
@@ -53,7 +53,7 @@ function DeleteModal({ open, productName, onConfirm, onCancel, loading }: Delete
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-danger-container px-4 py-2 text-sm font-semibold text-danger hover:opacity-90 disabled:opacity-50 transition-colors"
           >
             {loading ? 'Eliminando…' : 'Eliminar'}
           </button>
@@ -70,7 +70,6 @@ export function ProductosPage() {
   const isAdmin = roles.includes('ADMIN')
   const isStock = roles.includes('STOCK')
 
-  // Filters state
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [draftStockValues, setDraftStockValues] = useState<Record<number, string>>({})
@@ -80,7 +79,6 @@ export function ProductosPage() {
   const [stockBajo, setStockBajo] = useState(false)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Delete modal
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; nombre: string } | null>(null)
 
   useEffect(() => {
@@ -95,7 +93,6 @@ export function ProductosPage() {
     searchTimer.current = setTimeout(() => setDebouncedSearch(value), 300)
   }
 
-  // Build filters
   const effectiveFilters: ProductoFilters = {
     ...filters,
     q: debouncedSearch || undefined,
@@ -128,7 +125,6 @@ export function ProductosPage() {
   }
 
   const handleStockBlur = (id: number, rawValue: string) => {
-    // Clear draft state so input reverts to server value on next render
     setDraftStockValues((prev) => {
       const next = { ...prev }
       delete next[id]
@@ -153,19 +149,18 @@ export function ProductosPage() {
     )
   }
 
-  // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
-          <p className="mt-1 text-sm text-gray-500">Gestión de productos del catálogo</p>
+          <h1 className="text-2xl font-bold text-ink">Productos</h1>
+          <p className="mt-1 text-sm text-ink-muted">Gestión de productos del catálogo</p>
         </div>
         {isAdmin && (
           <Link
             to="/admin/productos/nuevo"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-brand-on hover:bg-brand-dim transition-colors"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -177,10 +172,9 @@ export function ProductosPage() {
 
       {/* Filters */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        {/* Search */}
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -192,18 +186,17 @@ export function ProductosPage() {
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Buscar productos…"
-            className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            className="w-full rounded-lg border border-line-subtle bg-surface-low py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
           />
         </div>
 
-        {/* Categoria filter */}
         <select
           value={catFilter}
           onChange={(e) => {
             setCatFilter(e.target.value ? Number(e.target.value) : '')
             setFilters((f) => ({ ...f, page: 1 }))
           }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+          className="rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
         >
           <option value="">Todas las categorías</option>
           {categorias?.map((cat) => (
@@ -213,22 +206,20 @@ export function ProductosPage() {
           ))}
         </select>
 
-        {/* Disponible filter */}
         <select
           value={disponibleFilter === '' ? '' : String(disponibleFilter)}
           onChange={(e) => {
             setDisponibleFilter(e.target.value === '' ? '' : e.target.value === 'true')
             setFilters((f) => ({ ...f, page: 1 }))
           }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+          className="rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
         >
           <option value="">Todos (disponibilidad)</option>
           <option value="true">Disponibles</option>
           <option value="false">No disponibles</option>
         </select>
 
-        {/* Stock bajo */}
-        <label className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50">
+        <label className="flex items-center gap-2 rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink cursor-pointer hover:bg-surface-high">
           <input
             type="checkbox"
             checked={stockBajo}
@@ -236,22 +227,21 @@ export function ProductosPage() {
               setStockBajo(e.target.checked)
               setFilters((f) => ({ ...f, page: 1 }))
             }}
-            className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+            className="h-4 w-4 rounded border-line-subtle text-brand focus:ring-brand/20"
           />
           Stock bajo
         </label>
       </div>
 
-      {/* Error state */}
       {isError && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-red-700 font-medium">
+        <div className="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-6 text-center">
+          <p className="text-danger font-medium">
             {error instanceof Error ? error.message : 'Error al cargar los productos'}
           </p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+            className="mt-3 rounded-lg bg-danger-container px-4 py-2 text-sm font-medium text-danger hover:opacity-90 transition-colors"
           >
             Reintentar
           </button>
@@ -259,45 +249,45 @@ export function ProductosPage() {
       )}
 
       {/* Table */}
-      <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="mt-4 overflow-x-auto rounded-lg border border-line-subtle bg-surface-base shadow-card-sm">
+        <table className="min-w-full divide-y divide-line-subtle">
+          <thead className="bg-surface-low">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Nombre
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Precio
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Stock
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Disponible
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Categorías
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Acciones
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-line-subtle">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
             ) : data && data.items.length > 0 ? (
               data.items.map((prod) => (
-                <tr key={prod.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={prod.id} className="hover:bg-surface-high transition-colors">
                   <td className="whitespace-nowrap px-4 py-3">
                     <Link
                       to={`/admin/productos/${prod.id}`}
-                      className="text-sm font-medium text-gray-900 hover:text-orange-600 transition-colors"
+                      className="text-sm font-medium text-ink hover:text-brand transition-colors"
                     >
                       {prod.nombre}
                     </Link>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
                     {formatCurrency(prod.precio_base)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -309,14 +299,14 @@ export function ProductosPage() {
                         value={draftStockValues[prod.id] ?? prod.stock_cantidad}
                         onChange={(e) => setDraftStockValues((prev) => ({ ...prev, [prod.id]: e.target.value }))}
                         onBlur={(e) => handleStockBlur(prod.id, e.target.value)}
-                        className="w-20 rounded border border-gray-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/20"
+                        className="w-20 rounded border border-line-subtle bg-surface-low px-2 py-1 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/20"
                       />
                     ) : (
                       <span
                         className={
                           prod.stock_cantidad <= 5
-                            ? 'font-semibold text-red-600'
-                            : 'text-gray-700'
+                            ? 'font-semibold text-danger'
+                            : 'text-ink-muted'
                         }
                       >
                         {prod.stock_cantidad}
@@ -330,8 +320,8 @@ export function ProductosPage() {
                         onClick={() => handleDisponibilidadToggle(prod.id, prod.disponible)}
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${
                           prod.disponible
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            ? 'bg-success/20 text-success hover:bg-success/30'
+                            : 'bg-danger/20 text-danger hover:bg-danger/30'
                         }`}
                       >
                         {prod.disponible ? 'Sí' : 'No'}
@@ -340,8 +330,8 @@ export function ProductosPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           prod.disponible
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-success/20 text-success'
+                            : 'bg-danger/20 text-danger'
                         }`}
                       >
                         {prod.disponible ? 'Sí' : 'No'}
@@ -353,13 +343,13 @@ export function ProductosPage() {
                       {prod.categoria_ids.slice(0, 3).map((cid) => (
                         <span
                           key={cid}
-                          className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700"
+                          className="inline-flex items-center rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand"
                         >
                           {categorias?.find((c) => c.id === cid)?.nombre ?? `#${cid}`}
                         </span>
                       ))}
                       {prod.categoria_ids.length > 3 && (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                        <span className="inline-flex items-center rounded-full bg-surface-high px-2 py-0.5 text-xs text-ink-muted">
                           +{prod.categoria_ids.length - 3}
                         </span>
                       )}
@@ -369,7 +359,7 @@ export function ProductosPage() {
                     <div className="flex items-center justify-end gap-1">
                       <Link
                         to={`/admin/productos/${prod.id}`}
-                        className="rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                        className="rounded p-1.5 text-ink-muted hover:text-ink hover:bg-surface-high transition-colors"
                         title="Ver detalle"
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -381,7 +371,7 @@ export function ProductosPage() {
                         <>
                           <Link
                             to={`/admin/productos/${prod.id}/editar`}
-                            className="rounded p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                            className="rounded p-1.5 text-ink-muted hover:text-brand hover:bg-brand/10 transition-colors"
                             title="Editar"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -391,7 +381,7 @@ export function ProductosPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteTarget({ id: prod.id, nombre: prod.nombre })}
-                            className="rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="rounded p-1.5 text-ink-muted hover:text-danger hover:bg-danger/10 transition-colors"
                             title="Eliminar"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -408,11 +398,11 @@ export function ProductosPage() {
               !isLoading && (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center">
-                    <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="mx-auto h-12 w-12 text-ink-muted/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <p className="mt-4 text-sm font-medium text-gray-500">No se encontraron productos</p>
-                    <p className="mt-1 text-xs text-gray-400">Probá cambiando los filtros de búsqueda</p>
+                    <p className="mt-4 text-sm font-medium text-ink-muted">No se encontraron productos</p>
+                    <p className="mt-1 text-xs text-ink-muted/70">Probá cambiando los filtros de búsqueda</p>
                   </td>
                 </tr>
               )
@@ -424,12 +414,12 @@ export function ProductosPage() {
       {/* Pagination */}
       {data && data.pages > 0 && (
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-ink-muted">
             <span>Mostrar</span>
             <select
               value={filters.size}
               onChange={(e) => setFilters((f) => ({ ...f, size: Number(e.target.value), page: 1 }))}
-              className="rounded border border-gray-300 px-2 py-1 text-sm"
+              className="rounded border border-line-subtle bg-surface-low px-2 py-1 text-sm text-ink"
             >
               {PAGE_SIZES.map((s) => (
                 <option key={s} value={s}>
@@ -447,7 +437,7 @@ export function ProductosPage() {
               type="button"
               disabled={data.page <= 1}
               onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm text-ink hover:bg-surface-high disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Anterior
             </button>
@@ -462,8 +452,8 @@ export function ProductosPage() {
                   onClick={() => setFilters((f) => ({ ...f, page: pageNum }))}
                   className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                     pageNum === data.page
-                      ? 'bg-orange-500 text-white'
-                      : 'border border-gray-300 hover:bg-gray-50'
+                      ? 'bg-brand text-brand-on'
+                      : 'border border-line-subtle text-ink hover:bg-surface-high'
                   }`}
                 >
                   {pageNum}
@@ -474,7 +464,7 @@ export function ProductosPage() {
               type="button"
               disabled={data.page >= data.pages}
               onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm text-ink hover:bg-surface-high disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Siguiente
             </button>
@@ -482,7 +472,6 @@ export function ProductosPage() {
         </div>
       )}
 
-      {/* Delete modal */}
       <DeleteModal
         open={deleteTarget !== null}
         productName={deleteTarget?.nombre ?? ''}

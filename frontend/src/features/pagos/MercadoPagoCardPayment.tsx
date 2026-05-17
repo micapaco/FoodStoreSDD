@@ -62,6 +62,7 @@ export function MercadoPagoCardPayment({ pedido }: MercadoPagoCardPaymentProps) 
   const pagoStatus = usePagoStatus(pedido.id)
   const [createdPayment, setCreatedPayment] = useState<PagoRead | null>(null)
   const [brickReady, setBrickReady] = useState(false)
+  const [sdkReady, setSdkReady] = useState(false)
 
   const ultimoIntento = pagoStatus.data?.ultimoIntento ?? createdPayment
   const status = ultimoIntento?.mpStatus ?? paymentStore.paymentStatus
@@ -72,6 +73,7 @@ export function MercadoPagoCardPayment({ pedido }: MercadoPagoCardPaymentProps) 
   useEffect(() => {
     if (publicKey) {
       initMercadoPago(publicKey, { locale: 'es-AR' })
+      setSdkReady(true)
     }
   }, [])
 
@@ -108,7 +110,7 @@ export function MercadoPagoCardPayment({ pedido }: MercadoPagoCardPaymentProps) 
 
   if (!publicKey) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
         MercadoPago no esta configurado. Falta `VITE_MERCADOPAGO_PUBLIC_KEY`.
       </div>
     )
@@ -116,40 +118,44 @@ export function MercadoPagoCardPayment({ pedido }: MercadoPagoCardPaymentProps) 
 
   return (
     <div className="mt-8 space-y-4">
-      <div className="rounded-lg border border-gray-200 bg-white p-5">
+      <div className="rounded-lg border border-line-subtle bg-surface-base p-5 shadow-card-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Pago MercadoPago</h2>
-            <p className="mt-1 text-sm text-gray-600">{paymentStatusText(status)}</p>
+            <h2 className="text-base font-semibold text-ink">Pago MercadoPago</h2>
+            <p className="mt-1 text-sm text-ink-muted">{paymentStatusText(status)}</p>
           </div>
-          <span className="text-sm font-semibold text-orange-600">
+          <span className="text-sm font-semibold text-brand">
             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount)}
           </span>
         </div>
 
         {statusDetail && (
-          <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">{statusDetail}</p>
+          <p className="mt-3 rounded-lg bg-surface-high px-3 py-2 text-sm text-ink">{statusDetail}</p>
         )}
 
         {paymentStore.error && (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
             {paymentStore.error}
           </p>
         )}
 
         {shouldShowBrick ? (
           <div className="mt-5">
-            {!brickReady && <p className="mb-3 text-sm text-gray-500">Cargando formulario de pago...</p>}
-            <CardPayment
-              initialization={{ amount }}
-              locale="es-AR"
-              onReady={() => setBrickReady(true)}
-              onError={handleBrickError}
-              onSubmit={handleSubmit}
-            />
+            {(!brickReady || !sdkReady) && (
+              <p className="mb-3 text-sm text-ink-muted">Cargando formulario de pago...</p>
+            )}
+            {sdkReady && (
+              <CardPayment
+                initialization={{ amount }}
+                locale="es-AR"
+                onReady={() => setBrickReady(true)}
+                onError={handleBrickError}
+                onSubmit={handleSubmit}
+              />
+            )}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-gray-600">
+          <p className="mt-4 text-sm text-ink-muted">
             {status === 'approved'
               ? 'Tu pedido quedo en proceso de confirmacion.'
               : 'Estamos esperando la confirmacion final de MercadoPago.'}

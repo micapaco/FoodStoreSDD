@@ -6,17 +6,63 @@ from app.core.uow import UnitOfWork
 from app.db.models.identidad import Usuario
 from app.db.models.ventas import Pago, Pedido
 from app.modules.pagos.mercadopago_client import MercadoPagoGateway, MercadoPagoPaymentResult
-from app.modules.pagos.schemas import CrearPagoRequest, PagoRead, PagoStatusResponse
+from app.modules.pagos.schemas import (
+    CrearPagoRequest,
+    CrearPedidoMercadoPagoRequest,
+    PagoRead,
+    PagoStatusResponse,
+    PedidoMercadoPagoResponse,
+)
+from app.modules.pedidos.schemas import CancelarPedidoRequest
 from app.modules.pedidos.service import PedidosService
 
 ESTADO_PENDIENTE = "PENDIENTE"
 FORMA_MERCADOPAGO = "MERCADOPAGO"
 BLOCKING_STATUSES = {"pending", "in_process"}
 RETRYABLE_STATUSES = {"rejected", "cancelled"}
+AUTO_CANCEL_STATUSES = {"rejected", "cancelled"}
 
 
 class PagosService:
     """Casos de uso de pagos MercadoPago."""
+
+    async def crear_pedido_con_pago(
+        self,
+        uow: UnitOfWork,
+        request: CrearPedidoMercadoPagoRequest,
+        current_user: Usuario,
+        gateway: MercadoPagoGateway,
+    ) -> PedidoMercadoPagoResponse:
+        if request.pedido.forma_pago_codigo != FORMA_MERCADOPAGO:
+            raise ValidationAppError("El checkout MercadoPago requiere forma de pago MercadoPago.")
+
+        pedidos_service = PedidosService()
+        pedido_read = await pedidos_service.crear_pedido(uow, request.pedido, current_user)
+        pago_request = CrearPagoRequest.model_validate(
+            {
+                "pedidoId": pedido_read.id,
+                "cardToken": request.card_token,
+                "paymentMethodId": request.payment_method_id,
+                "issuerId": request.issuer_id,
+                "installments": request.installments,
+                "payerEmail": request.payer_email,
+                "payerIdentificationType": request.payer_identification_type,
+                "payerIdentificationNumber": request.payer_identification_number,
+            }
+        )
+        pago = await self.crear_pago(uow, pago_request, current_user, gateway)
+        if pago.mp_status in AUTO_CANCEL_STATUSES:
+            pedido_read = await pedidos_service.cancelar_pedido(
+                uow,
+                pedido_read.id,
+                CancelarPedidoRequest(motivo=self._auto_cancel_motivo(pago.mp_status, pago.status_detail)),
+                current_user,
+            )
+        else:
+            pedido = await uow.pedidos.get_by_id(pedido_read.id)
+            if pedido is not None:
+                pedido_read = pedidos_service._to_read(pedido)
+        return PedidoMercadoPagoResponse(pedido=pedido_read, pago=pago)
 
     async def crear_pago(
         self,
@@ -186,6 +232,11 @@ class PagosService:
         pago.monto = result.transaction_amount or pago.monto
         pago.raw_payload = result.raw_payload
         pago.updated_at = datetime.utcnow()
+
+    @staticmethod
+    def _auto_cancel_motivo(status: str | None, status_detail: str | None) -> str:
+        detail = f" ({status_detail})" if status_detail else ""
+        return f"Pago MercadoPago {status or 'rechazado'}{detail}."
 
     @staticmethod
     def _to_read(pago: Pago) -> PagoRead:

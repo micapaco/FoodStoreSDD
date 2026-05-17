@@ -11,8 +11,10 @@ from app.db.models.identidad import Usuario
 from app.modules.pagos.mercadopago_client import MercadoPagoGateway
 from app.modules.pagos.schemas import (
     CrearPagoRequest,
+    CrearPedidoMercadoPagoRequest,
     PagoRead,
     PagoStatusResponse,
+    PedidoMercadoPagoResponse,
     WebhookResponse,
 )
 from app.modules.pagos.service import PagosService
@@ -33,6 +35,21 @@ async def crear_pago(
     async with UnitOfWork() as uow:
         service = PagosService()
         return await service.crear_pago(uow, request, current_user, gateway)
+
+
+@router.post(
+    "/checkout",
+    response_model=PedidoMercadoPagoResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def crear_pedido_con_pago(
+    request: CrearPedidoMercadoPagoRequest,
+    current_user: Annotated[Usuario, Depends(require_role(["CLIENT"]))],
+) -> PedidoMercadoPagoResponse:
+    gateway = MercadoPagoGateway(get_settings())
+    async with UnitOfWork() as uow:
+        service = PagosService()
+        return await service.crear_pedido_con_pago(uow, request, current_user, gateway)
 
 
 @router.get(

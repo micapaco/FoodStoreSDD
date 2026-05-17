@@ -85,3 +85,54 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 - Frontend consume contratos existentes. Nunca los inventa.
 - Antes de consumir un endpoint, verificar que el change de backend está archivado en `openspec/`.
 - Si falta un campo o endpoint → no improvisar, reportar al root para coordinar cross-domain.
+
+## Google Stitch MCP — Solo referencia visual
+
+> ⚠️ EL MCP DE STITCH NO DEBE USARSE COMO MODELO DE DATOS, ESTRUCTURA DE NEGOCIO, LÓGICA, TIPOS, SCHEMAS NI FUENTE DE ESTADO.
+>
+> Usalo SOLAMENTE para: inspiración visual · estilos · layout · spacing · tipografías · componentes visuales · animaciones · responsive design · jerarquía visual · experiencia de usuario
+>
+> NO copies: estructuras de datos · arquitectura · nombres de entidades · stores · hooks de negocio · backend · lógica · validaciones · APIs · flujos internos
+>
+> **El frontend YA ESTÁ TERMINADO funcionalmente. NO reemplaces lógica existente. NO rompas componentes actuales. NO hagas refactorizaciones innecesarias.**
+
+Stitch es una herramienta de diseño AI conectada vía MCP. **Su único rol es guiar decisiones visuales.** No es una fuente de verdad de nada que no sea UI.
+
+### Tu trabajo con Stitch es
+
+- Adaptar el diseño visual actual para que tenga el look & feel de Stitch
+- Mantener toda la funcionalidad existente sin excepción
+- Conservar rutas, estados, stores y lógica sin tocarlos
+- Mejorar únicamente la capa visual/UI
+
+### Qué aplicás de Stitch
+
+- Paleta de colores y tokens de tipografía
+- Escala de espaciado y ritmo visual
+- Estilo de cards, inputs, botones, badges
+- Navbar, sidebar, tablas, modales
+- Layout general y responsive behavior
+
+Si existe una vista en el frontend actual que NO está en Stitch: **creala visualmente en el momento** siguiendo el mismo sistema visual. No esperés — mantenés coherencia con el resto.
+
+### Restricciones absolutas — NUNCA usar Stitch para
+
+- Modelos de datos, tipos TypeScript, interfaces
+- Lógica de negocio o de presentación
+- Stores (Zustand), queries (TanStack Query) o mutations
+- Contratos de API, payloads, respuestas del backend
+- Arquitectura, estructura de carpetas, imports
+- Nada que no sea clases CSS/Tailwind y estructura HTML del componente
+
+### Reglas de oro
+
+1. **La spec gana siempre.** Si hay conflicto entre Stitch y `openspec/` → la spec gana.
+2. **Zero cambios de lógica.** Si para aplicar un estilo necesitás cambiar lógica → el estilo se adapta, no la lógica.
+3. **No copiar código generado por Stitch.** Adaptalo a FSD + Tailwind v3 + TypeScript strict.
+4. **No tocar el backend bajo ningún concepto.**
+
+### Cómo usarlo
+
+1. Exportá el `DESIGN.md` del proyecto desde Stitch
+2. Usalo como referencia para clases Tailwind, colores y layout
+3. Aplicá los tokens visuales sobre los componentes existentes — no reescribas la lógica, solo las clases

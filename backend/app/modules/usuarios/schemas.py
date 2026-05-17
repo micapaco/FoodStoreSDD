@@ -44,9 +44,13 @@ class CambiarRolesRequest(BaseModel):
     @field_validator("roles")
     @classmethod
     def roles_no_vacios(cls, v: list[str]) -> list[str]:
-        if len(v) != 1:
-            raise ValueError("El usuario debe tener exactamente un rol.")
-        return v
+        normalized = list(dict.fromkeys(v))
+        if set(normalized) == {"STOCK", "PEDIDOS"}:
+            return ["STOCK", "PEDIDOS"]
+        valid_combinations = [["ADMIN"], ["STOCK"], ["PEDIDOS"], ["CLIENT"]]
+        if normalized not in valid_combinations:
+            raise ValueError("El usuario debe tener un rol valido o la combinacion STOCK+PEDIDOS.")
+        return normalized
 
 
 class CambiarEstadoRequest(BaseModel):

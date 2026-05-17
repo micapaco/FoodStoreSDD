@@ -10,7 +10,9 @@ function sameExclusiones(a: number[], b: number[]): boolean {
 }
 
 interface CartState {
+  ownerUserId: number | null
   items: CartItem[]
+  setOwner: (userId: number) => void
   addItem: (producto: Producto, cantidad: number, personalizacion: Personalizacion) => void
   removeItem: (productoId: number, personalizacion: Personalizacion) => void
   updateCantidad: (productoId: number, personalizacion: Personalizacion, cantidad: number) => void
@@ -23,7 +25,7 @@ interface CartState {
 }
 
 function matchItem(i: CartItem, productoId: number, p: Personalizacion) {
-  return i.productoId === productoId && sameExclusiones(i.personalizacion.ingredientesExcluidos, p.ingredientesExcluidos)
+  return i.productoId === productoId && sameExclusiones(i.personalizacion?.ingredientesExcluidos ?? [], p?.ingredientesExcluidos ?? [])
 }
 
 function productQuantity(items: CartItem[], productoId: number): number {
@@ -39,7 +41,15 @@ function maxCartQuantity(stockDisponible?: number): number {
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
+      ownerUserId: null,
       items: [],
+
+      setOwner: (userId) =>
+        set((state) => (
+          state.ownerUserId === userId
+            ? state
+            : { ownerUserId: userId, items: [] }
+        )),
 
       addItem: (producto, cantidad, personalizacion) =>
         set((state) => {
@@ -94,7 +104,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'food-store-cart',
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({ ownerUserId: state.ownerUserId, items: state.items }),
     },
   ),
 )
