@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from '@tanstack/react-form'
 import { useProfile, useUpdateProfile, useChangePassword } from '@/shared/hooks/useProfile'
 
@@ -194,6 +194,23 @@ export function ProfilePage() {
               <dd className="mt-1 text-ink">{profile?.telefono ?? <span className="text-ink-muted">—</span>}</dd>
             </div>
           </dl>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-line-subtle bg-surface-base p-8 shadow-card-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-ink">Direcciones de entrega</h2>
+              <p className="mt-2 text-sm text-ink-muted">
+                Administra tus direcciones guardadas y elegi cual usar como principal para el checkout.
+              </p>
+            </div>
+            <Link
+              to="/direcciones"
+              className="inline-flex items-center justify-center rounded-lg border border-line-subtle px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-high"
+            >
+              Administrar direcciones
+            </Link>
+          </div>
         </div>
 
         {/* Cambiar contraseña */}
