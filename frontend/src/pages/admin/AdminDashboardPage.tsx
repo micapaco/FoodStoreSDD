@@ -22,7 +22,14 @@ import {
   useMetricasVentas,
 } from '@/shared/hooks/useMetricas'
 
-const PIE_COLORS = ['#f2ca50', '#58e7aa', '#4285F4', '#9C27B0', '#ffb4ab', '#d4af37']
+const ESTADO_CHART_COLORS: Record<string, string> = {
+  PENDIENTE: '#f2ca50',
+  CONFIRMADO: '#4285F4',
+  EN_PREP: '#9C27B0',
+  EN_CAMINO: '#38bdf8',
+  ENTREGADO: '#58e7aa',
+  CANCELADO: '#ffb4ab',
+}
 
 const ESTADO_LABELS: Record<string, string> = {
   PENDIENTE: 'Pendiente',
@@ -196,8 +203,8 @@ export function AdminDashboardPage() {
                 <Tooltip
                   contentStyle={{ background: '#192029', border: '1px solid #4d4635', color: '#dce3f0' }}
                   formatter={(value, name) =>
-                    name === 'total_ventas'
-                      ? [formatCurrency(toNumber(value)), 'Ventas']
+                    name === 'total_ventas' || name === 'Ventas ($)'
+                      ? [formatCurrency(toNumber(value)), 'Ventas ($)']
                       : [toNumber(value), 'Pedidos']
                   }
                 />
@@ -267,8 +274,11 @@ export function AdminDashboardPage() {
                       return `${ESTADO_LABELS[estado] ?? estado} ${(percentValue * 100).toFixed(0)}%`
                     }}
                   >
-                    {porEstado.data.estados.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    {porEstado.data.estados.map((item) => (
+                      <Cell
+                        key={item.estado_codigo}
+                        fill={ESTADO_CHART_COLORS[item.estado_codigo] ?? '#d0c5af'}
+                      />
                     ))}
                   </Pie>
                   <Tooltip
