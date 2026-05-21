@@ -51,7 +51,12 @@ export function CocinaPage() {
   }
 
   async function handleDone(pedidoId: number) {
-    await advanceOrder(pedidoId, 'EN_CAMINO')
+    try {
+      await advanceOrder(pedidoId, 'EN_CAMINO')
+    } catch {
+      // Retiro en local: pickup no admite EN_CAMINO — usar ENTREGADO directamente
+      await advanceOrder(pedidoId, 'ENTREGADO')
+    }
   }
 
   return (
