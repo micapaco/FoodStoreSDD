@@ -26,13 +26,11 @@ from app.modules.pedidos.schemas import (
 )
 from app.modules.pedidos.service import PedidosService
 
-_COCINA_BROADCAST_STATES = {"CONFIRMADO", "EN_PREP", "EN_CAMINO", "ENTREGADO", "CANCELADO"}
+_COCINA_BROADCAST_STATES = {"CONFIRMADO", "EN_PREP", "EN_CAMINO", "CANCELADO"}
 _EVENTO_POR_ESTADO = {
     "CONFIRMADO": "PEDIDO_CONFIRMADO",
     "EN_PREP": "PEDIDO_EN_PREPARACION",
     "EN_CAMINO": "PEDIDO_EN_CAMINO",
-    # Retiro en local: ENTREGADO desde EN_PREP — la tarjeta también debe salir del KDS
-    "ENTREGADO": "PEDIDO_EN_CAMINO",
     "CANCELADO": "PEDIDO_CANCELADO",
 }
 
