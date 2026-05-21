@@ -57,6 +57,7 @@ async def seed(session: AsyncSession) -> None:
         {"codigo": "STOCK"},
         {"codigo": "PEDIDOS"},
         {"codigo": "CLIENT"},
+        {"codigo": "COCINA"},
     ]
     for rol in roles:
         await session.execute(

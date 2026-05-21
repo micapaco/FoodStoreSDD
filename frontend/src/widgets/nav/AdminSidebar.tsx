@@ -14,6 +14,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: '/admin/ingredientes', label: 'Ingredientes' },
   { to: '/admin/categorias', label: 'Categorías' },
   { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/cocina', label: 'Pantalla cocina' },
   { to: '/admin/usuarios', label: 'Usuarios' },
   { to: '/admin/configuracion', label: 'Configuración' },
 ]
@@ -31,6 +32,11 @@ const STOCK_ITEMS: NavItem[] = [
 
 const PEDIDOS_ITEMS: NavItem[] = [
   { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/cocina', label: 'Pantalla cocina' },
+]
+
+const COCINA_ITEMS: NavItem[] = [
+  { to: '/cocina', label: 'Pantalla cocina' },
 ]
 
 function getNavItems(roles: string[]): NavItem[] {
@@ -38,6 +44,7 @@ function getNavItems(roles: string[]): NavItem[] {
   if (roles.includes('STOCK') && roles.includes('PEDIDOS')) return STOCK_PEDIDOS_ITEMS
   if (roles.includes('STOCK')) return STOCK_ITEMS
   if (roles.includes('PEDIDOS')) return PEDIDOS_ITEMS
+  if (roles.includes('COCINA')) return COCINA_ITEMS
   return []
 }
 

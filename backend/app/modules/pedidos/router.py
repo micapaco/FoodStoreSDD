@@ -2,10 +2,14 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import select
 
 from app.core.deps import get_current_user, require_role
 from app.core.uow import UnitOfWork
 from app.db.models.identidad import Usuario
+from app.db.models.ventas import Pedido
+from app.modules.cocina.manager import emit_cocina_event
+from app.modules.cocina.router import build_pedido_cocina_read
 from app.modules.pedidos.schemas import (
     AvanzarEstadoRequest,
     CancelarPedidoRequest,
@@ -21,6 +25,14 @@ from app.modules.pedidos.schemas import (
     ValidarCarritoResponse,
 )
 from app.modules.pedidos.service import PedidosService
+
+_COCINA_BROADCAST_STATES = {"CONFIRMADO", "EN_PREP", "EN_CAMINO", "CANCELADO"}
+_EVENTO_POR_ESTADO = {
+    "CONFIRMADO": "PEDIDO_CONFIRMADO",
+    "EN_PREP": "PEDIDO_EN_PREPARACION",
+    "EN_CAMINO": "PEDIDO_EN_CAMINO",
+    "CANCELADO": "PEDIDO_CANCELADO",
+}
 
 router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 admin_router = APIRouter(prefix="/admin/pedidos", tags=["Pedidos Admin"])
@@ -62,11 +74,30 @@ async def crear_pedido(
 async def avanzar_estado(
     pedido_id: int,
     request: AvanzarEstadoRequest,
-    current_user: Annotated[Usuario, Depends(require_role(["ADMIN", "PEDIDOS"]))],
+    current_user: Annotated[Usuario, Depends(require_role(["ADMIN", "PEDIDOS", "COCINA"]))],
 ) -> PedidoRead:
     async with UnitOfWork() as uow:
         service = PedidosService()
-        return await service.avanzar_estado(uow, pedido_id, request, current_user)
+        result = await service.avanzar_estado(uow, pedido_id, request, current_user)
+
+    # Broadcast post-commit al KDS si la transición es relevante para cocina
+    nuevo_estado = request.nuevo_estado
+    event_type = _EVENTO_POR_ESTADO.get(nuevo_estado)
+    if event_type:
+        try:
+            if nuevo_estado == "CONFIRMADO":
+                # CONFIRMADO incluye el PedidoCocinaRead completo
+                async with UnitOfWork() as uow2:
+                    pedido_row = await uow2.session.get(Pedido, pedido_id)
+                    if pedido_row is not None:
+                        cocina_read = await build_pedido_cocina_read(uow2, pedido_row)
+                        await emit_cocina_event(event_type, pedido_id, cocina_read.model_dump(mode="json", by_alias=True))
+            else:
+                await emit_cocina_event(event_type, pedido_id)
+        except Exception:
+            pass  # broadcast es best-effort, no debe romper la respuesta
+
+    return result
 
 
 @router.delete(

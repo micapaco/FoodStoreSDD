@@ -27,6 +27,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: '/admin/ingredientes', label: 'Ingredientes' },
   { to: '/admin/categorias', label: 'Categorías' },
   { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/cocina', label: 'Cocina' },
   { to: '/admin/usuarios', label: 'Usuarios' },
   { to: '/admin/configuracion', label: 'Configuración' },
 ]
@@ -36,7 +37,12 @@ const STOCK_ITEMS: NavItem[] = [
   { to: '/admin/ingredientes', label: 'Ingredientes' },
 ]
 
-const PEDIDOS_ITEMS: NavItem[] = [{ to: '/admin/pedidos', label: 'Pedidos' }]
+const PEDIDOS_ITEMS: NavItem[] = [
+  { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/cocina', label: 'Cocina' },
+]
+
+const COCINA_ITEMS: NavItem[] = [{ to: '/cocina', label: 'Cocina' }]
 
 function getNavItems(roles: string[], path: string): NavItem[] {
   if (roles.includes('ADMIN') && isClientViewPath(path)) {
@@ -45,6 +51,7 @@ function getNavItems(roles: string[], path: string): NavItem[] {
   if (roles.includes('ADMIN')) return ADMIN_ITEMS
   if (roles.includes('STOCK')) return STOCK_ITEMS
   if (roles.includes('PEDIDOS')) return PEDIDOS_ITEMS
+  if (roles.includes('COCINA')) return COCINA_ITEMS
   return CLIENT_ITEMS
 }
 

@@ -120,17 +120,20 @@ class PagosService:
         *,
         payment_id: str,
         gateway: MercadoPagoGateway,
-    ) -> None:
+    ) -> int | None:
+        """Procesa webhook de MercadoPago. Retorna pedido_id si fue confirmado, None otherwise."""
         result = gateway.get_payment(payment_id)
         pago = await self._find_pago_for_result(uow, result)
         if pago is None:
-            return
+            return None
 
         self._apply_payment_result(pago, result)
         await uow.pagos.update(pago)
 
         if result.mp_status == "approved":
             await PedidosService().confirmar_por_pago(uow, pago.pedido_id)
+            return pago.pedido_id
+        return None
 
     @staticmethod
     def _require_usuario_id(current_user: Usuario) -> int:

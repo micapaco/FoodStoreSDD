@@ -229,8 +229,15 @@ class PedidosService:
         """Avanza manualmente estados operativos de pedidos."""
         usuario_id = self._require_usuario_id(current_user)
         roles = await self._get_user_roles(uow, usuario_id)
-        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS", "COCINA"}):
             raise ForbiddenError("No tenes permiso para avanzar pedidos.")
+
+        # El rol COCINA solo puede ejecutar CONFIRMADO→EN_PREP y EN_PREP→EN_CAMINO
+        if self._has_any_role(roles, {"COCINA"}) and not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            allowed_cocina = {ESTADO_EN_PREP, ESTADO_EN_CAMINO}
+            if request.nuevo_estado not in allowed_cocina:
+                raise ForbiddenError("El rol COCINA solo puede avanzar a EN_PREP o EN_CAMINO.")
+
         pedido = await self._get_active_pedido(uow, pedido_id)
         self._validate_manual_transition(pedido, request.nuevo_estado)
 

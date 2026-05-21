@@ -35,6 +35,9 @@ import { OrdersAdminPage } from '@/pages/admin/OrdersAdminPage'
 import { SystemConfigPage } from '@/pages/admin/SystemConfigPage'
 import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
 
+// Pages — cocina (KDS)
+import { CocinaPage } from '@/pages/cocina/CocinaPage'
+
 // Pages — productos (admin)
 import { ProductosPage } from '@/pages/productos/ProductosPage'
 import { ProductosCreatePage } from '@/pages/productos/ProductosCreatePage'
@@ -138,6 +141,19 @@ export const router = createBrowserRouter([
             element: <RoleRoute roles={['ADMIN', 'PEDIDOS']} />,
             children: [
               { path: '/admin/pedidos', element: <OrdersAdminPage /> },
+            ],
+          },
+        ],
+      },
+
+      // /cocina — requires auth + (COCINA or PEDIDOS or ADMIN)
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleRoute roles={['COCINA', 'PEDIDOS', 'ADMIN']} />,
+            children: [
+              { path: '/cocina', element: <CocinaPage /> },
             ],
           },
         ],

@@ -15,6 +15,7 @@ from app.modules.pagos.router import router as pagos_router
 from app.modules.usuarios.router import router as usuarios_admin_router
 from app.modules.config.router import router as config_router
 from app.modules.metricas.router import router as metricas_admin_router
+from app.modules.cocina.router import router as cocina_router
 
 router = APIRouter(prefix="/api/v1")
 
@@ -30,3 +31,4 @@ router.include_router(pagos_router)
 router.include_router(usuarios_admin_router)
 router.include_router(metricas_admin_router)
 router.include_router(config_router)
+router.include_router(cocina_router)
