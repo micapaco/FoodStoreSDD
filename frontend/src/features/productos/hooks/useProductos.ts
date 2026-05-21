@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/shared/api/productos'
+import { getIngredientes } from '@/shared/api/ingredientes'
 import type {
   ProductoFilters,
   ProductoCreate,
@@ -87,6 +88,12 @@ export function useDeleteProducto() {
   })
 }
 
+export function useUploadProductoImagen() {
+  return useMutation({
+    mutationFn: (file: File) => api.uploadProductoImagen(file),
+  })
+}
+
 export function useUpdateStock() {
   const qc = useQueryClient()
   return useMutation({
@@ -121,8 +128,11 @@ export function useCategorias() {
 
 export function useIngredientes() {
   return useQuery({
-    queryKey: ['ingredientes'],
-    queryFn: () => api.getIngredientesList(),
+    queryKey: ['ingredientes', 'form-list'],
+    queryFn: async () => {
+      const result = await getIngredientes({ page: 1, size: 100 })
+      return result.items
+    },
     staleTime: 5 * 60 * 1000,
   })
 }

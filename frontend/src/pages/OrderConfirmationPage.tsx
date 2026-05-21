@@ -1,5 +1,4 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { MercadoPagoCardPayment } from '@/features/pagos/MercadoPagoCardPayment'
 import { usePedidoDetalle } from '@/shared/hooks/usePedidos'
 
 function formatCurrency(value: string | number): string {
@@ -9,6 +8,16 @@ function formatCurrency(value: string | number): string {
 
 function itemSubtotal(precioSnapshot: string, cantidad: number): string {
   return formatCurrency(Number.parseFloat(precioSnapshot) * cantidad)
+}
+
+function formatExclusiones(item: { personalizacion: number[]; personalizacionDetalle: { nombre: string }[] }): string | null {
+  if (item.personalizacionDetalle.length > 0) {
+    return item.personalizacionDetalle.map((exclusion) => exclusion.nombre).join(', ')
+  }
+  if (item.personalizacion.length > 0) {
+    return item.personalizacion.map((id) => `Ingrediente #${id}`).join(', ')
+  }
+  return null
 }
 
 export function OrderConfirmationPage() {
@@ -38,7 +47,6 @@ export function OrderConfirmationPage() {
   }
 
   const isPickup = pedido.direccionSnapshot === null
-  const isMercadoPago = pedido.formaPagoCodigo === 'MERCADOPAGO'
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
@@ -49,7 +57,7 @@ export function OrderConfirmationPage() {
       <div className="rounded-lg border border-success/30 bg-surface-base p-8 shadow-card-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-success">Pedido creado</p>
         <h1 className="mt-2 text-2xl font-bold text-ink">Pedido #{pedido.id}</h1>
-        <p className="mt-1 text-sm text-ink-muted">PENDIENTE — Esperando pago</p>
+        <p className="mt-1 text-sm text-ink-muted">{pedido.estadoCodigo}</p>
 
         <section className="mt-6">
           <h2 className="text-sm font-semibold text-ink-muted">Resumen del pedido</h2>
@@ -61,6 +69,11 @@ export function OrderConfirmationPage() {
               >
                 <span className="text-ink">
                   {item.cantidad}× {item.nombreSnapshot}
+                  {formatExclusiones(item) && (
+                    <span className="mt-1 block text-xs text-ink-muted">
+                      Sin {formatExclusiones(item)}
+                    </span>
+                  )}
                 </span>
                 <span className="font-medium text-ink">
                   {itemSubtotal(item.precioSnapshot, item.cantidad)}
@@ -112,8 +125,6 @@ export function OrderConfirmationPage() {
             Mis pedidos
           </Link>
         </div>
-
-        {isMercadoPago && <MercadoPagoCardPayment pedido={pedido} />}
       </div>
     </div>
   )

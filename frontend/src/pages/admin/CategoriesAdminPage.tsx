@@ -7,6 +7,7 @@ import {
   useDeleteCategoria,
   useUpdateCategoria,
 } from '@/shared/hooks/useCategorias'
+import { parseHttpError } from '@/shared/lib/http/parseHttpError'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { CategoriaRead } from '@/entities/categorias/types'
 
@@ -329,7 +330,8 @@ export function CategoriesAdminPage() {
             setFormOpen(false)
             setEditingCategory(null)
           },
-          onError: () => addToast({ type: 'error', message: 'No se pudo actualizar la categoria' }),
+          onError: (error) =>
+            addToast({ type: 'error', message: parseHttpError(error).message }),
         },
       )
       return
@@ -340,7 +342,8 @@ export function CategoriesAdminPage() {
         addToast({ type: 'success', message: 'Categoria creada correctamente' })
         setFormOpen(false)
       },
-      onError: () => addToast({ type: 'error', message: 'No se pudo crear la categoria' }),
+      onError: (error) =>
+        addToast({ type: 'error', message: parseHttpError(error).message }),
     })
   }
 
@@ -351,7 +354,8 @@ export function CategoriesAdminPage() {
         addToast({ type: 'success', message: 'Categoria eliminada correctamente' })
         setDeleteTarget(null)
       },
-      onError: () => addToast({ type: 'error', message: 'No se pudo eliminar la categoria' }),
+      onError: (error) =>
+        addToast({ type: 'error', message: parseHttpError(error).message }),
     })
   }
 

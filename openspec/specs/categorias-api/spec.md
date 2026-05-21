@@ -6,11 +6,23 @@ Define the REST contract for hierarchical product categories.
 ### Requirement: Category CRUD
 The system SHALL allow ADMIN and STOCK users to create, read, update, and soft-delete categories.
 The system SHALL persist category timestamps with values compatible with the configured PostgreSQL column types.
+Category creation and update SHALL enforce name uniqueness only against active categories.
+Soft-deleted categories SHALL NOT be restored implicitly and SHALL NOT block creating a new category with the same normalized name.
 
 #### Scenario: Create category
 - **WHEN** an ADMIN sends `POST /api/v1/categorias` with valid `nombre` and optional `parent_id`
 - **THEN** the system returns `201 Created` with the created category
 - **AND** the response includes valid `created_at` and `updated_at` values
+
+#### Scenario: Create category with active duplicate name
+- **WHEN** an ADMIN sends `POST /api/v1/categorias` with a name that matches an active category after trim and case normalization
+- **THEN** the system returns `409 Conflict`
+- **AND** the error message explains that an active category already exists with that name
+
+#### Scenario: Create category with soft-deleted duplicate name
+- **WHEN** an ADMIN sends `POST /api/v1/categorias` with a name that only matches soft-deleted categories
+- **THEN** the system creates a new category row with a new `id`
+- **AND** no soft-deleted category is restored or modified
 
 #### Scenario: Create category with invalid parent
 - **WHEN** an ADMIN sends `POST /api/v1/categorias` with a `parent_id` that does not exist or is soft-deleted
@@ -28,6 +40,10 @@ The system SHALL persist category timestamps with values compatible with the con
 - **WHEN** an ADMIN sends `PUT /api/v1/categorias/{id}` with updated fields
 - **THEN** the system returns `200 OK` with the updated category
 - **AND** the response includes a valid `updated_at` value
+
+#### Scenario: Update category to active duplicate name
+- **WHEN** an ADMIN updates a category name to one used by another active category after trim and case normalization
+- **THEN** the system returns `409 Conflict`
 
 #### Scenario: Update creates circular hierarchy
 - **WHEN** an ADMIN sends `PUT /api/v1/categorias/{id}` setting `parent_id` to a descendant of the current node
@@ -62,7 +78,7 @@ The system SHALL expose a public endpoint that returns the full category tree st
 
 ### Requirement: Category schema
 The system SHALL accept the following fields for category operations:
-- `nombre`: string, required, 1-100 chars, unique
+- `nombre`: string, required, 1-100 chars, unique among active categories after trim and case normalization
 - `parent_id`: integer, optional, must reference an active non-deleted category
 
 #### Scenario: CategoryRead response shape

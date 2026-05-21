@@ -130,6 +130,7 @@ class PedidoListResponse(BaseSchema):
 class PedidoAdminListItemRead(PedidoListItemRead):
     cliente_nombre: str = Field(alias="clienteNombre")
     cliente_email: str = Field(alias="clienteEmail")
+    forma_pago_codigo: str = Field(alias="formaPagoCodigo")
 
 
 class PedidoAdminListResponse(BaseSchema):
@@ -140,12 +141,21 @@ class PedidoAdminListResponse(BaseSchema):
     pages: int
 
 
+class PedidoPersonalizacionDetalleRead(BaseSchema):
+    ingrediente_id: int = Field(alias="ingredienteId")
+    nombre: str
+
+
 class PedidoDetalleItemRead(BaseSchema):
     producto_id: int | None = Field(alias="productoId")
     nombre_snapshot: str = Field(alias="nombreSnapshot")
     precio_snapshot: Decimal = Field(alias="precioSnapshot")
     cantidad: int
     personalizacion: list[int] = Field(default_factory=list)
+    personalizacion_detalle: list[PedidoPersonalizacionDetalleRead] = Field(
+        default_factory=list,
+        alias="personalizacionDetalle",
+    )
 
 
 class DireccionSnapshotRead(BaseSchema):

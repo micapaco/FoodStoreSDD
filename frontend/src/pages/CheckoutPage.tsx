@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { ValidarCarritoResponse } from '@/entities/pedidos/types'
 import { useAddressesQuery } from '@/features/direcciones/hooks/useDirecciones'
+import { MercadoPagoCheckoutPayment } from '@/features/pagos/MercadoPagoCheckoutPayment'
+import { useIngredientes } from '@/features/productos/hooks/useProductos'
 import { parseHttpError } from '@/shared/lib/http/parseHttpError'
 import { useCrearPedido } from '@/shared/hooks/usePedidos'
 import { useValidarCheckout } from '@/shared/hooks/useValidarCheckout'
@@ -33,10 +35,12 @@ export function CheckoutPage() {
   const validarCheckout = useValidarCheckout()
   const crearPedido = useCrearPedido()
   const addressesQuery = useAddressesQuery({ page: 1, page_size: 100 })
+  const ingredientesQuery = useIngredientes()
   const { data: configPublica } = useConfigPublica()
 
   const [resultado, setResultado] = useState<ValidarCarritoResponse | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
+  const [showMercadoPagoPayment, setShowMercadoPagoPayment] = useState(false)
   const [formaPagoCodigo, setFormaPagoCodigo] = useState('MERCADOPAGO')
   const [modoEntrega, setModoEntrega] = useState<'delivery' | 'pickup'>('delivery')
   const [direccionId, setDireccionId] = useState<string>('')
@@ -47,8 +51,14 @@ export function CheckoutPage() {
   const hasBlockingIssues = resultado && !resultado.valido
   const isPending = validarCheckout.isPending || crearPedido.isPending
   const configCosto = configPublica?.costo_envio_base ?? 50
+  const pedidosHabilitados = configPublica?.pedidos_habilitados !== false
   const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : configCosto
   const checkoutTotal = subtotal() + checkoutCostoEnvio
+  const isMercadoPago = formaPagoCodigo === 'MERCADOPAGO'
+  const ingredientNameMap = useMemo(
+    () => new Map(ingredientesQuery.data?.map((ingrediente) => [ingrediente.id, ingrediente.nombre]) ?? []),
+    [ingredientesQuery.data],
+  )
 
   const selectedDireccionId = useMemo(() => {
     if (modoEntrega === 'pickup') return null
@@ -65,10 +75,37 @@ export function CheckoutPage() {
     })),
   }
 
+  const pedidoRequest = {
+    items: items.map((item) => ({
+      productoId: item.productoId,
+      cantidad: item.cantidad,
+      personalizacion: item.personalizacion?.ingredientesExcluidos ?? [],
+    })),
+    formaPagoCodigo,
+    direccionId: selectedDireccionId,
+    notas: notas.trim() || null,
+  }
+
+  useEffect(() => {
+    setShowMercadoPagoPayment(false)
+  }, [formaPagoCodigo, modoEntrega, direccionId, notas, items])
+
+  function formatExclusiones(ids: number[]): string | null {
+    if (ids.length === 0) return null
+    return ids.map((id) => ingredientNameMap.get(id) ?? `Ingrediente #${id}`).join(', ')
+  }
+
   const handleCrearPedido = async () => {
     setRequestError(null)
     setResultado(null)
     resetPayment()
+
+    if (!pedidosHabilitados) {
+      const message = 'El local no esta aceptando pedidos en este momento.'
+      setRequestError(message)
+      addToast({ type: 'warning', message })
+      return
+    }
 
     if (modoEntrega === 'delivery' && selectedDireccionId === null) {
       setRequestError('Selecciona una direccion de entrega o elegi retiro en local.')
@@ -80,21 +117,14 @@ export function CheckoutPage() {
       setResultado(validacion)
       if (!validacion.valido) return
 
-      const pedido = await crearPedido.mutateAsync({
-        items: items.map((item) => ({
-          productoId: item.productoId,
-          cantidad: item.cantidad,
-          personalizacion: item.personalizacion?.ingredientesExcluidos ?? [],
-        })),
-        formaPagoCodigo,
-        direccionId: selectedDireccionId,
-        notas: notas.trim() || null,
-      })
+      if (isMercadoPago) {
+        setShowMercadoPagoPayment(true)
+        return
+      }
+
+      const pedido = await crearPedido.mutateAsync(pedidoRequest)
 
       clearCart()
-      if (formaPagoCodigo === 'MERCADOPAGO') {
-        startCheckoutPayment()
-      }
       addToast({ type: 'success', message: 'Pedido creado correctamente.' })
       navigate(`/pedidos/${pedido.id}/confirmacion`)
     } catch (error) {
@@ -131,11 +161,16 @@ export function CheckoutPage() {
                 {items.map((item) => (
                   <li
                     key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}`}
-                    className="flex items-center justify-between gap-4 p-4"
+                    className="flex items-start justify-between gap-4 p-4"
                   >
                     <div>
                       <p className="text-sm font-medium text-ink">{item.producto.nombre}</p>
                       <p className="mt-1 text-xs text-ink-muted">Cantidad: {item.cantidad}</p>
+                      {formatExclusiones(item.personalizacion?.ingredientesExcluidos ?? []) && (
+                        <p className="mt-1 text-xs text-ink-muted">
+                          Sin {formatExclusiones(item.personalizacion?.ingredientesExcluidos ?? [])}
+                        </p>
+                      )}
                     </div>
                     <span className="text-sm font-semibold text-ink">
                       {formatCurrency(item.producto.precio * item.cantidad)}
@@ -239,9 +274,29 @@ export function CheckoutPage() {
               </div>
             </div>
 
+            {showMercadoPagoPayment && isMercadoPago && (
+              <MercadoPagoCheckoutPayment
+                amount={checkoutTotal}
+                pedido={pedidoRequest}
+                onRejected={(message) => setRequestError(message)}
+                onSuccess={(result) => {
+                  clearCart()
+                  startCheckoutPayment()
+                  addToast({ type: 'success', message: 'Pedido creado correctamente.' })
+                  navigate(`/pedidos/${result.pedido.id}/confirmacion`)
+                }}
+              />
+            )}
+
             {requestError && (
               <div className="rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">
                 {requestError}
+              </div>
+            )}
+
+            {!pedidosHabilitados && (
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
+                El local no esta aceptando pedidos en este momento. Tu carrito se conserva para cuando se reanuden.
               </div>
             )}
 
@@ -292,10 +347,10 @@ export function CheckoutPage() {
               <button
                 type="button"
                 onClick={handleCrearPedido}
-                disabled={isPending || !hasItems}
+                disabled={isPending || !hasItems || !pedidosHabilitados || showMercadoPagoPayment}
                 className="mt-6 flex w-full items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-dim disabled:cursor-not-allowed disabled:bg-surface-higher disabled:text-ink-muted"
               >
-                {isPending ? 'Creando pedido...' : 'Crear pedido'}
+                {isPending ? 'Validando...' : isMercadoPago ? 'Continuar al pago' : 'Crear pedido'}
               </button>
             </div>
           </aside>

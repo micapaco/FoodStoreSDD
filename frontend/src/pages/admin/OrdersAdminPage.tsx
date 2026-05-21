@@ -99,6 +99,16 @@ function formatDate(value: string): string {
   }).format(new Date(value))
 }
 
+function formatExclusiones(item: { personalizacion: number[]; personalizacionDetalle: { nombre: string }[] }): string | null {
+  if (item.personalizacionDetalle.length > 0) {
+    return item.personalizacionDetalle.map((exclusion) => exclusion.nombre).join(', ')
+  }
+  if (item.personalizacion.length > 0) {
+    return item.personalizacion.map((id) => `Ingrediente #${id}`).join(', ')
+  }
+  return null
+}
+
 export function OrdersAdminPage() {
   const [page, setPage] = useState(1)
   const [estado, setEstado] = useState('')
@@ -282,7 +292,10 @@ export function OrdersAdminPage() {
                         <p className="mt-1 text-xs text-ink-muted">{pedido.clienteEmail}</p>
                       </td>
                       <td className="px-4 py-4"><EstadoBadge estado={pedido.estadoCodigo} /></td>
-                      <td className="px-4 py-4 text-sm font-semibold text-brand">{formatCurrency(pedido.total)}</td>
+                      <td className="px-4 py-4 text-sm">
+                        <p className="font-semibold text-brand">{formatCurrency(pedido.total)}</p>
+                        <p className="mt-1 text-xs text-ink-muted">{formatPaymentMethod(pedido.formaPagoCodigo)}</p>
+                      </td>
                       <td className="px-4 py-4 text-right">
                         <button
                           type="button"
@@ -459,6 +472,9 @@ export function OrdersAdminPage() {
                     <li key={`${item.productoId ?? 'snapshot'}-${index}`} className="rounded-lg bg-surface-low p-3">
                       <p className="font-semibold text-ink">{item.nombreSnapshot}</p>
                       <p className="mt-1 text-ink-muted">Cantidad {item.cantidad}</p>
+                      {formatExclusiones(item) && (
+                        <p className="mt-1 text-ink-muted">Sin {formatExclusiones(item)}</p>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -472,6 +488,7 @@ export function OrdersAdminPage() {
                         {entry.estadoDesde ?? 'Inicio'} - {entry.estadoHasta}
                       </p>
                       <p className="text-xs text-ink-muted">{formatDate(entry.createdAt)}</p>
+                      {entry.motivo && <p className="mt-1 text-xs text-ink-muted">{entry.motivo}</p>}
                     </li>
                   ))}
                 </ol>

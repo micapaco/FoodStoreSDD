@@ -6,6 +6,7 @@ import { useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 import { PersonalizarProductoModal } from '@/features/store/components/PersonalizarProductoModal'
 import type { Personalizacion } from '@/shared/types/cart'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
@@ -74,7 +75,7 @@ export function ProductoDetallePage() {
         nombre: producto.nombre,
         precio: producto.precio_base,
         stockDisponible: producto.stock_cantidad,
-        imagen: producto.imagen_url ?? undefined,
+        imagen: resolveImageUrl(producto.imagen_url),
       },
       quantityToAdd,
       personalizacion,
@@ -169,7 +170,7 @@ export function ProductoDetallePage() {
           {producto.imagen_url ? (
             <>
               <img
-                src={producto.imagen_url}
+                src={resolveImageUrl(producto.imagen_url)}
                 alt={producto.nombre}
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {

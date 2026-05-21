@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useProducto, useDeleteProducto } from '@/features/productos/hooks/useProductos'
 import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
@@ -143,7 +144,7 @@ export function ProductosDetailPage() {
         </h2>
         {producto.imagen_url ? (
           <img
-            src={producto.imagen_url}
+            src={resolveImageUrl(producto.imagen_url)}
             alt={producto.nombre}
             className="max-h-48 w-auto rounded-lg border border-line-subtle object-contain"
             onError={(e) => {

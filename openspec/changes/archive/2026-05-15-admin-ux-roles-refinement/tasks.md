@@ -1,7 +1,7 @@
 ## 1. Método de pago explícito en pedidos admin
 
 - [x] 1.1 En `OrdersAdminPage.tsx`, agregar fila "Método de pago" en el panel de detalle mostrando `formaPagoCodigo` como texto legible ("MercadoPago" / "Efectivo" / "Transferencia") — actualmente solo aparece el estado del pago, no el método
-- [ ] 1.2 En la tabla de pedidos (list view), agregar subtexto bajo el total o una columna pequeña con el método de pago para identificarlo de un vistazo sin entrar al detalle
+- [x] 1.2 En la tabla de pedidos (list view), agregar subtexto bajo el total o una columna pequeña con el método de pago para identificarlo de un vistazo sin entrar al detalle
 
 ## 2. Selector de roles con combinaciones válidas
 

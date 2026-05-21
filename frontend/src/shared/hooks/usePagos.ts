@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { crearPagoApi, obtenerPagoStatusApi } from '@/shared/api/pagos'
+import { crearPagoApi, crearPedidoMercadoPagoApi, obtenerPagoStatusApi } from '@/shared/api/pagos'
 
 export function useCrearPago() {
   const queryClient = useQueryClient()
@@ -8,6 +8,18 @@ export function useCrearPago() {
     mutationFn: crearPagoApi,
     onSuccess: (pago) => {
       queryClient.invalidateQueries({ queryKey: ['pagos', pago.pedidoId] })
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] })
+    },
+  })
+}
+
+export function useCrearPedidoMercadoPago() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: crearPedidoMercadoPagoApi,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['pagos', result.pedido.id] })
       queryClient.invalidateQueries({ queryKey: ['pedidos'] })
     },
   })

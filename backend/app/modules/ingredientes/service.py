@@ -129,11 +129,21 @@ class IngredienteService:
         page: int = 1,
         size: int = 20,
         alergeno: bool | None = None,
+        q: str | None = None,
     ) -> IngredienteList:
         """Lista ingredientes activos con paginación y filtro opcional de alérgenos."""
         skip = (page - 1) * size
+        search = q.strip() if q else None
 
-        if alergeno is not None:
+        if search:
+            items = await uow.ingredientes.list_filtered(
+                skip=skip,
+                limit=size,
+                alergeno=alergeno,
+                q=search,
+            )
+            total = await uow.ingredientes.count_filtered(alergeno=alergeno, q=search)
+        elif alergeno is not None:
             if alergeno:
                 items = await uow.ingredientes.list_alergenos(skip=skip, limit=size)
                 total = await uow.ingredientes.count_alergenos()

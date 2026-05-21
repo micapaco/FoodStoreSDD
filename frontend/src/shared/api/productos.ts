@@ -5,10 +5,10 @@ import type {
   ProductoCreate,
   ProductoUpdate,
   ProductoFilters,
+  ProductoImagenUploadResponse,
   PaginatedResponse,
 } from '@/entities/productos/types'
 import type { CategoriaRead } from '@/entities/categorias/types'
-import type { IngredienteRead } from '@/entities/ingredientes/types'
 
 export async function getProductos(
   filters: ProductoFilters,
@@ -40,6 +40,15 @@ export async function deleteProducto(id: number): Promise<void> {
   await api.delete(`/productos/${id}`)
 }
 
+export async function uploadProductoImagen(file: File): Promise<ProductoImagenUploadResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await api.post<ProductoImagenUploadResponse>('/productos/imagenes', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data
+}
+
 export async function updateStock(
   id: number,
   stock_cantidad: number,
@@ -68,16 +77,5 @@ export async function getCategoriasList(): Promise<CategoriaRead[]> {
     size: number
     pages: number
   }>('/categorias')
-  return res.data.items
-}
-
-export async function getIngredientesList(): Promise<IngredienteRead[]> {
-  const res = await api.get<{
-    items: IngredienteRead[]
-    total: number
-    page: number
-    size: number
-    pages: number
-  }>('/ingredientes')
   return res.data.items
 }

@@ -18,6 +18,7 @@ class FakePedidoRepository:
         self.pedido: Pedido | None = None
         self.detalles: list[DetallePedido] = []
         self.historial: list[HistorialEstadoPedido] = []
+        self.removable_detail: dict[int, dict[int, str]] = {}
         self.productos = [
             Producto(
                 id=100,
@@ -36,6 +37,9 @@ class FakePedidoRepository:
 
     async def get_removable_ingredientes(self, _producto_ids: list[int]) -> dict[int, set[int]]:
         return {}
+
+    async def get_removable_ingredientes_detail(self, _producto_ids: list[int]) -> dict[int, dict[int, str]]:
+        return self.removable_detail
 
     async def create(self, pedido: Pedido) -> Pedido:
         pedido.id = 1
@@ -82,3 +86,30 @@ class PedidosPickupCreationTests(IsolatedAsyncioTestCase):
         self.assertIsNotNone(uow.pedidos.pedido)
         self.assertEqual(Decimal("0.00"), uow.pedidos.pedido.costo_envio)
         self.assertEqual(Decimal("200.00"), uow.pedidos.pedido.total)
+
+    async def test_crear_pedido_persiste_snapshot_de_exclusiones(self) -> None:
+        uow = FakeUnitOfWork()
+        uow.pedidos.removable_detail = {100: {7: "Queso"}}
+        request = CrearPedidoRequest.model_validate(
+            {
+                "items": [{"productoId": 100, "cantidad": 1, "personalizacion": [7]}],
+                "formaPagoCodigo": "EFECTIVO",
+                "direccionId": None,
+                "notas": None,
+            }
+        )
+        current_user = Usuario(
+            id=10,
+            nombre="Cliente",
+            apellido="Food",
+            email="cliente@example.com",
+            password_hash="x" * 60,
+        )
+
+        await PedidosService().crear_pedido(uow, request, current_user)
+
+        self.assertEqual([7], uow.pedidos.detalles[0].personalizacion)
+        self.assertEqual(
+            [{"ingredienteId": 7, "nombre": "Queso"}],
+            uow.pedidos.detalles[0].personalizacion_snapshot,
+        )

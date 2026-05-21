@@ -15,6 +15,16 @@
 
 ---
 
+## Estado real de archivo (2026-05-17)
+
+`openspec list` no muestra changes activos. El repo tiene archivados 31 changes reales: `01` a `15`, los ajustes `15.5` y `15.6`, y la numeracion continua `16` a `29`.
+
+La linea historica no separa "correctivos" o "refinamientos" en una seccion aparte: despues del `19` se continua con `20`, `21`, `22`, etc. para mantener referencias claras y estables.
+
+Antes de proponer un nuevo change, verificar el estado real con `npx.cmd -y openspec list` y revisar `openspec/changes/archive/`.
+
+---
+
 ## Changes del proyecto
 
 ### `01` — `infra-backend-core`
@@ -269,91 +279,91 @@ Panel y backend para parámetros operativos globales administrables sin tocar c�
 
 ---
 
-### `20` — `catalog-timestamp-hotfix`
+### `20` — `admin-categories-ui`
 
-**Funcionalidad**: Normalización de timestamps en el catálogo.
-Corrección de defaults de `updated_at` en modelos de categorías e ingredientes, asignación correcta en el servicio de actualización y soft delete genérico. Fix puntual de regresión en PostgreSQL local.
+**Funcionalidad**: Implementa la vista administrativa de categorias y reemplaza placeholders de UI para gestionar el catalogo desde el panel.
 
-**Historias de usuario**: Corrección técnica transversal a US-007 a US-014  
+**Depende de**: `catalog-categories-ingredients`, `frontend-shell`
+
+---
+
+### `21` — `catalog-timestamp-hotfix`
+
+**Funcionalidad**: Corrige inconsistencias de timestamps del catalogo detectadas en runtime y tests.
+
 **Depende de**: `catalog-categories-ingredients`, `catalog-products`
 
-> Hotfix de backend. No agrega funcionalidad de dominio; corrige comportamiento incorrecto de timestamps que afectaba las respuestas del catálogo en entornos locales.
-
 ---
 
-### `21` — `frontend-runtime-stabilization`
+### `22` — `frontend-runtime-stabilization`
 
-**Funcionalidad**: Estabilización del runtime del frontend.
-Fallback de `VITE_API_BASE_URL` a `/api/v1`, normalización de `roles` en `authStore` (siempre `string[]`), helper `getSafeUserRoles`, helper `resolvePostLoginPath` para redirects post-login seguros, corrección de tipos en `AdminDashboardPage` y suscripción no usada en checkout.
+**Funcionalidad**: Estabiliza errores de runtime del frontend, rutas, stores o integraciones necesarias para que la app compile y navegue correctamente.
 
-**Historias de usuario**: Correctivo transversal a US-000c, US-066, US-067  
-**Depende de**: `frontend-shell`, `auth`
-
-> Estabilización operativa del cliente HTTP y del store de autenticación. Sin este change el runtime fallaba silenciosamente en entornos sin `VITE_API_BASE_URL` configurado y con usuarios que tenían `roles` en formato inconsistente.
-
----
-
-### `22` — `admin-categories-ui`
-
-**Funcionalidad**: Panel admin de categorías (frontend completo).
-Tipos y API client para categorías (`CategoriaCreate`, `CategoriaUpdate`), hooks TanStack Query para árbol y lista, mutations con invalidación, página `CategoriesAdminPage` con CRUD completo, selector de categoría padre, confirmación de eliminación y estados de carga/vacío/error.
-
-**Historias de usuario**: US-007 a US-014 (frontend admin)  
-**Depende de**: `catalog-categories-ingredients`, `frontend-shell`, `frontend-runtime-stabilization`
-
-> El change `catalog-categories-ingredients` implementó el backend. Este change implementa la UI admin que faltaba para operar el CRUD desde el dashboard.
+**Depende de**: `frontend-shell`
 
 ---
 
 ### `23` — `single-role-and-client-cart-hotfix`
 
-**Funcionalidad**: Rol único por usuario + carrito exclusivo de clientes.
-Enforcement de exactamente un rol por usuario en backend (schema y servicio), UI de asignación de roles cambia de multi-checkbox a selector único, carrito (`CartDrawer`, header) oculto para roles que no sean `CLIENT`.
+**Funcionalidad**: Ajuste correctivo sobre roles y carrito cliente para alinear UI, RBAC y persistencia del carrito con el comportamiento real esperado.
 
-**Historias de usuario**: Correctivo sobre US-004, US-005, US-029 a US-034  
-**Depende de**: `auth`, `frontend-shell`, `admin-users`, `cart`
-
-> Hotfix cross-domain. La especificación establece un solo rol activo por usuario; el sistema original permitía múltiples. El carrito tampoco debía mostrarse a roles operativos (ADMIN, STOCK, PEDIDOS).
+**Depende de**: `auth`, `cart`, `frontend-shell`
 
 ---
 
-### `24` — `stitch-visual-redesign`
+### `24` — `product-image-url`
 
-**Funcionalidad**: Rediseño visual completo con design system Stitch.
-Actualización de `tailwind.config.js` con tokens de color (`brand`, `ink`, `surface-*`, `line-*`), tipografía y sombras extraídos de Stitch. Restyleo de `Button.tsx`, `Badge.tsx`, `Input.tsx`, `Card.tsx` en `shared/ui/`. Restyleo de todas las páginas públicas, admin y widgets (header, footer, nav, toaster) con los tokens del nuevo tema.
+**Funcionalidad**: Agrega soporte para URL de imagen en productos, con contrato backend/frontend para mostrar imagenes de catalogo y administracion.
 
-**Historias de usuario**: Mejora visual transversal (no mapea a historias de dominio)  
-**Depende de**: `frontend-shell`, `frontend-runtime-stabilization`
-
-> Change puramente visual. No modifica lógica, stores, hooks ni contratos API. Todo el trabajo está en clases Tailwind y estructura HTML de los componentes existentes.
+**Depende de**: `catalog-products`
 
 ---
 
-### `25` — `product-image-url`
+### `25` — `stitch-visual-redesign`
 
-**Funcionalidad**: Imágenes de productos end-to-end.
-Campo `imagen_url VARCHAR(500) NULL` en el modelo `Producto` (migración Alembic), schemas y servicio backend actualizados, tipos frontend extendidos, formulario admin con campo URL + preview en tiempo real, catálogo público y detalle público mostrando imagen real o placeholder SVG, detalle admin con sección de imagen, y correcciones UX en inputs numéricos del formulario.
+**Funcionalidad**: Refinamiento visual transversal de la experiencia frontend ya implementada, sin redefinir reglas de negocio.
 
-**Historias de usuario**: US-015 a US-018 (extensión de imagen), US-021, US-023  
-**Depende de**: `catalog-products`, `stitch-visual-redesign`
-
-> Extensión de una entidad ya existente. El campo es nullable; todos los endpoints existentes mantienen su contrato agregando `imagen_url` como campo opcional en request y garantizado (puede ser `null`) en response.
+**Depende de**: `frontend-shell`, `catalog-products`, `order-views`, `admin-users`, `admin-metrics`, `system-config`
 
 ---
 
 ### `26` — `admin-ux-roles-refinement`
 
-**Funcionalidad**: Refinamientos UX del panel admin.
-Método de pago visible en detalle y lista de pedidos admin, selector de roles con combinación `STOCK+PEDIDOS`, eliminación del link "Inicio" duplicado en la nav pública, sidebar vertical fixed para el dashboard admin (`AdminSidebar.tsx`) con toggle mobile, patrones de skeleton y `useMemo` aplicados en todas las páginas admin.
+**Funcionalidad**: Refinamiento UX del panel admin: sidebar, visualizacion explicita de metodo de pago en pedidos y soporte para asignacion operativa combinada `STOCK+PEDIDOS`.
 
-**Historias de usuario**: Refinamiento sobre US-051, US-052, US-053, US-054, US-055, US-065  
-**Depende de**: `admin-users`, `order-views`, `stitch-visual-redesign`
-
-> Change activo al momento de agregar este registro. Mejoras UX que no implican cambios de contrato ni de lógica de negocio; todo el trabajo es en la capa de presentación del dashboard.
+**Depende de**: `admin-users`, `order-views`, `frontend-shell`
 
 ---
 
-### `27` — `display-cocina`
+### `27` — `catalog-order-admin-ux-hardening`
+
+**Funcionalidad**: Endurecimiento correctivo del catalogo, pedidos, pagos y UX admin/cliente. Incluye unicidad activa para categorias con soft delete, exclusiones de ingredientes por nombre, upload local de imagen de producto, bloqueo coherente por configuracion, checkout MercadoPago antes de confirmacion, motivos de cancelacion en admin, vista cliente completa para `ADMIN` y carrito aislado por usuario.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`, `cart`, `order-creation`, `payment-integration`, `order-fsm`, `order-views`, `admin-users`, `system-config`, `frontend-shell`
+
+---
+
+### `28` — `product-image-local-upload-integration`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-17-product-image-local-upload-integration/`.
+
+**Funcionalidad**: Integra de forma real el upload local de imagen en el formulario activo de crear/editar productos, reemplazando la carga manual por URL. Reutiliza el endpoint `POST /api/v1/productos/imagenes`, conserva `imagen_url` como contrato persistido, amplia formatos soportados, asigna imagenes locales a productos seed y limpia duplicacion/huerfandad de UI relacionada.
+
+**Depende de**: `catalog-order-admin-ux-hardening`, `catalog-products`
+
+---
+
+### `29` — `admin-ingredients-management-ui`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-17-admin-ingredients-management-ui/`.
+
+**Funcionalidad**: Completa la administracion web de ingredientes para `ADMIN` y `STOCK`: vista dedicada, CRUD, paginacion real, buscador por nombre, filtro de alergenos, selector de ingredientes paginado/buscable en productos y sincronizacion de caches para que los ingredientes gestionados queden disponibles al crear o editar productos.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`, `frontend-shell`
+
+---
+
+### `30` — `display-cocina`
 
 **Funcionalidad**: Kitchen Display System (KDS) + rol Cocinero.
 Nuevo rol `COCINA` en el RBAC, pantalla en tiempo real (`/cocina`) con dos columnas por estado (`CONFIRMADO` / `EN_PREP`), WebSocket push con fallback polling REST, timer de urgencia visual, alerta sonora opcional y autorización de las transiciones `CONFIRMADO → EN_PREP → EN_CAMINO` para el nuevo rol.
@@ -361,7 +371,7 @@ Nuevo rol `COCINA` en el RBAC, pantalla en tiempo real (`/cocina`) con dos colum
 **Historias de usuario**: US-COCINA-01 a US-COCINA-09  
 **Depende de**: `auth`, `payment-integration`, `order-fsm`, `frontend-shell`
 
-> Este change agrega infraestructura nueva al backend (WebSocket single-instance con pub/sub en proceso) sin modificar el FSM ni sus estados. El rol `COCINA` se incorpora en paralelo a `PEDIDOS`, sin reemplazarlo. El material de dominio vive en `feature-display-cocina/`. Ver `feature-display-cocina/README.md` para decisiones de diseño cerradas (WebSocket vs SSE, single vs multi-instancia, PA-CO-01).
+> Agrega infraestructura nueva al backend (WebSocket single-instance con pub/sub en proceso) sin modificar el FSM ni sus estados. El rol `COCINA` se incorpora en paralelo a `PEDIDOS`, sin reemplazarlo. El material de dominio vive en `feature-display-cocina/`. Ver `feature-display-cocina/README.md` para decisiones de diseño cerradas (WebSocket vs SSE, single vs multi-instancia, PA-CO-01).
 
 ---
 
@@ -371,39 +381,26 @@ Nuevo rol `COCINA` en el RBAC, pantalla en tiempo real (`/cocina`) con dos colum
 infra-backend-core ────────┐
                            ├── infra-database ──┐
 infra-frontend-core ───────┘                    │
-                                                ├── auth ──────────────────────────────────────────┐
-                                                │                      ├── profile                  │
-                                                │                      ├── catalog-categories-ingredients ── catalog-products ──┐
-                                                │                      ├── addresses                │                            │
-                                                │                      ├── admin-users              │                            │
-                                                │                      └── system-config            │                            │
-                                                │                                                   │                            │
-                                                └── frontend-shell ──────┬── catalog-products       │                            │
-                                                                         ├── addresses              │                            │
-                                                                         ├── order-views            │                            │
-                                                                         └── admin-users            │                            │
-
-catalog-categories-ingredients ─────────────────────────────────────────────────────────────────────┤
-                                                                                                     ├── catalog-timestamp-hotfix
-catalog-products ────────────────────────────────────────────────────────────────────────────────────┘
-
-frontend-shell ─────────────────────────┐
-                                        ├── frontend-runtime-stabilization ── admin-categories-ui
-auth ───────────────────────────────────┘
-
-auth + frontend-shell + admin-users + cart ────── single-role-and-client-cart-hotfix
-
-frontend-shell + frontend-runtime-stabilization ── stitch-visual-redesign ── product-image-url
-
-admin-users + order-views + stitch-visual-redesign ── admin-ux-roles-refinement
+                                                ├── auth ─────────────┐
+                                                │                      ├── profile
+                                                │                      ├── catalog-categories-ingredients ── catalog-products
+                                                │                      ├── addresses
+                                                │                      ├── admin-users
+                                                │                      └── system-config
+                                                │
+                                                └── frontend-shell ────┬── catalog-products
+                                                                       ├── addresses
+                                                                       ├── order-views
+                                                                       └── admin-users
 
 catalog-products ───────────────┐
                                 ├── cart ───────────────┐
 addresses ──────────────────────┘                       │
                                                         ├── checkout-validation ── order-creation ──┐
-catalog-products ───────────────────────────────────────┘                                             ├── payment-integration ──┬── order-fsm ── order-views ── admin-metrics
-                                                                                                      └── order-feedback        │
-                                                                                                                                └── display-cocina
+catalog-products ───────────────────────────────────────┘                                             ├── payment-integration ── order-fsm ── order-views ── admin-metrics
+                                                                                                      └── order-feedback
+
+catalog-products ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---

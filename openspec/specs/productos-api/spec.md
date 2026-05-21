@@ -1,44 +1,25 @@
-## ADDED Requirements
-
+## Purpose
+Define los contratos backend para administracion, stock, relaciones y catalogo publico de productos.
+## Requirements
 ### Requirement: CRUD de productos (ADMIN)
-El sistema SHALL exponer endpoints REST protegidos para la gestión completa de productos.
+El sistema SHALL exponer endpoints REST protegidos para la gestion completa de productos.
+El campo persistido de imagen de producto SHALL seguir siendo `imagen_url`, tanto para URLs externas como para URLs internas generadas por upload.
 
 #### Scenario: Crear producto con imagen
-- **WHEN** un usuario con rol ADMIN envía `POST /api/v1/productos` con `{nombre, descripcion, precio_base, stock_cantidad, disponible, categoria_ids[], ingrediente_ids[], imagen_url?}`
-- **THEN** el sistema responde `201 Created` con el producto creado incluyendo el campo `imagen_url` (null si no se proveyó), y las relaciones en `ProductoCategoria` y `ProductoIngrediente` quedan persistidas
+- **WHEN** un usuario con rol ADMIN envia `POST /api/v1/productos` con `{nombre, descripcion, precio_base, stock_cantidad, disponible, categoria_ids[], ingrediente_ids[], imagen_url?}`
+- **THEN** el sistema responde `201 Created` con el producto creado incluyendo el campo `imagen_url` (null si no se proveyo), y las relaciones en `ProductoCategoria` y `ProductoIngrediente` quedan persistidas
 
 #### Scenario: Crear producto sin imagen
-- **WHEN** un usuario con rol ADMIN envía `POST /api/v1/productos` omitiendo el campo `imagen_url`
+- **WHEN** un usuario con rol ADMIN envia `POST /api/v1/productos` omitiendo el campo `imagen_url`
 - **THEN** el sistema responde `201 Created` con `imagen_url: null` en la respuesta
 
-#### Scenario: Listar productos (protegido)
-- **WHEN** un usuario ADMIN envía `GET /api/v1/productos?page=1&size=20`
-- **THEN** el sistema responde `200 OK` con `{items: Producto[], total: N, page: 1, size: 20, pages: P}` excluyendo soft-deleted, cada item incluye `imagen_url`
-
-#### Scenario: Obtener producto por ID
-- **WHEN** un usuario ADMIN envía `GET /api/v1/productos/{id}`
-- **THEN** el sistema responde `200 OK` con el producto expandido incluyendo `categorias[]`, `ingredientes[]` e `imagen_url`
-- **THEN** si el producto no existe o está soft-deleted, responde `404 Not Found`
-
-#### Scenario: Actualizar producto — imagen_url
-- **WHEN** un usuario con rol ADMIN envía `PUT /api/v1/productos/{id}` con `{imagen_url: "https://..."}`
+#### Scenario: Actualizar producto - imagen_url interna
+- **WHEN** un usuario con rol ADMIN envia `PUT /api/v1/productos/{id}` con una `imagen_url` devuelta por el endpoint de upload
 - **THEN** el sistema responde `200 OK` con el producto actualizado y `imagen_url` persistida
 
 #### Scenario: Limpiar imagen de producto
-- **WHEN** un usuario con rol ADMIN envía `PUT /api/v1/productos/{id}` con `{imagen_url: null}`
+- **WHEN** un usuario con rol ADMIN envia `PUT /api/v1/productos/{id}` con `{imagen_url: null}`
 - **THEN** el sistema responde `200 OK` con `imagen_url: null` en la respuesta
-
-#### Scenario: URL demasiado larga
-- **WHEN** un usuario envía `imagen_url` con más de 500 caracteres
-- **THEN** el sistema responde `422 Unprocessable Entity` con error de validación en `imagen_url`
-
-#### Scenario: Actualizar producto (otros campos)
-- **WHEN** un usuario ADMIN envía `PUT /api/v1/productos/{id}` con datos parciales
-- **THEN** el sistema responde `200 OK` con el producto actualizado y sincroniza las relaciones
-
-#### Scenario: Soft delete producto
-- **WHEN** un usuario ADMIN envía `DELETE /api/v1/productos/{id}`
-- **THEN** el sistema responde `204 No Content` y marca `deleted_at` con el timestamp actual
 
 ### Requirement: Control de stock (ADMIN/STOCK)
 El sistema SHALL exponer endpoints para la gestión de stock y disponibilidad.
@@ -127,3 +108,49 @@ El sistema SHALL soportar ordenamiento configurable en la lista de productos.
 #### Scenario: Ordenar por fecha de creación
 - **WHEN** un usuario envía `GET /api/v1/productos?sort=created_at&order=desc`
 - **THEN** el sistema responde productos ordenados por fecha de creación descendente
+
+### Requirement: Upload de imagen de producto
+El sistema SHALL exponer un endpoint protegido para que usuarios ADMIN carguen imagenes locales de producto y obtengan una URL interna compatible con `imagen_url`.
+
+#### Scenario: Upload exitoso
+- **WHEN** un ADMIN envia `POST /api/v1/productos/imagenes` con multipart file de imagen valida
+- **THEN** el sistema guarda el archivo con nombre seguro
+- **AND** responde `201 Created` con `{ imagen_url: "<url interna>" }`
+
+#### Scenario: Tipo de archivo invalido
+- **WHEN** un ADMIN sube un archivo que no es `jpg`, `jpeg`, `png`, `webp`, `gif` o `avif`
+- **THEN** el sistema responde `422 Unprocessable Entity`
+
+#### Scenario: Archivo demasiado grande
+- **WHEN** un ADMIN sube una imagen que supera el tamano maximo definido
+- **THEN** el sistema responde `413 Payload Too Large` o `422 Unprocessable Entity` con mensaje claro
+
+#### Scenario: Usuario sin rol ADMIN
+- **WHEN** un usuario sin rol ADMIN intenta subir una imagen de producto
+- **THEN** el sistema responde `403 Forbidden`
+
+#### Scenario: Ruta de upload no colisiona con detalle de producto
+- **WHEN** un cliente HTTP envia `POST /api/v1/productos/imagenes` sin credenciales validas
+- **THEN** el sistema procesa la ruta estatica de upload y responde un error de autenticacion o autorizacion
+- **AND** la respuesta no es un error de validacion de path para `producto_id`
+
+### Requirement: Imagenes locales en seed de productos
+El sistema SHALL asociar imagenes locales a los productos base de seed cuando los assets existan.
+
+#### Scenario: Seed asigna imagen local existente
+- **WHEN** se ejecuta la seed y existe `backend/app/modules/productos/imagenes/pizza.jpg`
+- **THEN** el producto `Pizza Mozzarella` se crea o actualiza con una `imagen_url` local servida por el backend
+- **AND** la URL apunta a un archivo publicado bajo `/static/uploads/productos/`
+
+#### Scenario: Seed asigna imagenes a productos base
+- **WHEN** se ejecuta la seed con assets disponibles para `pizza`, `hamburguesa`, `cocacola`, `agua`, `papas` y `flan`
+- **THEN** los productos `Pizza Mozzarella`, `Hamburguesa Clasica`, `Coca-Cola 500ml`, `Agua Mineral 500ml`, `Papas Fritas` y `Flan con Crema` quedan asociados a sus imagenes correspondientes
+
+#### Scenario: Asset seed faltante no rompe el producto
+- **WHEN** se ejecuta la seed y no existe el asset local de un producto base
+- **THEN** la seed completa correctamente
+- **AND** el producto se crea o mantiene sin `imagen_url` para que el frontend muestre placeholder
+
+#### Scenario: Seed no pisa imagen manual del admin
+- **WHEN** un producto seed ya existe con una `imagen_url` cargada manualmente por un ADMIN
+- **THEN** la seed no reemplaza esa imagen por el asset local

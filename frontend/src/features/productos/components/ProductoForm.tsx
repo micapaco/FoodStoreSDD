@@ -1,7 +1,11 @@
+import { useMemo, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
+import { useUploadProductoImagen } from '@/features/productos/hooks/useProductos'
 import type { CategoriaRead } from '@/entities/categorias/types'
 import type { IngredienteRead } from '@/entities/ingredientes/types'
 import type { ProductoCreate, ProductoUpdate } from '@/entities/productos/types'
+import { parseHttpError } from '@/shared/lib/http/parseHttpError'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 
 export interface ProductoFormValues {
   nombre: string
@@ -34,6 +38,7 @@ function FieldError({ errors }: { errors: unknown[] }) {
 
 const inputCls = 'w-full rounded-lg border border-line-subtle bg-surface-low px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20'
 const labelCls = 'block text-sm font-medium text-ink-muted mb-1'
+const INGREDIENTES_PAGE_SIZE = 8
 
 export function ProductoForm({
   initialValues,
@@ -44,6 +49,11 @@ export function ProductoForm({
   onCancel,
   isEdit = false,
 }: ProductoFormProps) {
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [ingredientSearch, setIngredientSearch] = useState('')
+  const [ingredientPage, setIngredientPage] = useState(1)
+  const uploadImagen = useUploadProductoImagen()
+  const isBusy = isPending || uploadImagen.isPending
   const defaultValues: ProductoFormValues = {
     nombre: '',
     descripcion: '',
@@ -62,6 +72,19 @@ export function ProductoForm({
       onSubmit(value)
     },
   })
+  const filteredIngredientes = useMemo(() => {
+    const search = ingredientSearch.trim().toLowerCase()
+    if (!search) return ingredientes
+    return ingredientes.filter((ingrediente) =>
+      ingrediente.nombre.toLowerCase().includes(search),
+    )
+  }, [ingredientSearch, ingredientes])
+  const ingredientPages = Math.max(1, Math.ceil(filteredIngredientes.length / INGREDIENTES_PAGE_SIZE))
+  const currentIngredientPage = Math.min(ingredientPage, ingredientPages)
+  const paginatedIngredientes = filteredIngredientes.slice(
+    (currentIngredientPage - 1) * INGREDIENTES_PAGE_SIZE,
+    currentIngredientPage * INGREDIENTES_PAGE_SIZE,
+  )
 
   return (
     <form
@@ -121,33 +144,46 @@ export function ProductoForm({
         )}
       </form.Field>
 
-      {/* Imagen URL */}
+      {/* Imagen local */}
       <form.Field
         name="imagen_url"
         validators={{
           onChange: ({ value }) =>
-            value && value.length > 500 ? 'La URL no puede superar los 500 caracteres' : undefined,
+            value && value.length > 500 ? 'La ruta de la imagen no puede superar los 500 caracteres' : undefined,
         }}
       >
         {(field) => (
           <div>
-            <label htmlFor={field.name} className={labelCls}>
-              Imagen (URL)
-            </label>
+            <span className={labelCls}>Imagen del producto</span>
             <input
-              id={field.name}
-              type="text"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="https://ejemplo.com/imagen.jpg"
-              className={inputCls}
+              id="producto-imagen-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              disabled={isBusy}
+              onChange={async (event) => {
+                const file = event.target.files?.[0]
+                if (!file) return
+                setUploadError(null)
+                try {
+                  const result = await uploadImagen.mutateAsync(file)
+                  field.handleChange(result.imagen_url)
+                } catch (error) {
+                  setUploadError(parseHttpError(error).message)
+                  event.target.value = ''
+                }
+              }}
+              className="block w-full rounded-lg border border-line-subtle bg-surface-low px-4 py-2.5 text-sm text-ink file:mr-4 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-on hover:file:bg-brand-dim disabled:opacity-50"
             />
+            <p className="mt-1 text-xs text-ink-muted">
+              Formatos: JPG, PNG, WEBP, GIF o AVIF. La imagen se guarda localmente.
+            </p>
+            {uploadImagen.isPending && <p className="mt-1 text-xs text-brand">Subiendo imagen...</p>}
+            {uploadError && <p className="mt-1 text-xs text-danger">{uploadError}</p>}
             <FieldError errors={field.state.meta.errors} />
             {field.state.value && (
               <div className="mt-2 overflow-hidden rounded-lg border border-line-subtle aspect-video bg-surface-high">
                 <img
-                  src={field.state.value}
+                  src={resolveImageUrl(field.state.value)}
                   alt="Preview"
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -162,9 +198,22 @@ export function ProductoForm({
                   }}
                 />
                 <div className="hidden w-full h-full items-center justify-center text-sm text-ink-muted/60">
-                  URL no válida o imagen no disponible
+                  Imagen no disponible
                 </div>
               </div>
+            )}
+            {field.state.value && (
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => {
+                  setUploadError(null)
+                  field.handleChange('')
+                }}
+                className="mt-2 rounded-lg border border-line-subtle px-3 py-1.5 text-xs font-medium text-ink-muted hover:bg-surface-high disabled:opacity-50"
+              >
+                Quitar imagen
+              </button>
             )}
           </div>
         )}
@@ -289,11 +338,31 @@ export function ProductoForm({
       <form.Field name="ingredientes">
         {(field) => (
           <div>
-            <label className="block text-sm font-medium text-ink-muted mb-2">
-              Ingredientes
-            </label>
+            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <label htmlFor="producto-ingredientes-search" className={labelCls}>
+                  Ingredientes
+                </label>
+                <p className="text-xs text-ink-muted">
+                  {field.state.value.length} seleccionados
+                </p>
+              </div>
+              <div className="w-full sm:max-w-xs">
+                <input
+                  id="producto-ingredientes-search"
+                  type="search"
+                  value={ingredientSearch}
+                  onChange={(e) => {
+                    setIngredientSearch(e.target.value)
+                    setIngredientPage(1)
+                  }}
+                  placeholder="Buscar ingrediente..."
+                  className={inputCls}
+                />
+              </div>
+            </div>
             <div className="space-y-1.5">
-              {ingredientes.map((ing) => {
+              {paginatedIngredientes.map((ing) => {
                 const asignacion = field.state.value.find(
                   (a) => a.ingrediente_id === ing.id,
                 )
@@ -351,7 +420,37 @@ export function ProductoForm({
               {ingredientes.length === 0 && (
                 <span className="text-sm text-ink-muted/50">No hay ingredientes disponibles</span>
               )}
+              {ingredientes.length > 0 && filteredIngredientes.length === 0 && (
+                <div className="rounded-lg border border-line-subtle bg-surface-low px-3 py-4 text-center text-sm text-ink-muted">
+                  No se encontraron ingredientes para esa busqueda
+                </div>
+              )}
             </div>
+            {filteredIngredientes.length > INGREDIENTES_PAGE_SIZE && (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs text-ink-muted">
+                  Pagina {currentIngredientPage} de {ingredientPages} - {filteredIngredientes.length} resultados
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentIngredientPage <= 1}
+                    onClick={() => setIngredientPage((page) => Math.max(1, page - 1))}
+                    className="rounded-lg border border-line-subtle px-3 py-1.5 text-xs font-medium text-ink-muted hover:bg-surface-high disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={currentIngredientPage >= ingredientPages}
+                    onClick={() => setIngredientPage((page) => Math.min(ingredientPages, page + 1))}
+                    className="rounded-lg border border-line-subtle px-3 py-1.5 text-xs font-medium text-ink-muted hover:bg-surface-high disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </form.Field>
@@ -361,7 +460,7 @@ export function ProductoForm({
         <button
           type="button"
           onClick={onCancel}
-          disabled={isPending}
+          disabled={isBusy}
           className="rounded-lg border border-line-subtle px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50 transition-colors"
         >
           Cancelar
@@ -372,11 +471,13 @@ export function ProductoForm({
           {({ canSubmit, isSubmitting }) => (
             <button
               type="submit"
-              disabled={!canSubmit || isSubmitting || isPending}
+              disabled={!canSubmit || isSubmitting || isBusy}
               className="rounded-lg bg-brand px-6 py-2.5 text-sm font-semibold text-brand-on hover:bg-brand-dim disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting || isPending
-                ? 'Guardando…'
+              {uploadImagen.isPending
+                ? 'Subiendo imagen...'
+                : isSubmitting || isPending
+                ? 'Guardando...'
                 : isEdit
                   ? 'Actualizar producto'
                   : 'Crear producto'}

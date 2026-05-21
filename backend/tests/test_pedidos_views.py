@@ -97,8 +97,12 @@ class FakePedidoRepository:
                 nombre_snapshot="Hamburguesa",
                 precio_snapshot=Decimal("100.00"),
                 personalizacion=[7],
+                personalizacion_snapshot=[{"ingredienteId": 7, "nombre": "Queso"}],
             )
         ]
+
+    async def get_ingrediente_names(self, ingrediente_ids: list[int]) -> dict[int, str]:
+        return {ingrediente_id: f"Ingrediente {ingrediente_id}" for ingrediente_id in ingrediente_ids}
 
     async def list_historial_by_pedido_id(
         self,
@@ -235,6 +239,29 @@ class PedidosViewsTests(IsolatedAsyncioTestCase):
                 hasta=None,
                 q=None,
             )
+
+    async def test_lista_operativa_incluye_forma_pago(self) -> None:
+        operador = build_usuario(20, nombre="Ops", email="ops@example.com")
+        cliente = build_usuario(10)
+        uow = FakeUnitOfWork(
+            build_pedido(forma_pago_codigo="TRANSFERENCIA"),
+            cliente,
+            roles=["PEDIDOS"],
+        )
+        uow.usuarios = FakeUsuarioRepository(operador, ["PEDIDOS"])
+
+        result = await PedidosService().listar_operativos(
+            uow,
+            current_user=operador,
+            page=1,
+            size=20,
+            estado=None,
+            desde=None,
+            hasta=None,
+            q=None,
+        )
+
+        self.assertEqual("TRANSFERENCIA", result.items[0].forma_pago_codigo)
 
     async def test_operador_confirma_pago_offline_pendiente(self) -> None:
         operador = build_usuario(20, nombre="Ops", email="ops@example.com")

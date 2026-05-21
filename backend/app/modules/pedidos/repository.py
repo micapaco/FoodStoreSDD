@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.repository import BaseRepository
 from app.db.models.identidad import Usuario
-from app.db.models.catalogo import FormaPago, Producto, ProductoIngrediente
+from app.db.models.catalogo import FormaPago, Ingrediente, Producto, ProductoIngrediente
 from app.db.models.ventas import DetallePedido, HistorialEstadoPedido, Pedido
 
 
@@ -54,6 +54,40 @@ class PedidoRepository(BaseRepository[Pedido]):
         for producto_id, ingrediente_id in result.all():
             removable.setdefault(producto_id, set()).add(ingrediente_id)
         return removable
+
+    async def get_removable_ingredientes_detail(
+        self,
+        producto_ids: list[int],
+    ) -> dict[int, dict[int, str]]:
+        if not producto_ids:
+            return {}
+        result = await self.session.execute(
+            select(
+                ProductoIngrediente.producto_id,
+                ProductoIngrediente.ingrediente_id,
+                Ingrediente.nombre,
+            )
+            .join(Ingrediente, Ingrediente.id == ProductoIngrediente.ingrediente_id)
+            .where(
+                ProductoIngrediente.producto_id.in_(producto_ids),
+                ProductoIngrediente.es_removible.is_(True),
+                Ingrediente.deleted_at.is_(None),
+            )
+        )
+        removable: dict[int, dict[int, str]] = {}
+        for producto_id, ingrediente_id, nombre in result.all():
+            removable.setdefault(producto_id, {})[ingrediente_id] = nombre
+        return removable
+
+    async def get_ingrediente_names(self, ingrediente_ids: list[int]) -> dict[int, str]:
+        if not ingrediente_ids:
+            return {}
+        result = await self.session.execute(
+            select(Ingrediente.id, Ingrediente.nombre).where(
+                Ingrediente.id.in_(ingrediente_ids)
+            )
+        )
+        return {ingrediente_id: nombre for ingrediente_id, nombre in result.all()}
 
     async def create_detalles(self, detalles: list[DetallePedido]) -> None:
         self.session.add_all(detalles)

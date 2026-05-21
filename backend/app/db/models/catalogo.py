@@ -18,7 +18,10 @@ class Categoria(SQLModel, table=True):
         default=None,
         sa_column=Column(BigInteger(), primary_key=True, autoincrement=True),
     )
-    nombre: str = Field(max_length=100, nullable=False, unique=True)
+    nombre: str = Field(
+        max_length=100,
+        sa_column=Column(String(100), nullable=False),
+    )
     parent_id: Optional[int] = Field(
         default=None,
         sa_column=Column(BigInteger(), ForeignKey("categoria.id"), nullable=True),

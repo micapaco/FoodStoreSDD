@@ -23,7 +23,8 @@ export function RoleRoute({ roles }: RoleRouteProps) {
     return <Navigate to="/login" replace />
   }
 
-  const hasRequiredRole = roles.some((r) => useAuthStore.getState().hasRole(r))
+  const auth = useAuthStore.getState()
+  const hasRequiredRole = auth.hasRole('ADMIN') || roles.some((r) => auth.hasRole(r))
 
   if (!hasRequiredRole) {
     return <Navigate to="/403" replace />

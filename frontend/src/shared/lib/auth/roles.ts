@@ -5,6 +5,17 @@ export function getRoleHome(roles: string[]): string {
   return '/'
 }
 
+export function isClientViewPath(path: string): boolean {
+  return (
+    path.startsWith('/productos') ||
+    path.startsWith('/perfil') ||
+    path.startsWith('/direcciones') ||
+    path.startsWith('/carrito') ||
+    path.startsWith('/checkout') ||
+    path.startsWith('/pedidos')
+  )
+}
+
 export function canAccessPath(roles: string[], path: string): boolean {
   if (path.startsWith('/admin/productos')) {
     return roles.includes('ADMIN') || roles.includes('STOCK')
@@ -15,14 +26,8 @@ export function canAccessPath(roles: string[], path: string): boolean {
   if (path.startsWith('/admin')) {
     return roles.includes('ADMIN')
   }
-  if (
-    path.startsWith('/perfil') ||
-    path.startsWith('/direcciones') ||
-    path.startsWith('/carrito') ||
-    path.startsWith('/checkout') ||
-    path.startsWith('/pedidos')
-  ) {
-    return roles.includes('CLIENT')
+  if (isClientViewPath(path)) {
+    return roles.includes('ADMIN') || roles.includes('CLIENT')
   }
   return true
 }
