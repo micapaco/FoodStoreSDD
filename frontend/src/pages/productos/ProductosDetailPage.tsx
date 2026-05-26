@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useProducto, useDeleteProducto } from '@/features/productos/hooks/useProductos'
 import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useUiStore } from '@/shared/stores/uiStore'
+import { resolveImageUrl } from '@/shared/lib/images/resolveImageUrl'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value)
@@ -18,17 +19,17 @@ function formatDate(dateStr: string): string {
 function DetailSkeleton() {
   return (
     <div className="animate-pulse space-y-6">
-      <div className="h-8 w-64 rounded bg-gray-200" />
-      <div className="h-4 w-96 rounded bg-gray-200" />
+      <div className="h-8 w-64 rounded bg-surface-higher" />
+      <div className="h-4 w-96 rounded bg-surface-higher" />
       <div className="grid grid-cols-2 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="space-y-2">
-            <div className="h-3 w-20 rounded bg-gray-200" />
-            <div className="h-6 w-32 rounded bg-gray-200" />
+            <div className="h-3 w-20 rounded bg-surface-higher" />
+            <div className="h-6 w-32 rounded bg-surface-higher" />
           </div>
         ))}
       </div>
-      <div className="h-24 rounded-lg bg-gray-100" />
+      <div className="h-24 rounded-lg bg-surface-high" />
     </div>
   )
 }
@@ -59,7 +60,6 @@ export function ProductosDetailPage() {
     })
   }
 
-  // ── Loading ────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -68,28 +68,27 @@ export function ProductosDetailPage() {
     )
   }
 
-  // ── Error ──────────────────────────────────────────────────────────
   if (isError || !producto) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
-          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="rounded-lg border border-danger/30 bg-danger/10 p-8 text-center">
+          <svg className="mx-auto h-12 w-12 text-danger/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <p className="mt-4 text-lg font-medium text-red-700">Producto no encontrado</p>
-          <p className="mt-1 text-sm text-red-500">El producto que buscás no existe o fue eliminado.</p>
+          <p className="mt-4 text-lg font-medium text-danger">Producto no encontrado</p>
+          <p className="mt-1 text-sm text-danger/70">El producto que buscás no existe o fue eliminado.</p>
           <div className="mt-4 flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => refetch()}
-              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+              className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
             >
               Reintentar
             </button>
             <button
               type="button"
               onClick={() => navigate('/admin/productos')}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+              className="rounded-lg bg-danger-container px-4 py-2 text-sm font-medium text-danger hover:opacity-90 transition-colors"
             >
               Volver al listado
             </button>
@@ -104,8 +103,8 @@ export function ProductosDetailPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{producto.nombre}</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-ink">{producto.nombre}</h1>
+          <p className="mt-1 text-sm text-ink-muted">
             Creado {formatDate(producto.created_at)}
           </p>
         </div>
@@ -113,7 +112,7 @@ export function ProductosDetailPage() {
           <button
             type="button"
             onClick={() => navigate('/admin/productos')}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="rounded-lg border border-line-subtle px-3 py-2 text-sm font-medium text-ink hover:bg-surface-high transition-colors"
           >
             Volver
           </button>
@@ -122,14 +121,14 @@ export function ProductosDetailPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/admin/productos/${producto.id}/editar`)}
-                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-on hover:bg-brand-dim transition-colors"
               >
                 Editar
               </button>
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(true)}
-                className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                className="rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
               >
                 Eliminar
               </button>
@@ -138,42 +137,69 @@ export function ProductosDetailPage() {
         </div>
       </div>
 
+      {/* Imagen */}
+      <div className="mt-6 rounded-lg border border-line-subtle bg-surface-base p-4 shadow-card-sm">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">
+          Imagen del producto
+        </h2>
+        {producto.imagen_url ? (
+          <img
+            src={resolveImageUrl(producto.imagen_url)}
+            alt={producto.nombre}
+            className="max-h-48 w-auto rounded-lg border border-line-subtle object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+              const msg = e.currentTarget.nextElementSibling as HTMLElement | null
+              if (msg) msg.style.display = 'block'
+            }}
+          />
+        ) : null}
+        {!producto.imagen_url && (
+          <p className="text-sm italic text-ink-muted/60">Sin imagen configurada</p>
+        )}
+        {producto.imagen_url && (
+          <p className="mt-1 hidden text-sm italic text-ink-muted/60">
+            La imagen no pudo cargarse
+          </p>
+        )}
+      </div>
+
       {/* Detail cards */}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Info card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+        <div className="rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-muted">
             Información general
           </h2>
           <dl className="mt-4 space-y-4">
             <div>
-              <dt className="text-xs text-gray-400">Descripción</dt>
-              <dd className="mt-0.5 text-sm text-gray-700">
-                {producto.descripcion || <span className="italic text-gray-400">Sin descripción</span>}
+              <dt className="text-xs text-ink-muted/60">Descripción</dt>
+              <dd className="mt-0.5 text-sm text-ink">
+                {producto.descripcion || <span className="italic text-ink-muted/60">Sin descripción</span>}
               </dd>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <dt className="text-xs text-gray-400">Precio base</dt>
-                <dd className="mt-0.5 text-lg font-semibold text-gray-900">
+                <dt className="text-xs text-ink-muted/60">Precio base</dt>
+                <dd className="mt-0.5 text-lg font-semibold text-ink">
                   {formatCurrency(producto.precio_base)}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400">Stock</dt>
-                <dd className="mt-0.5 text-lg font-semibold text-gray-900">
+                <dt className="text-xs text-ink-muted/60">Stock</dt>
+                <dd className="mt-0.5 text-lg font-semibold text-ink">
                   {producto.stock_cantidad} uds.
                 </dd>
               </div>
             </div>
             <div>
-              <dt className="text-xs text-gray-400">Disponible</dt>
+              <dt className="text-xs text-ink-muted/60">Disponible</dt>
               <dd className="mt-0.5">
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                     producto.disponible
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
+                      ? 'bg-success/20 text-success'
+                      : 'bg-danger/20 text-danger'
                   }`}
                 >
                   {producto.disponible ? 'Disponible' : 'No disponible'}
@@ -182,8 +208,8 @@ export function ProductosDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <dt className="text-xs text-gray-400">Actualizado</dt>
-                <dd className="mt-0.5 text-sm text-gray-600">
+                <dt className="text-xs text-ink-muted/60">Actualizado</dt>
+                <dd className="mt-0.5 text-sm text-ink">
                   {formatDate(producto.updated_at)}
                 </dd>
               </div>
@@ -192,8 +218,8 @@ export function ProductosDetailPage() {
         </div>
 
         {/* Categorías card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+        <div className="rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-muted">
             Categorías
           </h2>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -201,21 +227,21 @@ export function ProductosDetailPage() {
               producto.categorias.map((cat) => (
                 <span
                   key={cat.id}
-                  className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700"
+                  className="inline-flex items-center rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand"
                 >
                   {cat.nombre}
                 </span>
               ))
             ) : (
-              <p className="text-sm text-gray-400 italic">Sin categorías asignadas</p>
+              <p className="text-sm italic text-ink-muted/60">Sin categorías asignadas</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Ingredientes section */}
-      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+      <div className="mt-6 rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-sm">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-muted">
           Ingredientes
         </h2>
         {producto.ingredientes.length > 0 ? (
@@ -223,34 +249,34 @@ export function ProductosDetailPage() {
             {producto.ingredientes.map((ing) => (
               <div
                 key={ing.id}
-                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+                className="flex items-center justify-between rounded-lg border border-line-subtle bg-surface-high px-3 py-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">{ing.nombre}</span>
+                  <span className="text-sm text-ink">{ing.nombre}</span>
                   {ing.es_alergeno && (
-                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
+                    <span className="inline-flex items-center rounded-full bg-warning/20 px-2 py-0.5 text-xs font-medium text-warning">
                       ⚠ Alérgeno
                     </span>
                   )}
                 </div>
                 {ing.es_removible && (
-                  <span className="text-xs text-gray-400 italic">Removible</span>
+                  <span className="text-xs italic text-ink-muted/60">Removible</span>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-gray-400 italic">Sin ingredientes asignados</p>
+          <p className="mt-4 text-sm italic text-ink-muted/60">Sin ingredientes asignados</p>
         )}
       </div>
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-900">Confirmar eliminación</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              ¿Estás seguro de eliminar <strong>{producto.nombre}</strong>? Esta acción no se puede
+          <div className="w-full max-w-sm rounded-lg border border-line-subtle bg-surface-base p-6 shadow-card-md">
+            <h3 className="text-lg font-semibold text-ink">Confirmar eliminación</h3>
+            <p className="mt-2 text-sm text-ink-muted">
+              ¿Estás seguro de eliminar <strong className="text-ink">{producto.nombre}</strong>? Esta acción no se puede
               deshacer.
             </p>
             <div className="mt-6 flex items-center justify-end gap-3">
@@ -258,7 +284,7 @@ export function ProductosDetailPage() {
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
                 disabled={isDeleting}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50 transition-colors"
               >
                 Cancelar
               </button>
@@ -266,7 +292,7 @@ export function ProductosDetailPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-danger-container px-4 py-2 text-sm font-semibold text-danger hover:opacity-90 disabled:opacity-50 transition-colors"
               >
                 {isDeleting ? 'Eliminando…' : 'Eliminar'}
               </button>

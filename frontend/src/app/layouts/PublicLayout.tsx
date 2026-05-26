@@ -15,10 +15,12 @@ import { RootErrorBoundary } from './RootErrorBoundary'
 function SystemMessageBanner() {
   const { data } = useConfigPublica()
   const mensaje = data?.mensaje_sistema ?? ''
-  if (!mensaje) return null
+  const pedidosDeshabilitados = data?.pedidos_habilitados === false
+  if (!mensaje && !pedidosDeshabilitados) return null
   return (
-    <div className="bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white">
-      {mensaje}
+    <div className="border-b border-brand/20 bg-brand/10 px-4 py-2 text-center text-sm font-medium text-brand">
+      {pedidosDeshabilitados ? 'El local no esta aceptando pedidos en este momento' : mensaje}
+      {pedidosDeshabilitados && mensaje ? ` - ${mensaje}` : ''}
     </div>
   )
 }
@@ -27,7 +29,7 @@ export function PublicLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-surface">
       {isAuthenticated ? (
         <>
           <PrivateHeader />

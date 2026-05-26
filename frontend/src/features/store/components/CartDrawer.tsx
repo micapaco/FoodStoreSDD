@@ -19,7 +19,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     <>
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 transition-opacity"
+          className="fixed inset-0 z-40 bg-black/60 transition-opacity"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -30,15 +30,15 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex h-full w-full flex-col bg-white">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex h-full w-full flex-col bg-surface-base border-l border-line-subtle">
+          <div className="flex items-center justify-between border-b border-line-subtle px-4 py-4">
+            <h2 className="text-lg font-semibold text-ink">
               Carrito {itemCount > 0 && `(${itemCount})`}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md p-1 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+              className="rounded-md p-1 text-ink-muted hover:text-ink hover:bg-surface-high transition-colors"
               aria-label="Cerrar carrito"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,23 +50,23 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           <div className="flex-1 overflow-y-auto px-4 py-4">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <svg className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-16 w-16 text-ink-muted/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
                 </svg>
-                <p className="mt-4 text-sm font-medium text-gray-500">Tu carrito está vacío</p>
+                <p className="mt-4 text-sm font-medium text-ink-muted">Tu carrito está vacío</p>
                 <Link
                   to="/productos"
                   onClick={onClose}
-                  className="mt-3 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
+                  className="mt-3 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-on hover:bg-brand-dim transition-colors"
                 >
                   Ver catálogo
                 </Link>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-line-subtle">
                 {items.map((item) => (
                   <li
-                    key={`${item.productoId}-${item.personalizacion.ingredientesExcluidos.slice().sort().join('-')}`}
+                    key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}-${item.personalizacion?.notas ?? ''}`}
                   >
                     <CartItemCard item={item} ingredientNameMap={ingredientNameMap} />
                   </li>
@@ -76,12 +76,12 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           </div>
 
           {items.length > 0 && (
-            <div className="border-t border-gray-200 px-4 py-4">
+            <div className="border-t border-line-subtle px-4 py-4">
               <CartSummary />
               <Link
                 to="/checkout"
                 onClick={onClose}
-                className="mt-4 flex w-full items-center justify-center rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+                className="mt-4 flex w-full items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-on hover:bg-brand-dim transition-colors"
               >
                 Ir al checkout
               </Link>

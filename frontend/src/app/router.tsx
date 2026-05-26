@@ -30,9 +30,13 @@ import { OrderConfirmationPage } from '@/pages/OrderConfirmationPage'
 // Pages — admin
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { CategoriesAdminPage } from '@/pages/admin/CategoriesAdminPage'
+import { IngredientsAdminPage } from '@/pages/admin/IngredientsAdminPage'
 import { OrdersAdminPage } from '@/pages/admin/OrdersAdminPage'
 import { SystemConfigPage } from '@/pages/admin/SystemConfigPage'
 import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
+
+// Pages — cocina (KDS)
+import { CocinaPage } from '@/pages/cocina/CocinaPage'
 
 // Pages — productos (admin)
 import { ProductosPage } from '@/pages/productos/ProductosPage'
@@ -120,6 +124,7 @@ export const router = createBrowserRouter([
             element: <RoleRoute roles={['ADMIN', 'STOCK']} />,
             children: [
               { path: '/admin/productos', element: <ProductosPage /> },
+              { path: '/admin/ingredientes', element: <IngredientsAdminPage /> },
               { path: '/admin/productos/nuevo', element: <ProductosCreatePage /> },
               { path: '/admin/productos/:id', element: <ProductosDetailPage /> },
               { path: '/admin/productos/:id/editar', element: <ProductosEditPage /> },
@@ -136,6 +141,19 @@ export const router = createBrowserRouter([
             element: <RoleRoute roles={['ADMIN', 'PEDIDOS']} />,
             children: [
               { path: '/admin/pedidos', element: <OrdersAdminPage /> },
+            ],
+          },
+        ],
+      },
+
+      // /cocina — requires auth + (COCINA or PEDIDOS or ADMIN)
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleRoute roles={['COCINA', 'PEDIDOS', 'ADMIN']} />,
+            children: [
+              { path: '/cocina', element: <CocinaPage /> },
             ],
           },
         ],

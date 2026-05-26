@@ -106,6 +106,16 @@ class CategoriaRepository(BaseRepository[Categoria]):
         )
         return result.scalar_one_or_none()
 
+    async def get_active_by_nombre_normalized(self, nombre: str) -> Optional[Categoria]:
+        """Retorna una categoria activa por nombre normalizado."""
+        result = await self.session.execute(
+            select(Categoria).where(
+                func.lower(func.btrim(Categoria.nombre)) == nombre.strip().lower(),
+                Categoria.deleted_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def check_circular_ref(self, categoria_id: int, new_parent_id: int) -> bool:
         """Verifica si asignar new_parent_id como padre crearía un ciclo.
 

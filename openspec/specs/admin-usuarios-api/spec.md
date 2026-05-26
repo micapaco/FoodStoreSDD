@@ -61,12 +61,16 @@ On email conflict: HTTP 409. On not found: HTTP 404.
 ### Requirement: Cambiar roles de usuario (Admin)
 The system SHALL expose `PATCH /api/v1/admin/usuarios/{id}/roles` requiring role ADMIN.
 Body: `{ roles: list[str] }` as full replacement of the user's role set.
-The submitted role list SHALL contain exactly one role code from: ADMIN, STOCK, PEDIDOS, CLIENT.
+The submitted role list SHALL contain one of these valid assignments: `ADMIN`, `STOCK`, `PEDIDOS`, `STOCK+PEDIDOS`, or `CLIENT`.
 Response: HTTP 200 + `UsuarioDetailRead`.
 
 #### Scenario: Asignación de rol exitosa
 - **WHEN** ADMIN submits a one-item role list for a user
 - **THEN** the system replaces the user's role and returns HTTP 200
+
+#### Scenario: Asignacion operativa combinada exitosa
+- **WHEN** ADMIN submits `{ roles: ["STOCK", "PEDIDOS"] }`
+- **THEN** the system replaces the user's role set with both operational roles and returns HTTP 200
 
 #### Scenario: Protección del último ADMIN
 - **WHEN** ADMIN tries to remove ADMIN role from the only user with that role
@@ -77,7 +81,7 @@ Response: HTTP 200 + `UsuarioDetailRead`.
 - **THEN** the system returns HTTP 422 Unprocessable Entity
 
 #### Scenario: Múltiples roles
-- **WHEN** ADMIN submits two or more roles
+- **WHEN** ADMIN submits an unsupported multi-role assignment such as `["ADMIN", "CLIENT"]`
 - **THEN** the system returns HTTP 422 Unprocessable Entity
 
 ### Requirement: Activar o desactivar usuario (Admin)

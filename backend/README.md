@@ -61,7 +61,13 @@ python -m alembic upgrade head
 python -m app.db.seed
 ```
 
-> El seed crea el usuario `admin@foodstore.com` con password `Admin1234!`. Usarlo solo en desarrollo.
+> El seed crea los siguientes usuarios de desarrollo:
+> | Usuario | Password | Rol |
+> |---------|----------|-----|
+> | `admin@foodstore.com` | `Admin1234!` | Admin |
+> | `cocina@foodstore.com` | `Cocina1234!` | Cocinero |
+>
+> Cambiar estos passwords antes de ir a producción.
 
 ### 4. Levantar el servidor
 

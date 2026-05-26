@@ -48,17 +48,19 @@ class ProductoRepository(BaseRepository[Producto]):
 
         En modo admin incluye productos no disponibles (disponible=False).
         En modo público solo productos disponibles.
-        Siempre excluye soft-deleted excepto en admin.
+        Siempre excluye soft-deleted.
         """
         # Build base query
-        query = select(Producto)
-        count_query = select(func.count(Producto.id.distinct())).select_from(Producto)
+        query = select(Producto).where(Producto.deleted_at.is_(None))
+        count_query = (
+            select(func.count(Producto.id.distinct()))
+            .select_from(Producto)
+            .where(Producto.deleted_at.is_(None))
+        )
 
         # ── Filters ───────────────────────────────────────────────────────
         if not admin:
-            query = query.where(Producto.deleted_at.is_(None))
             query = query.where(Producto.disponible == True)
-            count_query = count_query.where(Producto.deleted_at.is_(None))
             count_query = count_query.where(Producto.disponible == True)
 
         if q:

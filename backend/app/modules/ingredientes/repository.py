@@ -39,6 +39,31 @@ class IngredienteRepository(BaseRepository[Ingrediente]):
         )
         return list(result.scalars().all())
 
+    async def list_filtered(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        alergeno: bool | None = None,
+        q: str | None = None,
+    ) -> list[Ingrediente]:
+        """Lista ingredientes activos con filtros opcionales."""
+        conditions = [Ingrediente.deleted_at.is_(None)]
+        if alergeno is not None:
+            conditions.append(Ingrediente.es_alergeno.is_(alergeno))
+
+        search = q.strip() if q else ""
+        if search:
+            conditions.append(Ingrediente.nombre.ilike(f"%{search}%"))
+
+        result = await self.session.execute(
+            select(Ingrediente)
+            .where(*conditions)
+            .order_by(Ingrediente.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def list_active(self, skip: int = 0, limit: int = 100) -> list[Ingrediente]:
         """Lista ingredientes activos (excluye soft-deleted)."""
         result = await self.session.execute(
@@ -57,6 +82,25 @@ class IngredienteRepository(BaseRepository[Ingrediente]):
             ).order_by(Ingrediente.id).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
+
+    async def count_filtered(
+        self,
+        alergeno: bool | None = None,
+        q: str | None = None,
+    ) -> int:
+        """Cuenta ingredientes activos con filtros opcionales."""
+        conditions = [Ingrediente.deleted_at.is_(None)]
+        if alergeno is not None:
+            conditions.append(Ingrediente.es_alergeno.is_(alergeno))
+
+        search = q.strip() if q else ""
+        if search:
+            conditions.append(Ingrediente.nombre.ilike(f"%{search}%"))
+
+        result = await self.session.execute(
+            select(func.count()).select_from(Ingrediente).where(*conditions)
+        )
+        return result.scalar_one()
 
     async def count_alergenos(self) -> int:
         """Cuenta ingredientes activos marcados como alérgenos."""

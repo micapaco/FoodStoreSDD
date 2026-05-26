@@ -8,14 +8,33 @@ from app.core.deps import get_current_user, require_role
 from app.core.exceptions import ValidationAppError
 from app.core.uow import UnitOfWork
 from app.db.models.identidad import Usuario
+from app.db.models.ventas import Pedido
+from app.modules.cocina.manager import emit_cocina_event
+from app.modules.cocina.router import build_pedido_cocina_read
 from app.modules.pagos.mercadopago_client import MercadoPagoGateway
 from app.modules.pagos.schemas import (
     CrearPagoRequest,
+    CrearPedidoMercadoPagoRequest,
     PagoRead,
     PagoStatusResponse,
+    PedidoMercadoPagoResponse,
     WebhookResponse,
 )
 from app.modules.pagos.service import PagosService
+
+
+async def _broadcast_pedido_confirmado(pedido_id: int) -> None:
+    """Construye PedidoCocinaRead y emite PEDIDO_CONFIRMADO al KDS. Best-effort."""
+    try:
+        async with UnitOfWork() as uow:
+            pedido = await uow.session.get(Pedido, pedido_id)
+            if pedido is not None and pedido.estado_codigo == "CONFIRMADO":
+                cocina_read = await build_pedido_cocina_read(uow, pedido)
+                await emit_cocina_event(
+                    "PEDIDO_CONFIRMADO", pedido_id, cocina_read.model_dump(mode="json", by_alias=True)
+                )
+    except Exception:
+        pass
 
 router = APIRouter(prefix="/pagos", tags=["Pagos"])
 
@@ -32,7 +51,27 @@ async def crear_pago(
     gateway = MercadoPagoGateway(get_settings())
     async with UnitOfWork() as uow:
         service = PagosService()
-        return await service.crear_pago(uow, request, current_user, gateway)
+        result = await service.crear_pago(uow, request, current_user, gateway)
+
+    if result.mp_status == "approved":
+        await _broadcast_pedido_confirmado(result.pedido_id)
+
+    return result
+
+
+@router.post(
+    "/checkout",
+    response_model=PedidoMercadoPagoResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def crear_pedido_con_pago(
+    request: CrearPedidoMercadoPagoRequest,
+    current_user: Annotated[Usuario, Depends(require_role(["CLIENT"]))],
+) -> PedidoMercadoPagoResponse:
+    gateway = MercadoPagoGateway(get_settings())
+    async with UnitOfWork() as uow:
+        service = PagosService()
+        return await service.crear_pedido_con_pago(uow, request, current_user, gateway)
 
 
 @router.get(
@@ -66,9 +105,16 @@ async def mercado_pago_webhook(request: Request) -> WebhookResponse:
     ):
         raise ValidationAppError("Firma de MercadoPago invalida.")
 
+    confirmed_pedido_id: int | None = None
     async with UnitOfWork() as uow:
         service = PagosService()
-        await service.procesar_webhook(uow, payment_id=payment_id, gateway=gateway)
+        confirmed_pedido_id = await service.procesar_webhook(
+            uow, payment_id=payment_id, gateway=gateway
+        )
+
+    if confirmed_pedido_id is not None:
+        await _broadcast_pedido_confirmado(confirmed_pedido_id)
+
     return WebhookResponse(status="ok")
 
 

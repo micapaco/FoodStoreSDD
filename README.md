@@ -133,8 +133,9 @@ npm run dev
 
 Después de ejecutar el seed, podés iniciar sesión con:
 
-- **Email:** `admin@foodstore.com`
-- **Contraseña:** `Admin1234!`
-- **Rol:** `ADMIN`
+| Email | Contraseña | Rol |
+|-------|-----------|-----|
+| `admin@foodstore.com` | `Admin1234!` | ADMIN |
+| `cocina@foodstore.com` | `Cocina1234!` | COCINA |
 
 Estas credenciales se crean automáticamente cuando ejecutás `python -m app.db.seed`.

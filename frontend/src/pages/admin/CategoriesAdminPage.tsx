@@ -7,6 +7,7 @@ import {
   useDeleteCategoria,
   useUpdateCategoria,
 } from '@/shared/hooks/useCategorias'
+import { parseHttpError } from '@/shared/lib/http/parseHttpError'
 import { useUiStore } from '@/shared/stores/uiStore'
 import type { CategoriaRead } from '@/entities/categorias/types'
 
@@ -87,7 +88,7 @@ function formatDate(value: string): string {
 function FieldError({ errors }: { errors: unknown[] }) {
   const message = errors.find((error): error is string => typeof error === 'string')
   if (!message) return null
-  return <p className="mt-1 text-xs text-red-500">{message}</p>
+  return <p className="mt-1 text-xs text-danger">{message}</p>
 }
 
 function SkeletonRows() {
@@ -96,16 +97,16 @@ function SkeletonRows() {
       {Array.from({ length: 5 }).map((_, index) => (
         <tr key={index} className="animate-pulse">
           <td className="px-4 py-3">
-            <div className="h-4 w-40 rounded bg-gray-200" />
+            <div className="h-4 w-40 rounded bg-surface-higher" />
           </td>
           <td className="px-4 py-3">
-            <div className="h-4 w-28 rounded bg-gray-200" />
+            <div className="h-4 w-28 rounded bg-surface-higher" />
           </td>
           <td className="px-4 py-3">
-            <div className="h-4 w-24 rounded bg-gray-200" />
+            <div className="h-4 w-24 rounded bg-surface-higher" />
           </td>
           <td className="px-4 py-3">
-            <div className="ml-auto h-8 w-20 rounded bg-gray-200" />
+            <div className="ml-auto h-8 w-20 rounded bg-surface-higher" />
           </td>
         </tr>
       ))}
@@ -141,9 +142,9 @@ function CategoryFormModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-        <h2 className="text-lg font-semibold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+      <div className="w-full max-w-lg rounded-lg border border-line-subtle bg-surface-base p-6 shadow-dropdown">
+        <h2 className="text-lg font-semibold text-ink">
           {categoria ? 'Editar categoria' : 'Nueva categoria'}
         </h2>
         <form
@@ -168,7 +169,7 @@ function CategoryFormModal({
           >
             {(field) => (
               <div>
-                <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">
                   Nombre
                 </label>
                 <input
@@ -176,7 +177,7 @@ function CategoryFormModal({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  className="mt-1 w-full rounded-lg border border-line-subtle bg-surface-low px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                   placeholder="Ej: Bebidas"
                 />
                 <FieldError errors={field.state.meta.errors} />
@@ -187,7 +188,7 @@ function CategoryFormModal({
           <form.Field name="parent_id">
             {(field) => (
               <div>
-                <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">
                   Categoria padre
                 </label>
                 <select
@@ -197,7 +198,7 @@ function CategoryFormModal({
                   onChange={(event) =>
                     field.handleChange(event.target.value ? Number(event.target.value) : null)
                   }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  className="mt-1 w-full rounded-lg border border-line-subtle bg-surface-low px-4 py-2.5 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 >
                   <option value="">Sin padre</option>
                   {parentOptions.map((option) => (
@@ -215,7 +216,7 @@ function CategoryFormModal({
               type="button"
               onClick={onCancel}
               disabled={isPending}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-high disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -226,7 +227,7 @@ function CategoryFormModal({
                 <button
                   type="submit"
                   disabled={!canSubmit || isSubmitting || isPending}
-                  className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-dim disabled:opacity-50"
                 >
                   {isPending ? 'Guardando...' : 'Guardar'}
                 </button>
@@ -243,11 +244,11 @@ function DeleteModal({ categoria, isPending, onConfirm, onCancel }: DeleteModalP
   if (!categoria) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
-        <h2 className="text-lg font-semibold text-gray-900">Confirmar eliminacion</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Se eliminara <strong>{categoria.nombre}</strong>. Si tiene productos o subcategorias
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+      <div className="w-full max-w-sm rounded-lg border border-line-subtle bg-surface-base p-6 shadow-dropdown">
+        <h2 className="text-lg font-semibold text-ink">Confirmar eliminacion</h2>
+        <p className="mt-2 text-sm text-ink-muted">
+          Se eliminara <strong className="text-ink">{categoria.nombre}</strong>. Si tiene productos o subcategorias
           activas, el backend rechazara la operacion.
         </p>
         <div className="mt-6 flex items-center justify-end gap-3">
@@ -255,7 +256,7 @@ function DeleteModal({ categoria, isPending, onConfirm, onCancel }: DeleteModalP
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-high disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -263,7 +264,7 @@ function DeleteModal({ categoria, isPending, onConfirm, onCancel }: DeleteModalP
             type="button"
             onClick={onConfirm}
             disabled={isPending}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+            className="rounded-lg bg-danger-container px-4 py-2 text-sm font-semibold text-danger transition-colors hover:opacity-90 disabled:opacity-50"
           >
             {isPending ? 'Eliminando...' : 'Eliminar'}
           </button>
@@ -329,7 +330,8 @@ export function CategoriesAdminPage() {
             setFormOpen(false)
             setEditingCategory(null)
           },
-          onError: () => addToast({ type: 'error', message: 'No se pudo actualizar la categoria' }),
+          onError: (error) =>
+            addToast({ type: 'error', message: parseHttpError(error).message }),
         },
       )
       return
@@ -340,7 +342,8 @@ export function CategoriesAdminPage() {
         addToast({ type: 'success', message: 'Categoria creada correctamente' })
         setFormOpen(false)
       },
-      onError: () => addToast({ type: 'error', message: 'No se pudo crear la categoria' }),
+      onError: (error) =>
+        addToast({ type: 'error', message: parseHttpError(error).message }),
     })
   }
 
@@ -351,7 +354,8 @@ export function CategoriesAdminPage() {
         addToast({ type: 'success', message: 'Categoria eliminada correctamente' })
         setDeleteTarget(null)
       },
-      onError: () => addToast({ type: 'error', message: 'No se pudo eliminar la categoria' }),
+      onError: (error) =>
+        addToast({ type: 'error', message: parseHttpError(error).message }),
     })
   }
 
@@ -359,87 +363,87 @@ export function CategoriesAdminPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
-          <p className="mt-1 text-sm text-gray-500">Gestion de categorias del catalogo</p>
+          <h1 className="text-2xl font-bold text-ink">Categorias</h1>
+          <p className="mt-1 text-sm text-ink-muted">Gestion de categorias del catalogo</p>
         </div>
         <button
           type="button"
           onClick={openCreateForm}
-          className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+          className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-dim"
         >
           Nueva categoria
         </button>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Activas</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{listQuery.data?.total ?? 0}</p>
+        <div className="rounded-lg border border-line-subtle bg-surface-base px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Activas</p>
+          <p className="mt-1 text-2xl font-bold text-ink">{listQuery.data?.total ?? 0}</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Raiz</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+        <div className="rounded-lg border border-line-subtle bg-surface-base px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Raiz</p>
+          <p className="mt-1 text-2xl font-bold text-ink">
             {options.filter((option) => option.parent_id === null).length}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Subcategorias</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+        <div className="rounded-lg border border-line-subtle bg-surface-base px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Subcategorias</p>
+          <p className="mt-1 text-2xl font-bold text-ink">
             {options.filter((option) => option.parent_id !== null).length}
           </p>
         </div>
       </div>
 
       {isError && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-          <p className="font-medium text-red-700">Error al cargar categorias</p>
+        <div className="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-6 text-center">
+          <p className="font-medium text-danger">Error al cargar categorias</p>
           <button
             type="button"
             onClick={() => {
               listQuery.refetch()
               treeQuery.refetch()
             }}
-            className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            className="mt-3 rounded-lg bg-danger-container px-4 py-2 text-sm font-medium text-danger transition-colors hover:opacity-90"
           >
             Reintentar
           </button>
         </div>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="mt-4 overflow-x-auto rounded-lg border border-line-subtle bg-surface-base">
+        <table className="min-w-full divide-y divide-line-subtle">
+          <thead className="bg-surface-low">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Nombre
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Padre
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Actualizada
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Acciones
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-line-subtle">
             {isLoading ? (
               <SkeletonRows />
             ) : flatCategories.length > 0 ? (
               flatCategories.map((categoria) => (
-                <tr key={categoria.id} className="transition-colors hover:bg-gray-50">
+                <tr key={categoria.id} className="transition-colors hover:bg-surface-high">
                   <td className="whitespace-nowrap px-4 py-3">
                     <div className="flex items-center gap-2" style={{ paddingLeft: `${categoria.depth * 16}px` }}>
-                      {categoria.depth > 0 && <span className="text-gray-300">-</span>}
-                      <span className="text-sm font-medium text-gray-900">{categoria.nombre}</span>
+                      {categoria.depth > 0 && <span className="text-ink-muted/30">-</span>}
+                      <span className="text-sm font-medium text-ink">{categoria.nombre}</span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
                     {categoria.parent_id ? parentNames.get(categoria.parent_id) ?? `#${categoria.parent_id}` : 'Sin padre'}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-ink-muted">
                     {formatDate(categoria.updated_at)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
@@ -447,7 +451,7 @@ export function CategoriesAdminPage() {
                       <button
                         type="button"
                         onClick={() => openEditForm(categoria.id)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        className="rounded-lg border border-line-subtle px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-surface-high"
                       >
                         Editar
                       </button>
@@ -460,7 +464,7 @@ export function CategoriesAdminPage() {
                               null,
                           )
                         }
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                        className="rounded-lg border border-danger/30 px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
                       >
                         Eliminar
                       </button>
@@ -471,11 +475,11 @@ export function CategoriesAdminPage() {
             ) : (
               <tr>
                 <td colSpan={4} className="px-4 py-16 text-center">
-                  <p className="text-sm font-medium text-gray-500">No hay categorias cargadas</p>
+                  <p className="text-sm font-medium text-ink-muted">No hay categorias cargadas</p>
                   <button
                     type="button"
                     onClick={openCreateForm}
-                    className="mt-4 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-dim"
                   >
                     Crear primera categoria
                   </button>

@@ -71,6 +71,7 @@ export interface PedidoListResponse {
 export interface PedidoAdminListItem extends PedidoListItem {
   clienteNombre: string
   clienteEmail: string
+  formaPagoCodigo: string
 }
 
 export interface PedidoAdminListResponse {
@@ -87,6 +88,13 @@ export interface PedidoDetalleItem {
   precioSnapshot: string
   cantidad: number
   personalizacion: number[]
+  personalizacionDetalle: PedidoPersonalizacionDetalle[]
+  notas: string | null
+}
+
+export interface PedidoPersonalizacionDetalle {
+  ingredienteId: number
+  nombre: string
 }
 
 export interface DireccionSnapshot {

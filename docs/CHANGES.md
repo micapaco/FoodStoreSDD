@@ -15,6 +15,16 @@
 
 ---
 
+## Estado real de archivo (2026-05-24)
+
+`openspec list` muestra un change activo: `33` (`mercadopago-test-account`). El repo tiene archivados 34 changes reales: `01` a `15`, los ajustes `15.5` y `15.6`, y la numeracion continua `16` a `32`.
+
+La linea historica no separa "correctivos" o "refinamientos" en una seccion aparte: despues del `19` se continua con `20`, `21`, `22`, etc. para mantener referencias claras y estables.
+
+Antes de proponer un nuevo change, verificar el estado real con `npx.cmd -y openspec list` y revisar `openspec/changes/archive/`.
+
+---
+
 ## Changes del proyecto
 
 ### `01` — `infra-backend-core`
@@ -266,6 +276,141 @@ Panel y backend para parámetros operativos globales administrables sin tocar c�
 **Depende de**: `auth`, `frontend-shell`
 
 > Aunque sea de prioridad baja, merece un change separado porque no comparte el mismo foco que usuarios, catálogo o métricas.
+
+---
+
+### `20` — `admin-categories-ui`
+
+**Funcionalidad**: Implementa la vista administrativa de categorias y reemplaza placeholders de UI para gestionar el catalogo desde el panel.
+
+**Depende de**: `catalog-categories-ingredients`, `frontend-shell`
+
+---
+
+### `21` — `catalog-timestamp-hotfix`
+
+**Funcionalidad**: Corrige inconsistencias de timestamps del catalogo detectadas en runtime y tests.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`
+
+---
+
+### `22` — `frontend-runtime-stabilization`
+
+**Funcionalidad**: Estabiliza errores de runtime del frontend, rutas, stores o integraciones necesarias para que la app compile y navegue correctamente.
+
+**Depende de**: `frontend-shell`
+
+---
+
+### `23` — `single-role-and-client-cart-hotfix`
+
+**Funcionalidad**: Ajuste correctivo sobre roles y carrito cliente para alinear UI, RBAC y persistencia del carrito con el comportamiento real esperado.
+
+**Depende de**: `auth`, `cart`, `frontend-shell`
+
+---
+
+### `24` — `product-image-url`
+
+**Funcionalidad**: Agrega soporte para URL de imagen en productos, con contrato backend/frontend para mostrar imagenes de catalogo y administracion.
+
+**Depende de**: `catalog-products`
+
+---
+
+### `25` — `stitch-visual-redesign`
+
+**Funcionalidad**: Refinamiento visual transversal de la experiencia frontend ya implementada, sin redefinir reglas de negocio.
+
+**Depende de**: `frontend-shell`, `catalog-products`, `order-views`, `admin-users`, `admin-metrics`, `system-config`
+
+---
+
+### `26` — `admin-ux-roles-refinement`
+
+**Funcionalidad**: Refinamiento UX del panel admin: sidebar, visualizacion explicita de metodo de pago en pedidos y soporte para asignacion operativa combinada `STOCK+PEDIDOS`.
+
+**Depende de**: `admin-users`, `order-views`, `frontend-shell`
+
+---
+
+### `27` — `catalog-order-admin-ux-hardening`
+
+**Funcionalidad**: Endurecimiento correctivo del catalogo, pedidos, pagos y UX admin/cliente. Incluye unicidad activa para categorias con soft delete, exclusiones de ingredientes por nombre, upload local de imagen de producto, bloqueo coherente por configuracion, checkout MercadoPago antes de confirmacion, motivos de cancelacion en admin, vista cliente completa para `ADMIN` y carrito aislado por usuario.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`, `cart`, `order-creation`, `payment-integration`, `order-fsm`, `order-views`, `admin-users`, `system-config`, `frontend-shell`
+
+---
+
+### `28` — `product-image-local-upload-integration`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-17-product-image-local-upload-integration/`.
+
+**Funcionalidad**: Integra de forma real el upload local de imagen en el formulario activo de crear/editar productos, reemplazando la carga manual por URL. Reutiliza el endpoint `POST /api/v1/productos/imagenes`, conserva `imagen_url` como contrato persistido, amplia formatos soportados, asigna imagenes locales a productos seed y limpia duplicacion/huerfandad de UI relacionada.
+
+**Depende de**: `catalog-order-admin-ux-hardening`, `catalog-products`
+
+---
+
+### `29` — `admin-ingredients-management-ui`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-17-admin-ingredients-management-ui/`.
+
+**Funcionalidad**: Completa la administracion web de ingredientes para `ADMIN` y `STOCK`: vista dedicada, CRUD, paginacion real, buscador por nombre, filtro de alergenos, selector de ingredientes paginado/buscable en productos y sincronizacion de caches para que los ingredientes gestionados queden disponibles al crear o editar productos.
+
+**Depende de**: `catalog-categories-ingredients`, `catalog-products`, `frontend-shell`
+
+---
+
+### `30` — `display-cocina`
+
+**Estado**: archivado en `openspec/changes/archive/2026-05-21-display-cocina/`.
+
+**Funcionalidad**: Kitchen Display System (KDS) + rol Cocinero.
+Nuevo rol `COCINA` en el RBAC, pantalla en tiempo real (`/cocina`) con dos columnas por estado (`CONFIRMADO` / `EN_PREP`), WebSocket push con fallback polling REST, timer de urgencia visual, alerta sonora opcional y autorización de las transiciones `CONFIRMADO → EN_PREP → EN_CAMINO` para el nuevo rol.
+
+**Historias de usuario**: US-COCINA-01 a US-COCINA-09  
+**Depende de**: `auth`, `payment-integration`, `order-fsm`, `frontend-shell`
+
+> Agrega infraestructura nueva al backend (WebSocket single-instance con pub/sub en proceso) sin modificar el FSM ni sus estados. El rol `COCINA` se incorpora en paralelo a `PEDIDOS`, sin reemplazarlo. El material de dominio vive en `feature-display-cocina/`. Ver `feature-display-cocina/README.md` para decisiones de diseño cerradas (WebSocket vs SSE, single vs multi-instancia, PA-CO-01).
+
+---
+
+### `31` — `theme-toggle`
+
+**Funcionalidad**: Modo claro como tema por defecto + toggle de modo oscuro.
+El dashboard pasa a ser blanco (light mode) por defecto. El modo oscuro (diseño actual) se mantiene disponible mediante un botón de toggle persistido en `localStorage`. El cambio es puramente visual — no modifica lógica, stores, contratos ni rutas.
+
+**Depende de**: `stitch-visual-redesign`, `frontend-shell`
+
+---
+
+### `32` — `cart-item-notes`
+
+**Funcionalidad**: Observaciones por ítem en el carrito.
+El cliente puede escribir un texto libre por producto al agregarlo al carrito ("sin sal", "bien cocida", "extra salsa"). Las observaciones viajan junto al ítem en todo el flujo: `DetallePedido.notas_item` (nueva columna, migración), contrato API de creación de pedido y detalle, panel admin de pedidos y KDS (mostradas en la tarjeta del cocinero al lado de las exclusiones de ingredientes).
+
+**Historias de usuario**: extensión de US-035, US-049, US-050, US-051  
+**Depende de**: `order-creation`, `order-views`, `display-cocina`, `cart`
+
+---
+
+### `33` — `mercadopago-test-account`
+
+**Estado**: en el mapa, pendiente de proponer.
+
+**Funcionalidad**: Reestructuración de opciones de pago + panel de prueba.
+Reorganiza las formas de pago en el checkout:
+
+- **"Tarjetas"** → renombrado desde "MercadoPago". Mismo flujo CardPayment brick. Cuando `VITE_MERCADOPAGO_PUBLIC_KEY` empieza con `TEST-`, muestra un panel colapsable con datos de tarjeta de prueba (número, vencimiento, CVV, nombre, DNI) para pago aprobado y rechazado.
+- **"MercadoPago"** → nueva opción. Mismo CardPayment brick, pero el panel de prueba muestra credenciales de cuenta comprador test (email + contraseña) en lugar de datos de tarjeta.
+- **"Transferencia"** → eliminada (no tenía flujo funcional).
+
+Sin cambios de backend. Sin nuevos bricks. El código `MERCADOPAGO` en la base de datos no cambia — solo cambian las etiquetas y el panel de ayuda en la UI.
+
+**Historias de usuario**: —  
+**Depende de**: `payment-integration`
 
 ---
 

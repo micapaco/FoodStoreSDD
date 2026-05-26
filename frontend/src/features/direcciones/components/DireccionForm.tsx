@@ -6,14 +6,14 @@ export type DireccionFormValues = DireccionCreate
 function FieldError({ errors }: { errors: unknown[] }) {
   const msgs = errors.filter(Boolean) as string[]
   if (!msgs.length) return null
-  return <p className="mt-1 text-xs text-red-500">{msgs[0]}</p>
+  return <p className="mt-1 text-xs text-danger">{msgs[0]}</p>
 }
 
 function inputCls(hasError: boolean) {
   return [
-    'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 placeholder-gray-400',
-    'focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-    hasError ? 'border-red-400' : 'border-gray-300',
+    'w-full rounded-lg border px-3 py-2 text-sm text-ink placeholder:text-ink-muted/50 bg-surface-low',
+    'focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors',
+    hasError ? 'border-danger' : 'border-line-subtle',
   ].join(' ')
 }
 
@@ -63,7 +63,7 @@ export function DireccionForm({
         >
           {(field) => (
             <div>
-              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Alias *</label>
+              <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Alias *</label>
               <input
                 id={field.name}
                 value={field.state.value}
@@ -83,7 +83,7 @@ export function DireccionForm({
         >
           {(field) => (
             <div>
-              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Código postal *</label>
+              <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Código postal *</label>
               <input
                 id={field.name}
                 value={field.state.value}
@@ -104,7 +104,7 @@ export function DireccionForm({
       >
         {(field) => (
           <div>
-            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Línea 1 *</label>
+            <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Línea 1 *</label>
             <input
               id={field.name}
               value={field.state.value}
@@ -124,7 +124,7 @@ export function DireccionForm({
       >
         {(field) => (
           <div>
-            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Línea 2 *</label>
+            <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Línea 2 *</label>
             <input
               id={field.name}
               value={field.state.value}
@@ -145,7 +145,7 @@ export function DireccionForm({
         >
           {(field) => (
             <div>
-              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Ciudad *</label>
+              <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Ciudad *</label>
               <input
                 id={field.name}
                 value={field.state.value}
@@ -164,7 +164,7 @@ export function DireccionForm({
         >
           {(field) => (
             <div>
-              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Provincia *</label>
+              <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Provincia *</label>
               <input
                 id={field.name}
                 value={field.state.value}
@@ -184,7 +184,7 @@ export function DireccionForm({
       >
         {(field) => (
           <div>
-            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">Notas *</label>
+            <label htmlFor={field.name} className="block text-sm font-medium text-ink-muted">Notas *</label>
             <textarea
               id={field.name}
               value={field.state.value}
@@ -203,14 +203,14 @@ export function DireccionForm({
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          className="rounded-lg border border-line-subtle px-4 py-2 text-sm font-medium text-ink hover:bg-surface-high disabled:opacity-50 transition-colors"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-on hover:bg-brand-dim disabled:opacity-50 transition-colors"
         >
           {isPending ? 'Guardando…' : 'Guardar'}
         </button>

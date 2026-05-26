@@ -45,7 +45,13 @@ El sistema SHALL proveer un drawer lateral (panel deslizante desde la derecha) q
 
 #### Scenario: Listado de items en el drawer
 - **WHEN** el drawer esta abierto y el carrito tiene items
-- **THEN** se muestra cada item con: nombre, precio unitario, cantidad, foto (thumbnail), exclusiones aplicadas, y subtotal por item
+- **THEN** se muestra cada item con: nombre, precio unitario, cantidad, foto (thumbnail), exclusiones aplicadas, notas (si existen) y subtotal por item
+
+#### Scenario: Notas visibles en el item del drawer
+- **WHEN** un item tiene `personalizacion.notas` no vacío
+- **THEN** se muestra el texto de notas en el item (read-only, en modo de visualización)
+- **WHEN** un item no tiene notas
+- **THEN** no se muestra ningún elemento de notas en ese item
 
 #### Scenario: Controles de cantidad en el drawer
 - **WHEN** el usuario ve un item en el drawer
@@ -72,7 +78,7 @@ El sistema SHALL proveer un drawer lateral (panel deslizante desde la derecha) q
 - **THEN** el drawer se cierra
 
 ### Requirement: Modal de personalizacion antes de agregar
-El sistema SHALL mostrar un modal/dropdown con los ingredientes removibles del producto antes de agregarlo al carrito.
+El sistema SHALL mostrar un modal/dropdown con los ingredientes removibles del producto y un campo de texto libre para notas de preparación antes de agregarlo al carrito.
 
 #### Scenario: Seleccionar exclusiones
 - **WHEN** el usuario hace clic en "Agregar al carrito" desde el catalogo o detalle de producto
@@ -80,7 +86,15 @@ El sistema SHALL mostrar un modal/dropdown con los ingredientes removibles del p
 - **THEN** el usuario puede seleccionar que ingredientes excluir
 - **THEN** al confirmar, el producto se agrega al carrito con las exclusiones seleccionadas
 
+#### Scenario: Ingresar notas de preparacion
+- **WHEN** el usuario abre el modal de personalización
+- **THEN** se muestra un campo de texto libre (textarea o input) para ingresar notas (ej. "sin sal", "extra queso", "término medio")
+- **THEN** el campo es opcional — el usuario puede dejarlo vacío
+- **THEN** al confirmar, las notas se incluyen en `personalizacion.notas` del ítem agregado
+
 #### Scenario: Agregar sin exclusiones
 - **WHEN** el producto no tiene ingredientes removibles
-- **THEN** se agrega directamente al carrito sin mostrar el modal de personalizacion
+- **THEN** se muestra el modal de personalización igualmente con el campo de notas
+- **WHEN** el usuario no ingresa notas y confirma
+- **THEN** el producto se agrega directamente al carrito sin notas
 

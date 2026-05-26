@@ -86,25 +86,53 @@ No asumir que un endpoint existe si el contrato no está definido. Verificar el 
 - Antes de consumir un endpoint, verificar que el change de backend está archivado en `openspec/`.
 - Si falta un campo o endpoint → no improvisar, reportar al root para coordinar cross-domain.
 
-## Google Stitch MCP — Referencia visual
+## Google Stitch MCP — Solo referencia visual
 
-Stitch es una herramienta de diseño AI conectada vía MCP. Se usa para guiar decisiones visuales, no técnicas.
+> ⚠️ EL MCP DE STITCH NO DEBE USARSE COMO MODELO DE DATOS, ESTRUCTURA DE NEGOCIO, LÓGICA, TIPOS, SCHEMAS NI FUENTE DE ESTADO.
+>
+> Usalo SOLAMENTE para: inspiración visual · estilos · layout · spacing · tipografías · componentes visuales · animaciones · responsive design · jerarquía visual · experiencia de usuario
+>
+> NO copies: estructuras de datos · arquitectura · nombres de entidades · stores · hooks de negocio · backend · lógica · validaciones · APIs · flujos internos
+>
+> **El frontend YA ESTÁ TERMINADO funcionalmente. NO reemplaces lógica existente. NO rompas componentes actuales. NO hagas refactorizaciones innecesarias.**
 
-**Qué podés usar de Stitch:**
-- Paleta de colores, tokens de tipografía, escala de espaciado
-- Layout general de pantallas y componentes
-- Jerarquía visual, proporciones, ritmo de la UI
-- El `DESIGN.md` que exporta Stitch como referencia de sistema de diseño
+Stitch es una herramienta de diseño AI conectada vía MCP. **Su único rol es guiar decisiones visuales.** No es una fuente de verdad de nada que no sea UI.
 
-**Qué NO podés hacer con Stitch:**
-- Definir nombres de campos, modelos o estructuras de datos basándote en lo que muestra el diseño
-- Inventar endpoints o payloads a partir del diseño
-- Sobreescribir contratos de API porque "en el diseño se ve diferente"
-- Tomar el `DESIGN.md` como fuente de verdad del dominio — es solo guía visual
+### Tu trabajo con Stitch es
 
-**Regla de oro:** Si hay conflicto entre el diseño de Stitch y las specs en `openspec/` → **la spec gana siempre**.
+- Adaptar el diseño visual actual para que tenga el look & feel de Stitch
+- Mantener toda la funcionalidad existente sin excepción
+- Conservar rutas, estados, stores y lógica sin tocarlos
+- Mejorar únicamente la capa visual/UI
 
-**Cómo usarlo:**
-1. Abrí Stitch y exportá el `DESIGN.md` del proyecto
-2. Usalo como referencia al escribir clases Tailwind, elegir colores o definir layout
-3. No copiés código generado por Stitch directamente — adaptalo a las convenciones del proyecto (FSD, Tailwind v3, TypeScript strict)
+### Qué aplicás de Stitch
+
+- Paleta de colores y tokens de tipografía
+- Escala de espaciado y ritmo visual
+- Estilo de cards, inputs, botones, badges
+- Navbar, sidebar, tablas, modales
+- Layout general y responsive behavior
+
+Si existe una vista en el frontend actual que NO está en Stitch: **creala visualmente en el momento** siguiendo el mismo sistema visual. No esperés — mantenés coherencia con el resto.
+
+### Restricciones absolutas — NUNCA usar Stitch para
+
+- Modelos de datos, tipos TypeScript, interfaces
+- Lógica de negocio o de presentación
+- Stores (Zustand), queries (TanStack Query) o mutations
+- Contratos de API, payloads, respuestas del backend
+- Arquitectura, estructura de carpetas, imports
+- Nada que no sea clases CSS/Tailwind y estructura HTML del componente
+
+### Reglas de oro
+
+1. **La spec gana siempre.** Si hay conflicto entre Stitch y `openspec/` → la spec gana.
+2. **Zero cambios de lógica.** Si para aplicar un estilo necesitás cambiar lógica → el estilo se adapta, no la lógica.
+3. **No copiar código generado por Stitch.** Adaptalo a FSD + Tailwind v3 + TypeScript strict.
+4. **No tocar el backend bajo ningún concepto.**
+
+### Cómo usarlo
+
+1. Exportá el `DESIGN.md` del proyecto desde Stitch
+2. Usalo como referencia para clases Tailwind, colores y layout
+3. Aplicá los tokens visuales sobre los componentes existentes — no reescribas la lógica, solo las clases

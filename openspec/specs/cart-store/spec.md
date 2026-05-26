@@ -4,9 +4,10 @@
 El sistema SHALL proveer un store Zustand (`cartStore`) que gestione el estado del carrito de compras completamente en el cliente, sin interaccion con el backend.
 
 #### Scenario: Agregar producto al carrito
-- **WHEN** un usuario agrega un producto al carrito con `{ producto_id, nombre, precio, cantidad, imagen_url, exclusiones }`
+- **WHEN** un usuario agrega un producto al carrito con `{ producto_id, nombre, precio, cantidad, imagen_url, exclusiones, notas }`
 - **THEN** el producto se agrega a `items[]` en el store
-- **THEN** si el producto ya existe en el carrito (mismo `producto_id` y mismas `exclusiones`), se incrementa la cantidad
+- **THEN** si el producto ya existe en el carrito (mismo `producto_id`, mismas `exclusiones` Y mismas `notas`), se incrementa la cantidad
+- **THEN** si el mismo producto tiene distintas `notas`, se agrega como un ítem separado
 - **THEN** la cantidad total del producto en el carrito no supera el stock disponible ni el maximo de 99 unidades
 
 #### Scenario: Remover producto del carrito
@@ -31,6 +32,7 @@ El sistema SHALL proveer un store Zustand (`cartStore`) que gestione el estado d
 - **THEN** el estado se persiste automaticamente en localStorage
 - **WHEN** el usuario recarga la pagina
 - **THEN** el carrito se restaura desde localStorage
+- **THEN** items persistidos sin campo `notas` se tratan como `notas = ''` sin romper
 
 #### Scenario: Computo de subtotal
 - **WHEN** el store computa `subtotal()`
@@ -47,3 +49,16 @@ El sistema SHALL proveer un store Zustand (`cartStore`) que gestione el estado d
 #### Scenario: Partialize de persistencia
 - **WHEN** el store persiste su estado en localStorage
 - **THEN** solo persiste `items[]`, no los valores computados
+
+### Requirement: Personalizacion incluye notas de preparacion
+El tipo `Personalizacion` SHALL incluir un campo opcional `notas?: string` que representa instrucciones libres de preparación por ítem.
+
+#### Scenario: Personalizacion con notas
+- **WHEN** el usuario ingresa `notas` al agregar un producto
+- **THEN** `personalizacion.notas` contiene el texto ingresado
+- **THEN** `notas` viaja en el payload de checkout dentro de `personalizacion`
+
+#### Scenario: Personalizacion sin notas
+- **WHEN** el usuario agrega un producto sin completar el campo de notas
+- **THEN** `personalizacion.notas` es `undefined` o string vacío
+- **THEN** el sistema lo trata como ausencia de nota y no envía texto vacío al backend

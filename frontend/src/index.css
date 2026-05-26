@@ -1,19 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Dark theme — default global */
   :root {
-    --color-forest: #1a2e1a;
-    --color-forest-light: #2d4a2d;
-    --color-cream: #fdf6e3;
-    --color-amber: #d97706;
-    --color-amber-dark: #b45309;
+    --color-brand: #f2ca50;
+    --color-brand-dark: #d4af37;
+    --color-surface: #0d141d;
+    --color-surface-lowest: #080f17;
+    --color-surface-low: #151c25;
+    --color-surface-base: #192029;
+    --color-surface-high: #232a34;
+    --color-surface-higher: #2e353f;
+    --color-ink: #dce3f0;
+    --color-ink-muted: #d0c5af;
+    --color-line-subtle: #4d4635;
+  }
+
+  /* Light theme — applied by PrivateLayout */
+  .light {
+    --color-surface: #ffffff;
+    --color-surface-lowest: #e9ecef;
+    --color-surface-low: #f4f6f8;
+    --color-surface-base: #ffffff;
+    --color-surface-high: #f8f9fa;
+    --color-surface-higher: #f1f3f5;
+    --color-ink: #1e2533;
+    --color-ink-muted: #6b7280;
+    --color-line-subtle: #e5e7eb;
   }
 
   body {
     font-family: 'DM Sans', system-ui, sans-serif;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
   }
 }

@@ -8,6 +8,7 @@ export interface Producto {
 
 export interface Personalizacion {
   ingredientesExcluidos: number[]
+  notas?: string
 }
 
 export interface CartItem {

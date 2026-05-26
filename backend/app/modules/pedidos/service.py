@@ -36,6 +36,7 @@ from app.modules.pedidos.schemas import (
     PedidoListItemRead,
     PedidoListResponse,
     PedidoPagoResumenRead,
+    PedidoPersonalizacionDetalleRead,
     PedidoRead,
     PrecioActualizado,
     ValidarCarritoRequest,
@@ -73,6 +74,8 @@ class PreparedPedidoItem:
     nombre_snapshot: str
     precio_snapshot: Decimal
     personalizacion: list[int] | None
+    personalizacion_snapshot: list[dict] | None
+    notas: str | None = None
 
 
 class PedidosService:
@@ -227,8 +230,17 @@ class PedidosService:
         """Avanza manualmente estados operativos de pedidos."""
         usuario_id = self._require_usuario_id(current_user)
         roles = await self._get_user_roles(uow, usuario_id)
-        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+        if not self._has_any_role(roles, {"ADMIN", "PEDIDOS", "COCINA"}):
             raise ForbiddenError("No tenes permiso para avanzar pedidos.")
+
+        # El rol COCINA puede ejecutar CONFIRMADO→EN_PREP, EN_PREP→EN_CAMINO
+        # y EN_PREP→ENTREGADO (pedidos de retiro en local, donde no hay fase EN_CAMINO).
+        # El FSM valida la transición específica según el tipo de pedido.
+        if self._has_any_role(roles, {"COCINA"}) and not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
+            allowed_cocina = {ESTADO_EN_PREP, ESTADO_EN_CAMINO, ESTADO_ENTREGADO}
+            if request.nuevo_estado not in allowed_cocina:
+                raise ForbiddenError("El rol COCINA solo puede avanzar a EN_PREP, EN_CAMINO o ENTREGADO.")
+
         pedido = await self._get_active_pedido(uow, pedido_id)
         self._validate_manual_transition(pedido, request.nuevo_estado)
 
@@ -619,6 +631,7 @@ class PedidosService:
             **base.model_dump(),
             cliente_nombre=f"{usuario.nombre} {usuario.apellido}".strip(),
             cliente_email=usuario.email,
+            forma_pago_codigo=pedido.forma_pago_codigo,
         )
 
     @staticmethod
@@ -650,20 +663,73 @@ class PedidosService:
             forma_pago_codigo=pedido.forma_pago_codigo,
             direccion_snapshot=self._direccion_snapshot_to_read(pedido.direccion_snapshot),
             notas=pedido.notas,
-            items=[self._detalle_to_read(detalle) for detalle in detalles],
+            items=await self._detalles_to_read(uow, detalles),
             historial=[self._historial_to_read(item) for item in historial],
             pago=self._pago_resumen_to_read(ultimo_pago),
         )
 
     @staticmethod
-    def _detalle_to_read(detalle: DetallePedido) -> PedidoDetalleItemRead:
+    async def _detalles_to_read(
+        uow: UnitOfWork,
+        detalles: list[DetallePedido],
+    ) -> list[PedidoDetalleItemRead]:
+        missing_ids: set[int] = set()
+        for detalle in detalles:
+            if detalle.personalizacion and not detalle.personalizacion_snapshot:
+                missing_ids.update(detalle.personalizacion)
+
+        names_by_id: dict[int, str] = {}
+        if missing_ids:
+            names_by_id = await uow.pedidos.get_ingrediente_names(list(missing_ids))
+
+        return [
+            PedidosService._detalle_to_read(detalle, names_by_id)
+            for detalle in detalles
+        ]
+
+    @staticmethod
+    def _detalle_to_read(
+        detalle: DetallePedido,
+        names_by_id: dict[int, str] | None = None,
+    ) -> PedidoDetalleItemRead:
+        personalizacion = detalle.personalizacion or []
+        detalle_legible = PedidosService._personalizacion_detalle_to_read(
+            detalle.personalizacion_snapshot,
+            personalizacion,
+            names_by_id or {},
+        )
         return PedidoDetalleItemRead(
             producto_id=detalle.producto_id,
             nombre_snapshot=detalle.nombre_snapshot,
             precio_snapshot=detalle.precio_snapshot,
             cantidad=detalle.cantidad,
-            personalizacion=detalle.personalizacion or [],
+            personalizacion=personalizacion,
+            personalizacion_detalle=detalle_legible,
+            notas=detalle.notas,
         )
+
+    @staticmethod
+    def _personalizacion_detalle_to_read(
+        snapshot: list[dict] | None,
+        personalizacion: list[int],
+        names_by_id: dict[int, str],
+    ) -> list[PedidoPersonalizacionDetalleRead]:
+        if snapshot:
+            return [
+                PedidoPersonalizacionDetalleRead(
+                    ingrediente_id=int(item.get("ingredienteId") or item.get("ingrediente_id")),
+                    nombre=str(item.get("nombre") or ""),
+                )
+                for item in snapshot
+                if item.get("ingredienteId") is not None or item.get("ingrediente_id") is not None
+            ]
+        return [
+            PedidoPersonalizacionDetalleRead(
+                ingrediente_id=ingrediente_id,
+                nombre=names_by_id.get(ingrediente_id, f"Ingrediente #{ingrediente_id}"),
+            )
+            for ingrediente_id in personalizacion
+        ]
 
     @staticmethod
     def _direccion_snapshot_to_read(
@@ -739,7 +805,7 @@ class PedidosService:
         productos_by_id = {producto.id: producto for producto in productos}
 
         self._validar_productos_y_stock(productos_by_id, items)
-        removable = await uow.pedidos.get_removable_ingredientes(product_ids)
+        removable = await uow.pedidos.get_removable_ingredientes_detail(product_ids)
         return [
             self._prepare_item(productos_by_id[item.producto_id], item, removable)
             for item in items
@@ -767,21 +833,29 @@ class PedidosService:
     def _prepare_item(
         producto: Producto,
         item: ItemPedidoRequest,
-        removable: dict[int, set[int]],
+        removable: dict[int, dict[int, str]],
     ) -> PreparedPedidoItem:
         producto_id = int(producto.id)
         personalizacion = sorted(set(item.personalizacion))
-        invalid = set(personalizacion) - removable.get(producto_id, set())
+        removable_ingredientes = removable.get(producto_id, {})
+        invalid = set(personalizacion) - set(removable_ingredientes)
         if invalid:
             raise ValidationAppError(
                 f"Personalizacion invalida para el producto {producto.nombre}."
             )
+        personalizacion_snapshot = [
+            {"ingredienteId": ingrediente_id, "nombre": removable_ingredientes[ingrediente_id]}
+            for ingrediente_id in personalizacion
+        ]
+        notas = item.notas.strip() if item.notas else None
         return PreparedPedidoItem(
             producto_id=producto_id,
             cantidad=item.cantidad,
             nombre_snapshot=producto.nombre,
             precio_snapshot=Decimal(producto.precio_base),
             personalizacion=personalizacion or None,
+            personalizacion_snapshot=personalizacion_snapshot or None,
+            notas=notas or None,
         )
 
     @staticmethod
@@ -823,6 +897,8 @@ class PedidosService:
                 nombre_snapshot=item.nombre_snapshot,
                 precio_snapshot=item.precio_snapshot,
                 personalizacion=item.personalizacion,
+                personalizacion_snapshot=item.personalizacion_snapshot,
+                notas=item.notas,
             )
             for item in items
         ]

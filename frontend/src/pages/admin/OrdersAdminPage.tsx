@@ -13,17 +13,17 @@ import type { EstadoPedidoOperativo } from '@/entities/pedidos/types'
 const ESTADOS = ['', 'PENDIENTE', 'CONFIRMADO', 'EN_PREP', 'EN_CAMINO', 'ENTREGADO', 'CANCELADO']
 
 const ESTADO_COLORS: Record<string, string> = {
-  PENDIENTE:  'bg-amber-100 text-amber-700',
-  CONFIRMADO: 'bg-blue-100 text-blue-700',
-  EN_PREP:    'bg-purple-100 text-purple-700',
-  EN_CAMINO:  'bg-cyan-100 text-cyan-700',
-  ENTREGADO:  'bg-green-100 text-green-700',
-  CANCELADO:  'bg-red-100 text-red-700',
+  PENDIENTE:  'bg-warning/20 text-warning',
+  CONFIRMADO: 'bg-success/20 text-success',
+  EN_PREP:    'bg-brand/20 text-brand',
+  EN_CAMINO:  'bg-success/30 text-success',
+  ENTREGADO:  'bg-success/20 text-success',
+  CANCELADO:  'bg-danger/20 text-danger',
 }
 
 function EstadoBadge({ estado }: { estado: string }) {
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${ESTADO_COLORS[estado] ?? 'bg-gray-100 text-gray-600'}`}>
+    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${ESTADO_COLORS[estado] ?? 'bg-surface-high text-ink-muted'}`}>
       {estado}
     </span>
   )
@@ -79,6 +79,15 @@ function describePaymentStatus(
   return 'Gestionado fuera de MercadoPago'
 }
 
+function formatPaymentMethod(codigo: string): string {
+  switch (codigo) {
+    case 'MERCADOPAGO': return 'MercadoPago'
+    case 'EFECTIVO': return 'Efectivo'
+    case 'TRANSFERENCIA': return 'Transferencia'
+    default: return codigo
+  }
+}
+
 function formatCurrency(value: string): string {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(value))
 }
@@ -88,6 +97,16 @@ function formatDate(value: string): string {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value))
+}
+
+function formatExclusiones(item: { personalizacion: number[]; personalizacionDetalle: { nombre: string }[] }): string | null {
+  if (item.personalizacionDetalle.length > 0) {
+    return item.personalizacionDetalle.map((exclusion) => exclusion.nombre).join(', ')
+  }
+  if (item.personalizacion.length > 0) {
+    return item.personalizacion.map((id) => `Ingrediente #${id}`).join(', ')
+  }
+  return null
 }
 
 export function OrdersAdminPage() {
@@ -182,8 +201,8 @@ export function OrdersAdminPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Gestion de pedidos</h1>
-        <p className="mt-1 text-sm text-gray-500">Vista operativa para revisar pedidos y su trazabilidad.</p>
+        <h1 className="text-2xl font-bold text-ink">Gestion de pedidos</h1>
+        <p className="mt-1 text-sm text-ink-muted">Vista operativa para revisar pedidos y su trazabilidad.</p>
       </div>
 
       <div className="mt-6 grid gap-3 lg:grid-cols-[1.2fr_repeat(3,minmax(0,1fr))]">
@@ -192,7 +211,7 @@ export function OrdersAdminPage() {
           value={search}
           onChange={(event) => handleSearch(event.target.value)}
           placeholder="Buscar por pedido o cliente"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
         />
         <select
           value={estado}
@@ -200,7 +219,7 @@ export function OrdersAdminPage() {
             setEstado(event.target.value)
             setPage(1)
           }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink"
         >
           {ESTADOS.map((option) => (
             <option key={option || 'todos'} value={option}>
@@ -215,7 +234,7 @@ export function OrdersAdminPage() {
             setDesde(event.target.value)
             setPage(1)
           }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink"
         />
         <input
           type="date"
@@ -224,61 +243,64 @@ export function OrdersAdminPage() {
             setHasta(event.target.value)
             setPage(1)
           }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink"
         />
       </div>
 
       {isError && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+        <div className="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-5 text-sm text-danger">
           <p>{parsedListError?.message ?? 'No se pudieron cargar los pedidos.'}</p>
-          <button type="button" onClick={() => refetch()} className="mt-3 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white">
+          <button type="button" onClick={() => refetch()} className="mt-3 rounded-lg bg-danger-container px-4 py-2 font-semibold text-danger">
             Reintentar
           </button>
         </div>
       )}
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_1fr]">
-        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <section className="overflow-hidden rounded-lg border border-line-subtle bg-surface-base">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-line-subtle">
+              <thead className="bg-surface-low">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Pedido</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Estado</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Total</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-500">Accion</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-ink-muted">Pedido</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-ink-muted">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-ink-muted">Estado</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-ink-muted">Total</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-ink-muted">Accion</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-line-subtle">
                 {isLoading &&
                   Array.from({ length: 6 }).map((_, index) => (
                     <tr key={index} className="animate-pulse">
                       {Array.from({ length: 5 }).map((__, cell) => (
                         <td key={cell} className="px-4 py-4">
-                          <div className="h-4 rounded bg-gray-200" />
+                          <div className="h-4 rounded bg-surface-higher" />
                         </td>
                       ))}
                     </tr>
                   ))}
                 {!isLoading &&
                   data?.items.map((pedido) => (
-                    <tr key={pedido.id} className="hover:bg-gray-50">
+                    <tr key={pedido.id} className="hover:bg-surface-high">
                       <td className="px-4 py-4 text-sm">
-                        <p className="font-semibold text-gray-900">#{pedido.id}</p>
-                        <p className="mt-1 whitespace-nowrap text-xs text-gray-500">{formatDate(pedido.createdAt)}</p>
+                        <p className="font-semibold text-ink">#{pedido.id}</p>
+                        <p className="mt-1 whitespace-nowrap text-xs text-ink-muted">{formatDate(pedido.createdAt)}</p>
                       </td>
                       <td className="px-4 py-4 text-sm">
-                        <p className="font-medium text-gray-900">{pedido.clienteNombre}</p>
-                        <p className="mt-1 text-xs text-gray-500">{pedido.clienteEmail}</p>
+                        <p className="font-medium text-ink">{pedido.clienteNombre}</p>
+                        <p className="mt-1 text-xs text-ink-muted">{pedido.clienteEmail}</p>
                       </td>
                       <td className="px-4 py-4"><EstadoBadge estado={pedido.estadoCodigo} /></td>
-                      <td className="px-4 py-4 text-sm font-semibold text-orange-600">{formatCurrency(pedido.total)}</td>
+                      <td className="px-4 py-4 text-sm">
+                        <p className="font-semibold text-brand">{formatCurrency(pedido.total)}</p>
+                        <p className="mt-1 text-xs text-ink-muted">{formatPaymentMethod(pedido.formaPagoCodigo)}</p>
+                      </td>
                       <td className="px-4 py-4 text-right">
                         <button
                           type="button"
                           onClick={() => setSelectedPedidoId(pedido.id)}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                          className="rounded-lg border border-line-subtle px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-high"
                         >
                           Ver detalle
                         </button>
@@ -287,7 +309,7 @@ export function OrdersAdminPage() {
                   ))}
                 {!isLoading && !isError && (data?.items.length ?? 0) === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-14 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="px-4 py-14 text-center text-sm text-ink-muted">
                       No hay pedidos que coincidan con los filtros.
                     </td>
                   </tr>
@@ -297,8 +319,8 @@ export function OrdersAdminPage() {
           </div>
 
           {data && data.total > data.size && (
-            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-              <p className="text-sm text-gray-500">
+            <div className="flex items-center justify-between border-t border-line-subtle px-4 py-3">
+              <p className="text-sm text-ink-muted">
                 Pagina {data.page} de {data.pages}{isFetching ? ' (actualizando...)' : ''}
               </p>
               <div className="flex gap-2">
@@ -306,7 +328,7 @@ export function OrdersAdminPage() {
                   type="button"
                   disabled={data.page <= 1}
                   onClick={() => setPage((value) => value - 1)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
+                  className="rounded-lg border border-line-subtle px-3 py-2 text-sm text-ink hover:bg-surface-high disabled:opacity-50"
                 >
                   Anterior
                 </button>
@@ -314,7 +336,7 @@ export function OrdersAdminPage() {
                   type="button"
                   disabled={data.page >= data.pages}
                   onClick={() => setPage((value) => value + 1)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
+                  className="rounded-lg border border-line-subtle px-3 py-2 text-sm text-ink hover:bg-surface-high disabled:opacity-50"
                 >
                   Siguiente
                 </button>
@@ -323,28 +345,28 @@ export function OrdersAdminPage() {
           )}
         </section>
 
-        <aside className="rounded-lg border border-gray-200 bg-white p-5">
+        <aside className="rounded-lg border border-line-subtle bg-surface-base p-5">
           <div>
-            <p className="text-xs font-semibold uppercase text-gray-500">Detalle operativo</p>
-            <h2 className="mt-1 text-lg font-semibold text-gray-900">
+            <p className="text-xs font-semibold uppercase text-ink-muted">Detalle operativo</p>
+            <h2 className="mt-1 text-lg font-semibold text-ink">
               {selectedPedidoId ? `Pedido #${selectedPedidoId}` : 'Selecciona un pedido'}
             </h2>
           </div>
 
           {!selectedPedidoId && (
-            <p className="mt-5 text-sm text-gray-600">El detalle mostrara cliente, pago e historial.</p>
+            <p className="mt-5 text-sm text-ink-muted">El detalle mostrara cliente, pago e historial.</p>
           )}
 
           {selectedPedidoId && detailQuery.isLoading && (
             <div className="mt-5 space-y-3 animate-pulse">
-              <div className="h-5 rounded bg-gray-200" />
-              <div className="h-20 rounded bg-gray-200" />
-              <div className="h-28 rounded bg-gray-200" />
+              <div className="h-5 rounded bg-surface-higher" />
+              <div className="h-20 rounded bg-surface-higher" />
+              <div className="h-28 rounded bg-surface-higher" />
             </div>
           )}
 
           {selectedPedidoId && detailQuery.isError && (
-            <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="mt-5 rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">
               {parsedDetailError?.message ?? 'No se pudo cargar el detalle.'}
             </div>
           )}
@@ -352,48 +374,54 @@ export function OrdersAdminPage() {
           {detailQuery.data && (
             <div className="mt-5 space-y-5 text-sm">
               <div>
-                <p className="text-gray-500">Cliente</p>
-                <p className="mt-1 font-semibold text-gray-900">
+                <p className="text-ink-muted">Cliente</p>
+                <p className="mt-1 font-semibold text-ink">
                   {detailQuery.data.cliente.nombre} {detailQuery.data.cliente.apellido}
                 </p>
-                <p className="text-gray-600">{detailQuery.data.cliente.email}</p>
+                <p className="text-ink-muted">{detailQuery.data.cliente.email}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-gray-500">Estado</p>
+                  <p className="text-ink-muted">Estado</p>
                   <div className="mt-1"><EstadoBadge estado={detailQuery.data.estadoCodigo} /></div>
                 </div>
                 <div>
-                  <p className="text-gray-500">Total</p>
-                  <p className="mt-1 font-semibold text-orange-600">{formatCurrency(detailQuery.data.total)}</p>
+                  <p className="text-ink-muted">Total</p>
+                  <p className="mt-1 font-semibold text-brand">{formatCurrency(detailQuery.data.total)}</p>
                 </div>
               </div>
               <div>
-                <p className="text-gray-500">Entrega</p>
-                <p className="mt-1 font-semibold text-gray-900">
+                <p className="text-ink-muted">Entrega</p>
+                <p className="mt-1 font-semibold text-ink">
                   {selectedPedidoIsPickup ? 'Retiro en local' : 'Envio a domicilio'}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500">Pago</p>
-                <p className="mt-1 font-semibold text-gray-900">
+                <p className="text-ink-muted">Método de pago</p>
+                <p className="mt-1 font-semibold text-ink">
+                  {formatPaymentMethod(detailQuery.data.formaPagoCodigo)}
+                </p>
+              </div>
+              <div>
+                <p className="text-ink-muted">Estado del pago</p>
+                <p className="mt-1 font-semibold text-ink">
                   {describePaymentStatus(
                     detailQuery.data.formaPagoCodigo,
                     selectedEstado ?? 'PENDIENTE',
                     detailQuery.data.pago?.mpStatus,
                   )}
                 </p>
-                {detailQuery.data.pago?.statusDetail && <p className="text-gray-600">{detailQuery.data.pago.statusDetail}</p>}
+                {detailQuery.data.pago?.statusDetail && <p className="text-ink-muted">{detailQuery.data.pago.statusDetail}</p>}
               </div>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <p className="text-gray-500">Acciones operativas</p>
+              <div className="rounded-lg border border-line-subtle bg-surface-low p-4">
+                <p className="text-ink-muted">Acciones operativas</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {selectedEstado && canConfirmOffline(selectedEstado, detailQuery.data.formaPagoCodigo) && (
                     <button
                       type="button"
                       onClick={handleConfirmOffline}
                       disabled={actionBusy}
-                      className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg bg-success px-3 py-2 text-sm font-semibold text-success-on hover:bg-success/80 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Confirmar pago offline
                     </button>
@@ -403,7 +431,7 @@ export function OrdersAdminPage() {
                       type="button"
                       onClick={handleAdvance}
                       disabled={actionBusy}
-                      className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-brand-on hover:bg-brand-dim disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {nextStateLabel(selectedEstado, selectedPedidoIsPickup)}
                     </button>
@@ -413,7 +441,7 @@ export function OrdersAdminPage() {
                       type="button"
                       onClick={handleCancel}
                       disabled={actionBusy}
-                      className="rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg border border-danger/30 px-3 py-2 text-sm font-semibold text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Cancelar pedido
                     </button>
@@ -421,42 +449,49 @@ export function OrdersAdminPage() {
                 </div>
                 {selectedEstado && canCancel(selectedEstado) && (
                   <label className="mt-3 block">
-                    <span className="text-xs font-semibold uppercase text-gray-500">Motivo de cancelacion</span>
+                    <span className="text-xs font-semibold uppercase text-ink-muted">Motivo de cancelacion</span>
                     <textarea
                       value={cancelReason}
                       onChange={(event) => setCancelReason(event.target.value)}
                       rows={3}
                       maxLength={500}
                       disabled={actionBusy}
-                      className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100"
+                      className="mt-2 w-full rounded-lg border border-line-subtle bg-surface-base px-3 py-2 text-sm text-ink placeholder:text-ink-muted disabled:cursor-not-allowed disabled:bg-surface-high"
                       placeholder="Describe brevemente por que se cancela."
                     />
                   </label>
                 )}
                 {selectedEstado && !nextEstado && !canCancel(selectedEstado) && (
-                  <p className="mt-3 text-xs text-gray-500">No hay acciones disponibles para este estado.</p>
+                  <p className="mt-3 text-xs text-ink-muted">No hay acciones disponibles para este estado.</p>
                 )}
               </div>
               <div>
-                <p className="text-gray-500">Items</p>
+                <p className="text-ink-muted">Items</p>
                 <ul className="mt-2 space-y-2">
                   {detailQuery.data.items.map((item, index) => (
-                    <li key={`${item.productoId ?? 'snapshot'}-${index}`} className="rounded-lg bg-gray-50 p-3">
-                      <p className="font-semibold text-gray-900">{item.nombreSnapshot}</p>
-                      <p className="mt-1 text-gray-600">Cantidad {item.cantidad}</p>
+                    <li key={`${item.productoId ?? 'snapshot'}-${index}`} className="rounded-lg bg-surface-low p-3">
+                      <p className="font-semibold text-ink">{item.nombreSnapshot}</p>
+                      <p className="mt-1 text-ink-muted">Cantidad {item.cantidad}</p>
+                      {formatExclusiones(item) && (
+                        <p className="mt-1 text-ink-muted">Sin {formatExclusiones(item)}</p>
+                      )}
+                      {item.notas && (
+                        <p className="mt-1 text-sm text-ink-muted italic">"{item.notas}"</p>
+                      )}
                     </li>
                   ))}
                 </ul>
               </div>
               <div>
-                <p className="text-gray-500">Historial</p>
+                <p className="text-ink-muted">Historial</p>
                 <ol className="mt-2 space-y-3">
                   {detailQuery.data.historial.map((entry) => (
-                    <li key={entry.id} className="border-l-2 border-orange-200 pl-3">
-                      <p className="font-medium text-gray-900">
+                    <li key={entry.id} className="border-l-2 border-brand/30 pl-3">
+                      <p className="font-medium text-ink">
                         {entry.estadoDesde ?? 'Inicio'} - {entry.estadoHasta}
                       </p>
-                      <p className="text-xs text-gray-500">{formatDate(entry.createdAt)}</p>
+                      <p className="text-xs text-ink-muted">{formatDate(entry.createdAt)}</p>
+                      {entry.motivo && <p className="mt-1 text-xs text-ink-muted">{entry.motivo}</p>}
                     </li>
                   ))}
                 </ol>
