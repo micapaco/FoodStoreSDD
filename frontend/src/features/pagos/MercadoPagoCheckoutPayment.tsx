@@ -185,23 +185,8 @@ export function MercadoPagoCheckoutPayment({
         </details>
       )}
 
-      {/* Panel de prueba: cuenta comprador */}
-      {isTestMode && paymentType === 'account' && (
-        <details open className="mt-4 rounded-lg border border-brand/20 bg-brand/5 text-sm">
-          <summary className="cursor-pointer select-none px-4 py-3 font-semibold text-brand">
-            🧪 Cuenta de prueba MercadoPago
-          </summary>
-          <div className="px-4 pb-4 pt-3 space-y-1 text-ink-muted">
-            <p>Ingresá con la cuenta comprador de prueba en el formulario de MercadoPago.</p>
-            <ul className="mt-2 space-y-1">
-              <li><span className="font-semibold text-ink">Usuario:</span> <span className="font-mono">TESTUSER7950494174164251616</span></li>
-              <li><span className="font-semibold text-ink">Contraseña:</span> <span className="font-mono">3IissNro2f</span></li>
-            </ul>
-          </div>
-        </details>
-      )}
 
-      <div className="mt-5">
+<div className="mt-5">
         {/* Flujo tarjeta: CardPayment brick */}
         {paymentType === 'card' && (
           <>
