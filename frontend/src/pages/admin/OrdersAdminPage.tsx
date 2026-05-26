@@ -475,6 +475,9 @@ export function OrdersAdminPage() {
                       {formatExclusiones(item) && (
                         <p className="mt-1 text-ink-muted">Sin {formatExclusiones(item)}</p>
                       )}
+                      {item.notas && (
+                        <p className="mt-1 text-sm text-ink-muted italic">"{item.notas}"</p>
+                      )}
                     </li>
                   ))}
                 </ul>

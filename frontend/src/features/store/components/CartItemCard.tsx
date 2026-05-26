@@ -77,6 +77,12 @@ export function CartItemCard({ item, ingredientNameMap }: CartItemCardProps) {
           </div>
         )}
 
+        {item.personalizacion?.notas && (
+          <p className="mt-1 text-xs text-ink-muted italic">
+            "{item.personalizacion.notas}"
+          </p>
+        )}
+
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"

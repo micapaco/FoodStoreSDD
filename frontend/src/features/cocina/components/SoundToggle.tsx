@@ -1,4 +1,4 @@
-import { activateAudio } from '@/features/cocina/lib/kdsSound'
+import { activateAudio, deactivateAudio } from '@/features/cocina/lib/kdsSound'
 
 interface Props {
   enabled: boolean
@@ -8,9 +8,8 @@ interface Props {
 export function SoundToggle({ enabled, onChange }: Props) {
   async function handleToggle() {
     const next = !enabled
-    if (next) {
-      await activateAudio()
-    }
+    await activateAudio() // cualquier click del usuario activa el contexto
+    if (!next) deactivateAudio()
     onChange(next)
   }
 

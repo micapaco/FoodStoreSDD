@@ -15,9 +15,9 @@
 
 ---
 
-## Estado real de archivo (2026-05-17)
+## Estado real de archivo (2026-05-24)
 
-`openspec list` no muestra changes activos. El repo tiene archivados 31 changes reales: `01` a `15`, los ajustes `15.5` y `15.6`, y la numeracion continua `16` a `29`.
+`openspec list` muestra un change activo: `33` (`mercadopago-test-account`). El repo tiene archivados 34 changes reales: `01` a `15`, los ajustes `15.5` y `15.6`, y la numeracion continua `16` a `32`.
 
 La linea historica no separa "correctivos" o "refinamientos" en una seccion aparte: despues del `19` se continua con `20`, `21`, `22`, etc. para mantener referencias claras y estables.
 
@@ -365,6 +365,8 @@ Panel y backend para parámetros operativos globales administrables sin tocar c�
 
 ### `30` — `display-cocina`
 
+**Estado**: archivado en `openspec/changes/archive/2026-05-21-display-cocina/`.
+
 **Funcionalidad**: Kitchen Display System (KDS) + rol Cocinero.
 Nuevo rol `COCINA` en el RBAC, pantalla en tiempo real (`/cocina`) con dos columnas por estado (`CONFIRMADO` / `EN_PREP`), WebSocket push con fallback polling REST, timer de urgencia visual, alerta sonora opcional y autorización de las transiciones `CONFIRMADO → EN_PREP → EN_CAMINO` para el nuevo rol.
 
@@ -372,6 +374,43 @@ Nuevo rol `COCINA` en el RBAC, pantalla en tiempo real (`/cocina`) con dos colum
 **Depende de**: `auth`, `payment-integration`, `order-fsm`, `frontend-shell`
 
 > Agrega infraestructura nueva al backend (WebSocket single-instance con pub/sub en proceso) sin modificar el FSM ni sus estados. El rol `COCINA` se incorpora en paralelo a `PEDIDOS`, sin reemplazarlo. El material de dominio vive en `feature-display-cocina/`. Ver `feature-display-cocina/README.md` para decisiones de diseño cerradas (WebSocket vs SSE, single vs multi-instancia, PA-CO-01).
+
+---
+
+### `31` — `theme-toggle`
+
+**Funcionalidad**: Modo claro como tema por defecto + toggle de modo oscuro.
+El dashboard pasa a ser blanco (light mode) por defecto. El modo oscuro (diseño actual) se mantiene disponible mediante un botón de toggle persistido en `localStorage`. El cambio es puramente visual — no modifica lógica, stores, contratos ni rutas.
+
+**Depende de**: `stitch-visual-redesign`, `frontend-shell`
+
+---
+
+### `32` — `cart-item-notes`
+
+**Funcionalidad**: Observaciones por ítem en el carrito.
+El cliente puede escribir un texto libre por producto al agregarlo al carrito ("sin sal", "bien cocida", "extra salsa"). Las observaciones viajan junto al ítem en todo el flujo: `DetallePedido.notas_item` (nueva columna, migración), contrato API de creación de pedido y detalle, panel admin de pedidos y KDS (mostradas en la tarjeta del cocinero al lado de las exclusiones de ingredientes).
+
+**Historias de usuario**: extensión de US-035, US-049, US-050, US-051  
+**Depende de**: `order-creation`, `order-views`, `display-cocina`, `cart`
+
+---
+
+### `33` — `mercadopago-test-account`
+
+**Estado**: en el mapa, pendiente de proponer.
+
+**Funcionalidad**: Reestructuración de opciones de pago + panel de prueba.
+Reorganiza las formas de pago en el checkout:
+
+- **"Tarjetas"** → renombrado desde "MercadoPago". Mismo flujo CardPayment brick. Cuando `VITE_MERCADOPAGO_PUBLIC_KEY` empieza con `TEST-`, muestra un panel colapsable con datos de tarjeta de prueba (número, vencimiento, CVV, nombre, DNI) para pago aprobado y rechazado.
+- **"MercadoPago"** → nueva opción. Mismo CardPayment brick, pero el panel de prueba muestra credenciales de cuenta comprador test (email + contraseña) en lugar de datos de tarjeta.
+- **"Transferencia"** → eliminada (no tenía flujo funcional).
+
+Sin cambios de backend. Sin nuevos bricks. El código `MERCADOPAGO` en la base de datos no cambia — solo cambian las etiquetas y el panel de ayuda en la UI.
+
+**Historias de usuario**: —  
+**Depende de**: `payment-integration`
 
 ---
 

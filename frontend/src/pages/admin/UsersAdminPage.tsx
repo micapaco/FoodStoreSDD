@@ -10,6 +10,7 @@ const ROLE_OPTIONS = [
   { value: 'STOCK', label: 'Stock' },
   { value: 'PEDIDOS', label: 'Pedidos' },
   { value: 'STOCK+PEDIDOS', label: 'Stock + Pedidos' },
+  { value: 'COCINA', label: 'Cocinero' },
   { value: 'CLIENT', label: 'Cliente' },
 ]
 

@@ -89,6 +89,7 @@ export interface PedidoDetalleItem {
   cantidad: number
   personalizacion: number[]
   personalizacionDetalle: PedidoPersonalizacionDetalle[]
+  notas: string | null
 }
 
 export interface PedidoPersonalizacionDetalle {

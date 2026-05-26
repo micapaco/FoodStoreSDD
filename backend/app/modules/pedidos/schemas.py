@@ -43,6 +43,15 @@ class ItemPedidoRequest(BaseSchema):
     producto_id: int = Field(alias="productoId", gt=0)
     cantidad: int = Field(gt=0)
     personalizacion: list[int] = Field(default_factory=list)
+    notas: str | None = Field(default=None, max_length=500)
+
+    @field_validator("notas")
+    @classmethod
+    def normalize_notas_item(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
 
 
 class CrearPedidoRequest(BaseSchema):
@@ -156,6 +165,7 @@ class PedidoDetalleItemRead(BaseSchema):
         default_factory=list,
         alias="personalizacionDetalle",
     )
+    notas: str | None = None
 
 
 class DireccionSnapshotRead(BaseSchema):

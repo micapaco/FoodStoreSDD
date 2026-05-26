@@ -38,10 +38,6 @@ export function KDSCard({ pedido, action, onAction }: Props) {
     }
   }
 
-  const exclusiones = pedido.items.flatMap((item) =>
-    (item.personalizacion ?? []).map((id) => `#${id}`),
-  )
-
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-line-subtle bg-surface-high p-4 shadow-card-sm">
       {/* Header */}
@@ -51,21 +47,26 @@ export function KDSCard({ pedido, action, onAction }: Props) {
       </div>
 
       {/* Ítems */}
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {pedido.items.map((item, i) => (
-          <li key={i} className="flex items-baseline justify-between gap-2 text-sm text-ink">
-            <span className="truncate">{item.nombreSnapshot}</span>
-            <span className="shrink-0 font-semibold text-brand">×{item.cantidad}</span>
+          <li key={i} className="text-sm">
+            <div className="flex items-baseline justify-between gap-2 text-ink">
+              <span className="truncate">{item.nombreSnapshot}</span>
+              <span className="shrink-0 font-semibold text-brand">×{item.cantidad}</span>
+            </div>
+            {item.personalizacion && item.personalizacion.length > 0 && (
+              <p className="mt-0.5 text-xs text-warning">
+                Sin: {item.personalizacion.join(', ')}
+              </p>
+            )}
+            {item.notas && (
+              <p className="mt-0.5 text-xs text-ink-muted italic">
+                "{item.notas}"
+              </p>
+            )}
           </li>
         ))}
       </ul>
-
-      {/* Exclusiones */}
-      {exclusiones.length > 0 && (
-        <div className="rounded-md bg-warning/10 px-2 py-1 text-xs text-warning">
-          Sin: {exclusiones.join(', ')}
-        </div>
-      )}
 
       {/* Notas */}
       {pedido.notas && (

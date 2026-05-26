@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -15,26 +16,26 @@ export default {
           on: '#3c2f00',
           dim: '#e9c349',
         },
-        // Dark surfaces (layered depth)
+        // Surfaces — theme-aware via CSS custom properties
         surface: {
-          DEFAULT: '#0d141d',
-          lowest: '#080f17',
-          low: '#151c25',
-          base: '#192029',
-          high: '#232a34',
-          higher: '#2e353f',
+          DEFAULT: 'var(--color-surface)',
+          lowest: 'var(--color-surface-lowest)',
+          low: 'var(--color-surface-low)',
+          base: 'var(--color-surface-base)',
+          high: 'var(--color-surface-high)',
+          higher: 'var(--color-surface-higher)',
           bright: '#333a44',
         },
-        // Text
+        // Text — theme-aware via CSS custom properties
         ink: {
-          DEFAULT: '#dce3f0',
-          muted: '#d0c5af',
+          DEFAULT: 'var(--color-ink)',
+          muted: 'var(--color-ink-muted)',
           inverse: '#2a313b',
         },
-        // Borders
+        // Borders — theme-aware via CSS custom properties
         line: {
           DEFAULT: '#99907c',
-          subtle: '#4d4635',
+          subtle: 'var(--color-line-subtle)',
         },
         // Status — success (tertiary green)
         success: {

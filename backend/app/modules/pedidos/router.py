@@ -26,9 +26,7 @@ from app.modules.pedidos.schemas import (
 )
 from app.modules.pedidos.service import PedidosService
 
-_COCINA_BROADCAST_STATES = {"CONFIRMADO", "EN_PREP", "EN_CAMINO", "CANCELADO"}
 _EVENTO_POR_ESTADO = {
-    "CONFIRMADO": "PEDIDO_CONFIRMADO",
     "EN_PREP": "PEDIDO_EN_PREPARACION",
     "EN_CAMINO": "PEDIDO_EN_CAMINO",
     "CANCELADO": "PEDIDO_CANCELADO",
@@ -127,7 +125,18 @@ async def confirmar_pago_offline(
 ) -> PedidoRead:
     async with UnitOfWork() as uow:
         service = PedidosService()
-        return await service.confirmar_pago_offline(uow, pedido_id, request, current_user)
+        result = await service.confirmar_pago_offline(uow, pedido_id, request, current_user)
+
+    try:
+        async with UnitOfWork() as uow2:
+            pedido_row = await uow2.session.get(Pedido, pedido_id)
+            if pedido_row is not None:
+                cocina_read = await build_pedido_cocina_read(uow2, pedido_row)
+                await emit_cocina_event("PEDIDO_CONFIRMADO", pedido_id, cocina_read.model_dump(mode="json", by_alias=True))
+    except Exception:
+        pass
+
+    return result
 
 
 @router.get(

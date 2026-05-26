@@ -59,6 +59,25 @@ El sistema SHALL capturar snapshots de datos volatiles al crear el pedido.
 - **THEN** el sistema permite crear el pedido como retiro en local
 - **THEN** `direccion_snapshot` queda `NULL`
 
+### Requirement: Creacion de pedido con items personalizados
+El sistema SHALL aceptar en `POST /api/v1/pedidos` un payload donde cada ítem puede incluir `notas` de preparación opcionales.
+
+#### Scenario: Crear pedido con notas por item
+- **WHEN** el cliente envía `POST /api/v1/pedidos` con `items[].notas = "sin sal"`
+- **THEN** el sistema persiste `notas` en la columna `notas` de `pedido_item`
+- **THEN** el campo `notas` en la respuesta `PedidoItemRead` contiene el texto enviado
+
+#### Scenario: Crear pedido sin notas
+- **WHEN** el cliente envía `POST /api/v1/pedidos` sin campo `notas` en un ítem (o `notas = null`)
+- **THEN** el sistema persiste `null` en `pedido_item.notas`
+- **THEN** la respuesta retorna `notas: null` para ese ítem
+
+#### Scenario: Notas incluidas en respuesta de cocina
+- **WHEN** el backend retorna `GET /api/v1/cocina/pedidos`
+- **THEN** cada ítem en `PedidoCocinaItemRead` incluye el campo `notas` (string o null)
+
+---
+
 ### Requirement: Reglas de calculo del pedido
 El sistema SHALL calcular el total del pedido con precios snapshot y un costo de envio coherente con la modalidad de cumplimiento.
 
@@ -101,18 +120,29 @@ El sistema SHALL confirmar automaticamente un pedido `PENDIENTE` cuando MercadoP
 ---
 
 ### Requirement: Avanzar manualmente estados operativos
-El sistema SHALL exponer `PATCH /api/v1/pedidos/{pedido_id}/estado` para que usuarios `ADMIN` o `PEDIDOS` avancen pedidos segun la FSM y la modalidad de cumplimiento.
+El sistema SHALL exponer `PATCH /api/v1/pedidos/{pedido_id}/estado` para que usuarios `ADMIN`, `PEDIDOS` o `COCINA` avancen pedidos segun la FSM y la modalidad de cumplimiento. El endpoint acepta los tres roles en `require_role`, pero la validación de qué transición puede ejecutar cada rol vive en el servicio del FSM.
 
-#### Scenario: Confirmado a preparacion
+#### Scenario: Confirmado a preparacion — roles PEDIDOS o ADMIN
 - **WHEN** un usuario `ADMIN` o `PEDIDOS` envia `nuevoEstado=EN_PREP` para un pedido `CONFIRMADO`
 - **THEN** el sistema cambia el pedido a `EN_PREP`
 - **THEN** inserta historial `CONFIRMADO -> EN_PREP`
 - **THEN** la API responde `200 OK` con `PedidoRead`
 
-#### Scenario: Entrega a domicilio pasa a camino
+#### Scenario: Confirmado a preparacion — rol COCINA
+- **WHEN** un usuario `COCINA` envia `nuevoEstado=EN_PREP` para un pedido `CONFIRMADO`
+- **THEN** el sistema cambia el pedido a `EN_PREP`
+- **THEN** inserta historial `CONFIRMADO -> EN_PREP` con `usuario_id` del cocinero
+- **THEN** la API responde `200 OK` con `PedidoRead`
+
+#### Scenario: En preparacion a camino — roles PEDIDOS o ADMIN
 - **WHEN** un usuario `ADMIN` o `PEDIDOS` envia `nuevoEstado=EN_CAMINO` para un pedido `EN_PREP` con direccion de entrega
 - **THEN** el sistema cambia el pedido a `EN_CAMINO`
 - **THEN** inserta historial `EN_PREP -> EN_CAMINO`
+
+#### Scenario: En preparacion a camino — rol COCINA
+- **WHEN** un usuario `COCINA` envia `nuevoEstado=EN_CAMINO` para un pedido `EN_PREP`
+- **THEN** el sistema cambia el pedido a `EN_CAMINO`
+- **THEN** inserta historial `EN_PREP -> EN_CAMINO` con `usuario_id` del cocinero
 
 #### Scenario: Entrega a domicilio cierra desde camino
 - **WHEN** un usuario `ADMIN` o `PEDIDOS` envia `nuevoEstado=ENTREGADO` para un pedido `EN_CAMINO`
@@ -132,6 +162,11 @@ El sistema SHALL exponer `PATCH /api/v1/pedidos/{pedido_id}/estado` para que usu
 #### Scenario: Entrega a domicilio no salta el despacho
 - **WHEN** se solicita `nuevoEstado=ENTREGADO` para un pedido `EN_PREP` con direccion de entrega
 - **THEN** el sistema responde `409 Conflict`
+- **THEN** no cambia estado ni inserta historial
+
+#### Scenario: Rol COCINA intenta transicion fuera de su alcance
+- **WHEN** un usuario `COCINA` solicita `nuevoEstado=ENTREGADO` o cualquier transicion distinta de `EN_PREP` o `EN_CAMINO`
+- **THEN** el sistema responde `403 Forbidden`
 - **THEN** no cambia estado ni inserta historial
 
 #### Scenario: Transicion invalida

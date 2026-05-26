@@ -285,11 +285,7 @@ export function ProductoDetallePage() {
               type="button"
               disabled={!isAvailable}
               onClick={() => {
-                if (removibles.length > 0) {
-                  setModalOpen(true)
-                } else {
-                  handleAddToCart({ ingredientesExcluidos: [] })
-                }
+                setModalOpen(true)
               }}
               className="w-full rounded-lg bg-brand px-8 py-3 text-base font-semibold text-brand-on hover:bg-brand-dim disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:w-auto"
             >

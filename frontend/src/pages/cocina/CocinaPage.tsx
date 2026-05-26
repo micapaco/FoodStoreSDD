@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useKDS } from '@/features/cocina/hooks/useKDS'
 import { KDSColumn } from '@/features/cocina/components/KDSColumn'
 import { SoundToggle } from '@/features/cocina/components/SoundToggle'
@@ -8,7 +8,7 @@ const SOUND_KEY = 'kds_sound_enabled'
 function useSoundPreference() {
   const [enabled, setEnabled] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(SOUND_KEY) !== 'false'
+      return localStorage.getItem(SOUND_KEY) === 'true'
     } catch {
       return false
     }
@@ -31,18 +31,18 @@ export function CocinaPage() {
   const { porPreparar, enPreparacion, wsConnected, advanceOrder } = useKDS(soundEnabled)
 
   const [flash, setFlash] = useState(false)
-  const prevCountRef = useState(0)
+  const prevCountRef = useRef(0)
 
   // Flash visual cuando llega un pedido nuevo en "Por preparar"
   useEffect(() => {
-    const prev = prevCountRef[0]
+    const prev = prevCountRef.current
     if (porPreparar.length > prev) {
       setFlash(true)
       const t = setTimeout(() => setFlash(false), 1500)
-      prevCountRef[0] = porPreparar.length
+      prevCountRef.current = porPreparar.length
       return () => clearTimeout(t)
     }
-    prevCountRef[0] = porPreparar.length
+    prevCountRef.current = porPreparar.length
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [porPreparar.length])
 
@@ -51,7 +51,9 @@ export function CocinaPage() {
   }
 
   async function handleDone(pedidoId: number) {
-    await advanceOrder(pedidoId, 'EN_CAMINO')
+    const pedido = enPreparacion.find((p) => p.id === pedidoId)
+    const nuevoEstado = pedido?.esRetiro ? 'ENTREGADO' : 'EN_CAMINO'
+    await advanceOrder(pedidoId, nuevoEstado)
   }
 
   return (

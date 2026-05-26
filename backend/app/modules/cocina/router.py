@@ -15,6 +15,14 @@ from app.modules.cocina.schemas import ItemCocinaRead, PedidoCocinaRead
 router = APIRouter(prefix="/cocina", tags=["Cocina"])
 
 
+def _exclusiones_nombres(d: DetallePedido) -> list[str] | None:
+    if d.personalizacion_snapshot:
+        return [s["nombre"] for s in d.personalizacion_snapshot]
+    if d.personalizacion:
+        return [f"#{id_}" for id_ in d.personalizacion]
+    return None
+
+
 async def build_pedido_cocina_read(uow: UnitOfWork, pedido: Pedido) -> PedidoCocinaRead:
     """Construye PedidoCocinaRead para un pedido dado — reutilizable desde otros routers."""
     detalles_result = await uow.session.execute(
@@ -36,11 +44,13 @@ async def build_pedido_cocina_read(uow: UnitOfWork, pedido: Pedido) -> PedidoCoc
         notas=pedido.notas,
         created_at=pedido.created_at,
         timestamp_entrada_cocina=timestamp_entrada,
+        es_retiro=pedido.direccion_id is None,
         items=[
             ItemCocinaRead(
                 nombre_snapshot=d.nombre_snapshot,
                 cantidad=d.cantidad,
-                personalizacion=d.personalizacion or None,
+                personalizacion=_exclusiones_nombres(d),
+                notas=d.notas,
             )
             for d in detalles
         ],
@@ -145,7 +155,8 @@ async def listar_pedidos_activos(
                 ItemCocinaRead(
                     nombre_snapshot=d.nombre_snapshot,
                     cantidad=d.cantidad,
-                    personalizacion=d.personalizacion or None,
+                    personalizacion=_exclusiones_nombres(d),
+                    notas=d.notas,
                 )
                 for d in detalles_by_pedido.get(pedido.id, [])
             ]
@@ -156,6 +167,7 @@ async def listar_pedidos_activos(
                     notas=pedido.notas,
                     created_at=pedido.created_at,
                     timestamp_entrada_cocina=entrada_by_pedido.get(pedido.id),  # type: ignore[arg-type]
+                    es_retiro=pedido.direccion_id is None,
                     items=items,
                 )
             )

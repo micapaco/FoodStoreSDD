@@ -129,6 +129,37 @@ async def seed(session: AsyncSession) -> None:
             {"usuario_id": admin_id},
         )
 
+    # ── Usuario cocinero ──────────────────────────────────────────────────────
+    cocina_email = "cocina@foodstore.com"
+    existing = await session.execute(
+        text("SELECT id FROM usuario WHERE email = :email"),
+        {"email": cocina_email},
+    )
+    if existing.fetchone() is None:
+        password_hash = _pwd_context.hash("Cocina1234!")
+        result = await session.execute(
+            text(
+                "INSERT INTO usuario (nombre, apellido, email, password_hash, "
+                "created_at, updated_at) "
+                "VALUES (:nombre, :apellido, :email, :password_hash, "
+                "NOW() AT TIME ZONE 'utc', NOW() AT TIME ZONE 'utc') RETURNING id"
+            ),
+            {
+                "nombre": "Cocinero",
+                "apellido": "FoodStore",
+                "email": cocina_email,
+                "password_hash": password_hash,
+            },
+        )
+        cocina_id = result.scalar_one()
+        await session.execute(
+            text(
+                "INSERT INTO usuario_rol (usuario_id, rol_codigo) "
+                "VALUES (:usuario_id, 'COCINA') ON CONFLICT DO NOTHING"
+            ),
+            {"usuario_id": cocina_id},
+        )
+
     # ── Categorías jerárquicas ─────────────────────────────────────────────────
     # Root categories: insert idempotente, luego usamos RETURNING para obtener IDs
     roots = {
@@ -418,8 +449,9 @@ async def main() -> None:
     print("Seed completado.")
     print()
     print("[ADVERTENCIA DE SEGURIDAD]")
-    print("   El usuario admin@foodstore.com fue creado con password 'Admin1234!'.")
-    print("   CAMBIÁ este password ANTES de ir a producción.")
+    print("   admin@foodstore.com    → password: Admin1234!")
+    print("   cocina@foodstore.com   → password: Cocina1234!")
+    print("   CAMBIÁ estos passwords ANTES de ir a producción.")
     print()
 
 

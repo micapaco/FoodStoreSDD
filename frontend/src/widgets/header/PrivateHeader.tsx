@@ -4,6 +4,7 @@ import { getSafeUserRoles, useAuthStore } from '@/shared/stores/authStore'
 import { useCartStore } from '@/shared/stores/cartStore'
 import { CartDrawer } from '@/features/store/components/CartDrawer'
 import { isClientViewPath } from '@/shared/lib/auth/roles'
+import { ThemeToggle } from '@/shared/components/ThemeToggle'
 
 function getPrimaryRole(roles: string[]): string {
   if (roles.includes('ADMIN')) return 'ADMIN'
@@ -85,6 +86,7 @@ export function PrivateHeader() {
                 )}
               </>
             )}
+            {!canUseCart && <ThemeToggle />}
             <button
               type="button"
               onClick={handleLogout}

@@ -39,7 +39,7 @@ class UsuarioUpdateRequest(BaseModel):
 
 
 class CambiarRolesRequest(BaseModel):
-    roles: list[Literal["ADMIN", "STOCK", "PEDIDOS", "CLIENT"]]
+    roles: list[Literal["ADMIN", "STOCK", "PEDIDOS", "CLIENT", "COCINA"]]
 
     @field_validator("roles")
     @classmethod
@@ -47,7 +47,7 @@ class CambiarRolesRequest(BaseModel):
         normalized = list(dict.fromkeys(v))
         if set(normalized) == {"STOCK", "PEDIDOS"}:
             return ["STOCK", "PEDIDOS"]
-        valid_combinations = [["ADMIN"], ["STOCK"], ["PEDIDOS"], ["CLIENT"]]
+        valid_combinations = [["ADMIN"], ["STOCK"], ["PEDIDOS"], ["CLIENT"], ["COCINA"]]
         if normalized not in valid_combinations:
             raise ValueError("El usuario debe tener un rol valido o la combinacion STOCK+PEDIDOS.")
         return normalized

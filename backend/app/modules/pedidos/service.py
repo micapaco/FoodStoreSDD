@@ -75,6 +75,7 @@ class PreparedPedidoItem:
     precio_snapshot: Decimal
     personalizacion: list[int] | None
     personalizacion_snapshot: list[dict] | None
+    notas: str | None = None
 
 
 class PedidosService:
@@ -232,11 +233,13 @@ class PedidosService:
         if not self._has_any_role(roles, {"ADMIN", "PEDIDOS", "COCINA"}):
             raise ForbiddenError("No tenes permiso para avanzar pedidos.")
 
-        # El rol COCINA solo puede ejecutar CONFIRMADO→EN_PREP y EN_PREP→EN_CAMINO
+        # El rol COCINA puede ejecutar CONFIRMADO→EN_PREP, EN_PREP→EN_CAMINO
+        # y EN_PREP→ENTREGADO (pedidos de retiro en local, donde no hay fase EN_CAMINO).
+        # El FSM valida la transición específica según el tipo de pedido.
         if self._has_any_role(roles, {"COCINA"}) and not self._has_any_role(roles, {"ADMIN", "PEDIDOS"}):
-            allowed_cocina = {ESTADO_EN_PREP, ESTADO_EN_CAMINO}
+            allowed_cocina = {ESTADO_EN_PREP, ESTADO_EN_CAMINO, ESTADO_ENTREGADO}
             if request.nuevo_estado not in allowed_cocina:
-                raise ForbiddenError("El rol COCINA solo puede avanzar a EN_PREP o EN_CAMINO.")
+                raise ForbiddenError("El rol COCINA solo puede avanzar a EN_PREP, EN_CAMINO o ENTREGADO.")
 
         pedido = await self._get_active_pedido(uow, pedido_id)
         self._validate_manual_transition(pedido, request.nuevo_estado)
@@ -702,6 +705,7 @@ class PedidosService:
             cantidad=detalle.cantidad,
             personalizacion=personalizacion,
             personalizacion_detalle=detalle_legible,
+            notas=detalle.notas,
         )
 
     @staticmethod
@@ -843,6 +847,7 @@ class PedidosService:
             {"ingredienteId": ingrediente_id, "nombre": removable_ingredientes[ingrediente_id]}
             for ingrediente_id in personalizacion
         ]
+        notas = item.notas.strip() if item.notas else None
         return PreparedPedidoItem(
             producto_id=producto_id,
             cantidad=item.cantidad,
@@ -850,6 +855,7 @@ class PedidosService:
             precio_snapshot=Decimal(producto.precio_base),
             personalizacion=personalizacion or None,
             personalizacion_snapshot=personalizacion_snapshot or None,
+            notas=notas or None,
         )
 
     @staticmethod
@@ -892,6 +898,7 @@ class PedidosService:
                 precio_snapshot=item.precio_snapshot,
                 personalizacion=item.personalizacion,
                 personalizacion_snapshot=item.personalizacion_snapshot,
+                notas=item.notas,
             )
             for item in items
         ]

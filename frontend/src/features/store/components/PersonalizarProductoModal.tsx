@@ -20,6 +20,7 @@ export function PersonalizarProductoModal({
   cantidad = 1,
 }: PersonalizarProductoModalProps) {
   const [excludedIds, setExcludedIds] = useState<number[]>([])
+  const [notas, setNotas] = useState('')
 
   if (!open) return null
 
@@ -30,13 +31,19 @@ export function PersonalizarProductoModal({
   }
 
   const handleConfirm = () => {
-    onConfirm({ ingredientesExcluidos: excludedIds })
+    const trimmedNotas = notas.trim()
+    onConfirm({
+      ingredientesExcluidos: excludedIds,
+      ...(trimmedNotas ? { notas: trimmedNotas } : {}),
+    })
     setExcludedIds([])
+    setNotas('')
     onClose()
   }
 
   const handleClose = () => {
     setExcludedIds([])
+    setNotas('')
     onClose()
   }
 
@@ -88,6 +95,21 @@ export function PersonalizarProductoModal({
             ))}
           </ul>
         )}
+
+        <div className="mt-4">
+          <label htmlFor="notas-prep" className="block text-sm font-medium text-ink mb-1.5">
+            Notas de preparación <span className="text-ink-muted font-normal">(opcional)</span>
+          </label>
+          <textarea
+            id="notas-prep"
+            value={notas}
+            onChange={(e) => setNotas(e.target.value)}
+            placeholder='Ej: "sin sal", "extra queso", "término medio"'
+            rows={2}
+            maxLength={500}
+            className="w-full rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink placeholder:text-ink-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none transition-colors"
+          />
+        </div>
 
         <div className="mt-6 flex items-center justify-end gap-3">
           <button

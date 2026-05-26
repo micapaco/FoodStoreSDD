@@ -1,44 +1,74 @@
 let ctx: AudioContext | null = null
+let keepAliveTimer: ReturnType<typeof setInterval> | null = null
 
-function getCtx(): AudioContext | null {
-  if (typeof window === 'undefined') return null
-  if (!ctx) {
-    try {
-      ctx = new AudioContext()
-    } catch {
-      return null
+function startKeepAlive(): void {
+  if (keepAliveTimer || !ctx) return
+  keepAliveTimer = setInterval(() => {
+    if (!ctx) return
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    } else if (ctx.state === 'running') {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.01)
     }
-  }
-  return ctx
+  }, 30_000)
 }
 
 /**
- * Activa el AudioContext si está suspendido.
- * Debe llamarse en respuesta a un evento de usuario (click/tap).
+ * Crea y activa el AudioContext. Debe llamarse desde un gesto del usuario (click).
+ * Inicia el keep-alive para evitar que el browser suspenda el contexto.
  */
 export async function activateAudio(): Promise<void> {
-  const context = getCtx()
-  if (context && context.state === 'suspended') {
-    await context.resume()
+  if (!ctx) {
+    try {
+      ctx = new AudioContext()
+      console.log('[kdsSound] AudioContext creado, state:', ctx.state)
+    } catch {
+      console.error('[kdsSound] No se pudo crear AudioContext')
+      return
+    }
+  }
+  if (ctx.state === 'suspended') {
+    await ctx.resume()
+    console.log('[kdsSound] AudioContext resumido, state:', ctx.state)
+  } else {
+    console.log('[kdsSound] AudioContext ya running, state:', ctx.state)
+  }
+  startKeepAlive()
+}
+
+export function deactivateAudio(): void {
+  if (keepAliveTimer) {
+    clearInterval(keepAliveTimer)
+    keepAliveTimer = null
   }
 }
 
-/** Reproduce un beep breve vía Web Audio API. No requiere archivos externos. */
-export function playBeep(): void {
-  const context = getCtx()
-  if (!context || context.state !== 'running') return
-
+function doBeep(context: AudioContext): void {
   const oscillator = context.createOscillator()
   const gain = context.createGain()
-
   oscillator.connect(gain)
   gain.connect(context.destination)
-
   oscillator.type = 'sine'
   oscillator.frequency.setValueAtTime(880, context.currentTime)
   gain.gain.setValueAtTime(0.3, context.currentTime)
   gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.3)
-
   oscillator.start(context.currentTime)
   oscillator.stop(context.currentTime + 0.3)
+}
+
+export function playBeep(): void {
+  console.log('[kdsSound] playBeep llamado, ctx:', ctx ? `state=${ctx.state}` : 'null')
+  if (!ctx) return
+  if (ctx.state === 'running') {
+    doBeep(ctx)
+  } else if (ctx.state === 'suspended') {
+    console.log('[kdsSound] ctx suspendido, intentando resume...')
+    ctx.resume().then(() => { console.log('[kdsSound] resume ok'); doBeep(ctx!) }).catch((e) => console.error('[kdsSound] resume falló:', e))
+  }
 }

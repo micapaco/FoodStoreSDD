@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { PrivateHeader } from '@/widgets/header/PrivateHeader'
 import { AdminSidebar } from '@/widgets/nav/AdminSidebar'
@@ -29,6 +30,17 @@ export function PrivateLayout() {
   const isClientRole = !roles.includes('ADMIN') && !roles.includes('STOCK') && !roles.includes('PEDIDOS')
   const isAdminClientView = roles.includes('ADMIN') && isClientViewPath(location.pathname)
   const isClient = isClientRole || isAdminClientView
+
+  useEffect(() => {
+    if (!isClient && localStorage.getItem('theme') !== 'dark') {
+      document.documentElement.classList.add('light')
+    } else {
+      document.documentElement.classList.remove('light')
+    }
+    return () => {
+      document.documentElement.classList.remove('light')
+    }
+  }, [isClient])
 
   if (isClient) {
     return (

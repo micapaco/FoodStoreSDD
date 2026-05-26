@@ -23,6 +23,8 @@ export function useKDS(soundEnabled: boolean) {
   const wsRef = useRef<WebSocket | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const mountedRef = useRef(true)
+  const soundEnabledRef = useRef(soundEnabled)
+  soundEnabledRef.current = soundEnabled // sincroniza en cada render para evitar closures stale
 
   const fetchAll = useCallback(async () => {
     try {
@@ -92,9 +94,6 @@ export function useKDS(soundEnabled: boolean) {
 
       if (msg.type === 'PEDIDO_CONFIRMADO') {
         next.set(msg.pedido_id, msg.pedido)
-        if (soundEnabled) {
-          playBeep()
-        }
       } else if (msg.type === 'PEDIDO_EN_PREPARACION') {
         const existing = next.get(msg.pedido_id)
         if (existing) {
@@ -106,15 +105,39 @@ export function useKDS(soundEnabled: boolean) {
 
       return next
     })
+
+    if (msg.type === 'PEDIDO_CONFIRMADO') {
+      console.log('[useKDS] PEDIDO_CONFIRMADO recibido, soundEnabled:', soundEnabledRef.current)
+      if (soundEnabledRef.current) {
+        playBeep()
+      }
+    }
   }
 
   const advanceOrder = useCallback(async (pedidoId: number, nuevoEstado: string) => {
     const { avanzarEstadoPedidoApi } = await import('@/shared/api/pedidos')
-    await avanzarEstadoPedidoApi({
-      pedidoId,
-      nuevoEstado: nuevoEstado as 'EN_PREP' | 'EN_CAMINO' | 'ENTREGADO' | 'CANCELADO',
-    })
-  }, [])
+    try {
+      await avanzarEstadoPedidoApi({
+        pedidoId,
+        nuevoEstado: nuevoEstado as 'EN_PREP' | 'EN_CAMINO' | 'ENTREGADO' | 'CANCELADO',
+      })
+      // Update local state immediately so the card disappears/moves even if the WS event is delayed or missed
+      setOrders((prev) => {
+        const next = new Map(prev)
+        if (nuevoEstado === 'EN_CAMINO' || nuevoEstado === 'CANCELADO' || nuevoEstado === 'ENTREGADO') {
+          next.delete(pedidoId)
+        } else if (nuevoEstado === 'EN_PREP') {
+          const existing = next.get(pedidoId)
+          if (existing) next.set(pedidoId, { ...existing, estadoCodigo: 'EN_PREP' })
+        }
+        return next
+      })
+    } catch (err) {
+      // Re-sync with server so stale cards are removed (e.g. 409 when pedido already advanced)
+      await fetchAll()
+      throw err
+    }
+  }, [fetchAll])
 
   useEffect(() => {
     mountedRef.current = true

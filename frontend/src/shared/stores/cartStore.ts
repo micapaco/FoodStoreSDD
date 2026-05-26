@@ -25,7 +25,11 @@ interface CartState {
 }
 
 function matchItem(i: CartItem, productoId: number, p: Personalizacion) {
-  return i.productoId === productoId && sameExclusiones(i.personalizacion?.ingredientesExcluidos ?? [], p?.ingredientesExcluidos ?? [])
+  return (
+    i.productoId === productoId &&
+    sameExclusiones(i.personalizacion?.ingredientesExcluidos ?? [], p?.ingredientesExcluidos ?? []) &&
+    (i.personalizacion?.notas ?? '') === (p?.notas ?? '')
+  )
 }
 
 function productQuantity(items: CartItem[], productoId: number): number {

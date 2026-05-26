@@ -74,6 +74,9 @@ export function OrderConfirmationPage() {
                       Sin {formatExclusiones(item)}
                     </span>
                   )}
+                  {item.notas && (
+                    <span className="mt-0.5 block text-xs text-ink-muted italic">"{item.notas}"</span>
+                  )}
                 </span>
                 <span className="font-medium text-ink">
                   {itemSubtotal(item.precioSnapshot, item.cantidad)}

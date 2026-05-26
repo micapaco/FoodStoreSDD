@@ -2,17 +2,44 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados (8/19):**
-- `01` `infra-backend-core` ✅ archivado (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
-- `02` `infra-database` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-database/`)
-- `03` `infra-frontend-core` ✅ archivado (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
-- `04` `frontend-shell` ✅ archivado (`openspec/changes/archive/2026-05-08-frontend-shell/`)
-- `05` `auth` ✅ archivado (`openspec/changes/archive/2026-05-09-auth/`)
-- `06` `profile` ✅ archivado (`openspec/changes/archive/2026-05-10-profile/`)
-- `07` `catalog-categories-ingredients` ✅ archivado (`openspec/changes/archive/2026-05-10-catalog-categories-ingredients/`)
-- `08` `catalog-products` ✅ archivado (`openspec/changes/archive/2026-05-10-catalog-products/`)
+**Changes archivados (34/34 — todos completos):**
+- `01` `infra-backend-core` ✅ (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
+- `02` `infra-database` ✅ (`openspec/changes/archive/2026-05-07-infra-database/`)
+- `03` `infra-frontend-core` ✅ (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
+- `04` `frontend-shell` ✅ (`openspec/changes/archive/2026-05-08-frontend-shell/`)
+- `05` `auth` ✅ (`openspec/changes/archive/2026-05-09-auth/`)
+- `06` `profile` ✅ (`openspec/changes/archive/2026-05-10-profile/`)
+- `07` `catalog-categories-ingredients` ✅ (`openspec/changes/archive/2026-05-10-catalog-categories-ingredients/`)
+- `08` `catalog-products` ✅ (`openspec/changes/archive/2026-05-10-catalog-products/`)
+- `09` `addresses` ✅ (`openspec/changes/archive/2026-05-11-addresses/`)
+- `10` `cart` ✅ (`openspec/changes/archive/2026-05-11-cart/`)
+- `11` `checkout-validation` ✅ (`openspec/changes/archive/2026-05-11-checkout-validation/`)
+- `12` `order-creation` ✅ (`openspec/changes/archive/2026-05-12-order-creation/`)
+- `13` `payment-integration` ✅ (`openspec/changes/archive/2026-05-12-payment-integration/`)
+- `14` `order-fsm` ✅ (`openspec/changes/archive/2026-05-12-order-fsm/`)
+- `15` `order-views` ✅ (`openspec/changes/archive/2026-05-12-order-views/`)
+- `15.5` `offline-payment-order-flow` ✅ (`openspec/changes/archive/2026-05-12-offline-payment-order-flow/`)
+- `15.6` `pickup-fulfillment-flow` ✅ (`openspec/changes/archive/2026-05-13-pickup-fulfillment-flow/`)
+- `16` `order-feedback` ✅ (`openspec/changes/archive/2026-05-13-order-feedback/`)
+- `17` `admin-users` ✅ (`openspec/changes/archive/2026-05-13-admin-users/`)
+- `18` `admin-metrics` ✅ (`openspec/changes/archive/2026-05-13-admin-metrics/`)
+- `19` `system-config` ✅ (`openspec/changes/archive/2026-05-13-system-config/`)
+- `20` `admin-categories-ui` ✅ (`openspec/changes/archive/2026-05-13-admin-categories-ui/`)
+- `21` `catalog-timestamp-hotfix` ✅ (`openspec/changes/archive/2026-05-13-catalog-timestamp-hotfix/`)
+- `22` `frontend-runtime-stabilization` ✅ (`openspec/changes/archive/2026-05-13-frontend-runtime-stabilization/`)
+- `23` `single-role-and-client-cart-hotfix` ✅ (`openspec/changes/archive/2026-05-13-single-role-and-client-cart-hotfix/`)
+- `24` `product-image-url` ✅ (`openspec/changes/archive/2026-05-15-product-image-url/`)
+- `25` `stitch-visual-redesign` ✅ (`openspec/changes/archive/2026-05-15-stitch-visual-redesign/`)
+- `26` `admin-ux-roles-refinement` ✅ (`openspec/changes/archive/2026-05-15-admin-ux-roles-refinement/`)
+- `27` `catalog-order-admin-ux-hardening` ✅ (`openspec/changes/archive/2026-05-17-catalog-order-admin-ux-hardening/`)
+- `28` `product-image-local-upload-integration` ✅ (`openspec/changes/archive/2026-05-17-product-image-local-upload-integration/`)
+- `29` `admin-ingredients-management-ui` ✅ (`openspec/changes/archive/2026-05-17-admin-ingredients-management-ui/`)
+- `30` `display-cocina` ✅ (`openspec/changes/archive/2026-05-21-display-cocina/`)
+- `31` `theme-toggle` ✅ (`openspec/changes/archive/2026-05-22-theme-toggle/`)
+- `32` `cart-item-notes` ✅ (`openspec/changes/archive/2026-05-24-cart-item-notes/`)
 
-**Próximo change:** `09` — pendiente de definir según roadmap.
+**Changes en progreso:**
+- `33` `mercadopago-test-account` 🔄 — renombra "MercadoPago" → "Tarjetas", agrega "MercadoPago" (cuenta test, mismo CardPayment brick), elimina "Transferencia". Panel de prueba condicional cuando `VITE_MERCADOPAGO_PUBLIC_KEY` empieza con `TEST-`. Sin cambios de backend.
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción

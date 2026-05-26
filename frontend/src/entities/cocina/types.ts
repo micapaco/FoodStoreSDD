@@ -1,7 +1,8 @@
 export interface ItemCocinaRead {
   nombreSnapshot: string
   cantidad: number
-  personalizacion: number[] | null
+  personalizacion: string[] | null
+  notas: string | null
 }
 
 export interface PedidoCocinaRead {
@@ -10,6 +11,7 @@ export interface PedidoCocinaRead {
   notas: string | null
   createdAt: string
   timestampEntradaCocina: string | null
+  esRetiro: boolean
   items: ItemCocinaRead[]
 }
 

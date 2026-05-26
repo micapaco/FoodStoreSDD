@@ -125,6 +125,9 @@ export function OrderDetailPage() {
                           Sin {formatExclusiones(item)}
                         </p>
                       )}
+                      {item.notas && (
+                        <p className="mt-1 text-sm text-ink-muted italic">"{item.notas}"</p>
+                      )}
                     </div>
                     <p className="font-semibold text-ink">
                       {formatCurrency(String(Number(item.precioSnapshot) * item.cantidad))}

@@ -66,7 +66,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               <ul className="divide-y divide-line-subtle">
                 {items.map((item) => (
                   <li
-                    key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}`}
+                    key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}-${item.personalizacion?.notas ?? ''}`}
                   >
                     <CartItemCard item={item} ingredientNameMap={ingredientNameMap} />
                   </li>

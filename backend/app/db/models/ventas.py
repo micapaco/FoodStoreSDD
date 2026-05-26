@@ -89,6 +89,11 @@ class DetallePedido(SQLModel, table=True):
         default=None,
         sa_column=Column(JSONB, nullable=True),
     )
+    # Notas libres de preparación por ítem (ej. "sin sal", "extra queso")
+    notas: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text(), nullable=True),
+    )
 
 
 class HistorialEstadoPedido(SQLModel, table=True):
