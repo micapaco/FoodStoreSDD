@@ -9,9 +9,11 @@ from app.modules.pagos.mercadopago_client import MercadoPagoGateway, MercadoPago
 from app.modules.pagos.schemas import (
     CrearPagoRequest,
     CrearPedidoMercadoPagoRequest,
+    CrearPreferenciaRequest,
     PagoRead,
     PagoStatusResponse,
     PedidoMercadoPagoResponse,
+    PreferenciaResponse,
 )
 from app.modules.pedidos.schemas import CancelarPedidoRequest
 from app.modules.pedidos.service import PedidosService
@@ -25,6 +27,72 @@ AUTO_CANCEL_STATUSES = {"rejected", "cancelled"}
 
 class PagosService:
     """Casos de uso de pagos MercadoPago."""
+
+    async def crear_preferencia_checkout_pro(
+        self,
+        uow: UnitOfWork,
+        request: CrearPreferenciaRequest,
+        current_user: Usuario,
+        gateway: MercadoPagoGateway,
+        *,
+        frontend_url: str,
+        notification_url: str | None,
+    ) -> PreferenciaResponse:
+        """Crea un pedido PENDIENTE y una preferencia de Checkout Pro en MercadoPago.
+
+        Retorna el pedido_id y la URL de init_point a donde redirigir al usuario.
+        """
+        if request.pedido.forma_pago_codigo != FORMA_MERCADOPAGO:
+            raise ValidationAppError("El checkout MercadoPago requiere forma de pago MERCADOPAGO.")
+
+        pedidos_service = PedidosService()
+        pedido_read = await pedidos_service.crear_pedido(uow, request.pedido, current_user)
+        pedido_id = pedido_read.id
+
+        external_reference = f"preferencia-{pedido_id}-{uuid4().hex[:8]}"
+        idempotency_key = str(uuid4())
+
+        items = [
+            {
+                "id": str(pedido_id),
+                "title": f"Pedido Food Store #{pedido_id}",
+                "quantity": 1,
+                "unit_price": float(pedido_read.total),
+                "currency_id": "ARS",
+            }
+        ]
+        back_urls = {
+            "success": f"{frontend_url}/pedidos/{pedido_id}/confirmacion?status=approved",
+            "failure": f"{frontend_url}/pedidos/{pedido_id}/confirmacion?status=failure",
+            "pending": f"{frontend_url}/pedidos/{pedido_id}/confirmacion?status=pending",
+        }
+        notification = notification_url or f"{frontend_url}/api/v1/pagos/webhook"
+        preference = gateway.create_preference(
+            items=items,
+            back_urls=back_urls,
+            notification_url=notification,
+            external_reference=external_reference,
+        )
+        init_point: str = preference.get("init_point") or preference.get("sandbox_init_point") or ""
+        if not init_point:
+            raise ValidationAppError("MercadoPago no retorno un init_point valido.")
+
+        # Pre-crear el registro Pago para que el webhook IPN pueda encontrarlo
+        # y actualizar el estado cuando llegue la confirmación de MP.
+        pago = Pago(
+            pedido_id=pedido_id,
+            mp_payment_id=None,
+            mp_order_id=None,
+            mp_status="pending",
+            status_detail=None,
+            monto=pedido_read.total,
+            external_reference=external_reference,
+            idempotency_key=idempotency_key,
+            raw_payload={},
+        )
+        await uow.pagos.create(pago)
+
+        return PreferenciaResponse(pedido_id=pedido_id, init_point=init_point)
 
     async def crear_pedido_con_pago(
         self,

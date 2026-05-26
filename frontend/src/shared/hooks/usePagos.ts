@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { crearPagoApi, crearPedidoMercadoPagoApi, obtenerPagoStatusApi } from '@/shared/api/pagos'
+import {
+  crearPagoApi,
+  crearPedidoMercadoPagoApi,
+  crearPreferenciaMercadoPagoApi,
+  obtenerPagoStatusApi,
+} from '@/shared/api/pagos'
 
 export function useCrearPago() {
   const queryClient = useQueryClient()
@@ -22,6 +27,13 @@ export function useCrearPedidoMercadoPago() {
       queryClient.invalidateQueries({ queryKey: ['pagos', result.pedido.id] })
       queryClient.invalidateQueries({ queryKey: ['pedidos'] })
     },
+  })
+}
+
+export function useCrearPreferenciaMercadoPago() {
+  // Sin invalidación de cache: la redirección a init_point abandona la SPA.
+  return useMutation({
+    mutationFn: crearPreferenciaMercadoPagoApi,
   })
 }
 

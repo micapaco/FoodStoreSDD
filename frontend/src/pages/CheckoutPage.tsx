@@ -13,9 +13,8 @@ import { usePaymentStore } from '@/shared/stores/paymentStore'
 import { useUiStore } from '@/shared/stores/uiStore'
 
 const FORMAS_PAGO = [
-  { codigo: 'MERCADOPAGO', label: 'MercadoPago' },
-  { codigo: 'EFECTIVO', label: 'Efectivo' },
-  { codigo: 'TRANSFERENCIA', label: 'Transferencia' },
+  { value: 'MERCADOPAGO', codigo: 'MERCADOPAGO', label: 'MercadoPago', tipo: 'account' as const },
+  { value: 'EFECTIVO',    codigo: 'EFECTIVO',    label: 'Efectivo',    tipo: null },
 ]
 
 function formatCurrency(value: number): string {
@@ -54,7 +53,8 @@ export function CheckoutPage() {
   const pedidosHabilitados = configPublica?.pedidos_habilitados !== false
   const checkoutCostoEnvio = modoEntrega === 'pickup' ? 0 : configCosto
   const checkoutTotal = subtotal() + checkoutCostoEnvio
-  const isMercadoPago = formaPagoCodigo === 'MERCADOPAGO'
+  const selectedForma = FORMAS_PAGO.find((f) => f.value === formaPagoCodigo) ?? FORMAS_PAGO[0]
+  const isMercadoPago = selectedForma.codigo === 'MERCADOPAGO'
   const ingredientNameMap = useMemo(
     () => new Map(ingredientesQuery.data?.map((ingrediente) => [ingrediente.id, ingrediente.nombre]) ?? []),
     [ingredientesQuery.data],
@@ -80,8 +80,9 @@ export function CheckoutPage() {
       productoId: item.productoId,
       cantidad: item.cantidad,
       personalizacion: item.personalizacion?.ingredientesExcluidos ?? [],
+      notas: item.personalizacion?.notas?.trim() || null,
     })),
-    formaPagoCodigo,
+    formaPagoCodigo: selectedForma.codigo,
     direccionId: selectedDireccionId,
     notas: notas.trim() || null,
   }
@@ -160,7 +161,7 @@ export function CheckoutPage() {
               <ul className="mt-4 divide-y divide-line-subtle rounded-lg border border-line-subtle bg-surface-base">
                 {items.map((item) => (
                   <li
-                    key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}`}
+                    key={`${item.productoId}-${(item.personalizacion?.ingredientesExcluidos ?? []).slice().sort().join('-')}-${item.personalizacion?.notas ?? ''}`}
                     className="flex items-start justify-between gap-4 p-4"
                   >
                     <div>
@@ -170,6 +171,9 @@ export function CheckoutPage() {
                         <p className="mt-1 text-xs text-ink-muted">
                           Sin {formatExclusiones(item.personalizacion?.ingredientesExcluidos ?? [])}
                         </p>
+                      )}
+                      {item.personalizacion?.notas && (
+                        <p className="mt-1 text-xs text-ink-muted italic">"{item.personalizacion.notas}"</p>
                       )}
                     </div>
                     <span className="text-sm font-semibold text-ink">
@@ -252,7 +256,7 @@ export function CheckoutPage() {
                     className="mt-1 w-full rounded-lg border border-line-subtle bg-surface-low px-3 py-2 text-sm text-ink"
                   >
                     {FORMAS_PAGO.map((forma) => (
-                      <option key={forma.codigo} value={forma.codigo}>
+                      <option key={forma.value} value={forma.value}>
                         {forma.label}
                       </option>
                     ))}
@@ -274,10 +278,11 @@ export function CheckoutPage() {
               </div>
             </div>
 
-            {showMercadoPagoPayment && isMercadoPago && (
+            {showMercadoPagoPayment && isMercadoPago && selectedForma.tipo && (
               <MercadoPagoCheckoutPayment
                 amount={checkoutTotal}
                 pedido={pedidoRequest}
+                paymentType={selectedForma.tipo}
                 onRejected={(message) => setRequestError(message)}
                 onSuccess={(result) => {
                   clearCart()

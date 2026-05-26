@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { usePedidoDetalle } from '@/shared/hooks/usePedidos'
 
 function formatCurrency(value: string | number): string {
@@ -20,10 +20,14 @@ function formatExclusiones(item: { personalizacion: number[]; personalizacionDet
   return null
 }
 
+type CheckoutProStatus = 'approved' | 'failure' | 'pending' | null
+
 export function OrderConfirmationPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const pedidoId = id ? Number.parseInt(id, 10) : null
+  const checkoutProStatus = (searchParams.get('status') ?? null) as CheckoutProStatus
 
   const { data: pedido, isLoading, isError } = usePedidoDetalle(pedidoId)
 
@@ -58,6 +62,23 @@ export function OrderConfirmationPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-success">Pedido creado</p>
         <h1 className="mt-2 text-2xl font-bold text-ink">Pedido #{pedido.id}</h1>
         <p className="mt-1 text-sm text-ink-muted">{pedido.estadoCodigo}</p>
+
+        {/* Banners de retorno de Checkout Pro */}
+        {checkoutProStatus === 'pending' && (
+          <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+            <p className="font-semibold">Pago en proceso</p>
+            <p className="mt-1">Tu pago está siendo procesado. Te vamos a notificar cuando se confirme.</p>
+          </div>
+        )}
+        {checkoutProStatus === 'failure' && (
+          <div className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+            <p className="font-semibold">Pago fallido</p>
+            <p className="mt-1">Hubo un problema con el pago en MercadoPago. Podés volver a intentarlo desde el checkout.</p>
+            <Link to="/checkout" className="mt-2 inline-block font-semibold underline">
+              Volver al checkout
+            </Link>
+          </div>
+        )}
 
         <section className="mt-6">
           <h2 className="text-sm font-semibold text-ink-muted">Resumen del pedido</h2>

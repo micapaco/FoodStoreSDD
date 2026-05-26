@@ -15,9 +15,11 @@ from app.modules.pagos.mercadopago_client import MercadoPagoGateway
 from app.modules.pagos.schemas import (
     CrearPagoRequest,
     CrearPedidoMercadoPagoRequest,
+    CrearPreferenciaRequest,
     PagoRead,
     PagoStatusResponse,
     PedidoMercadoPagoResponse,
+    PreferenciaResponse,
     WebhookResponse,
 )
 from app.modules.pagos.service import PagosService
@@ -37,6 +39,33 @@ async def _broadcast_pedido_confirmado(pedido_id: int) -> None:
         pass
 
 router = APIRouter(prefix="/pagos", tags=["Pagos"])
+
+
+@router.post(
+    "/preferencia",
+    response_model=PreferenciaResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def crear_preferencia_checkout_pro(
+    request: CrearPreferenciaRequest,
+    current_user: Annotated[Usuario, Depends(require_role(["CLIENT"]))],
+) -> PreferenciaResponse:
+    """Crea un pedido PENDIENTE y una preferencia de Checkout Pro en MercadoPago.
+
+    Retorna el ``pedido_id`` y el ``init_point`` al que redirigir al usuario.
+    """
+    settings = get_settings()
+    gateway = MercadoPagoGateway(settings)
+    async with UnitOfWork() as uow:
+        service = PagosService()
+        return await service.crear_preferencia_checkout_pro(
+            uow,
+            request,
+            current_user,
+            gateway,
+            frontend_url=settings.FRONTEND_URL,
+            notification_url=settings.MERCADOPAGO_NOTIFICATION_URL,
+        )
 
 
 @router.post(
