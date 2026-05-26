@@ -68,4 +68,4 @@
 
 - [x] 11.1 `FRONTEND_URL` documentado con comentario en `config.py`
 - [x] 11.2 Verificar `npx tsc --noEmit` sin errores en frontend — ✅ limpio
-- [ ] 11.3 Verificar que el endpoint `/api/v1/pagos/preferencia` aparece en FastAPI `/docs` — validar manualmente con el backend corriendo
+- [x] 11.3 Verificar que el endpoint `/api/v1/pagos/preferencia` aparece en FastAPI `/docs` — validado manualmente en sesión de prueba

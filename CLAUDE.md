@@ -2,7 +2,7 @@
 
 ## Fase actual del proyecto
 
-**Changes archivados (34/34 — todos completos):**
+**Changes archivados (35/35 — todos completos):**
 - `01` `infra-backend-core` ✅ (`openspec/changes/archive/2026-04-26-infra-backend-core/`)
 - `02` `infra-database` ✅ (`openspec/changes/archive/2026-05-07-infra-database/`)
 - `03` `infra-frontend-core` ✅ (`openspec/changes/archive/2026-05-07-infra-frontend-core/`)
@@ -37,9 +37,10 @@
 - `30` `display-cocina` ✅ (`openspec/changes/archive/2026-05-21-display-cocina/`)
 - `31` `theme-toggle` ✅ (`openspec/changes/archive/2026-05-22-theme-toggle/`)
 - `32` `cart-item-notes` ✅ (`openspec/changes/archive/2026-05-24-cart-item-notes/`)
+- `33` `mercadopago-test-account` ✅ (`openspec/changes/archive/2026-05-26-mercadopago-test-account/`)
 
 **Changes en progreso:**
-- `33` `mercadopago-test-account` 🔄 — renombra "MercadoPago" → "Tarjetas", agrega "MercadoPago" (cuenta test, mismo CardPayment brick), elimina "Transferencia". Panel de prueba condicional cuando `VITE_MERCADOPAGO_PUBLIC_KEY` empieza con `TEST-`. Sin cambios de backend.
+(ninguno)
 
 Reglas obligatorias:
 - Leer `docs/` antes de cualquier acción
