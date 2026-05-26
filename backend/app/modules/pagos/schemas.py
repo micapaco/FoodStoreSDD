@@ -122,5 +122,18 @@ class PedidoMercadoPagoResponse(BaseSchema):
     pago: PagoRead
 
 
+class CrearPreferenciaRequest(BaseSchema):
+    """Payload para crear un pedido + preferencia de Checkout Pro."""
+
+    pedido: CrearPedidoRequest
+
+
+class PreferenciaResponse(BaseSchema):
+    """Respuesta del endpoint POST /pagos/preferencia."""
+
+    pedido_id: int = Field(alias="pedidoId")
+    init_point: str = Field(alias="initPoint")
+
+
 class WebhookResponse(BaseSchema):
     status: str

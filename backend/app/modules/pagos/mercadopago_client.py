@@ -71,6 +71,37 @@ class MercadoPagoGateway:
         response = self._sdk.payment().create(payload, request_options)  # type: ignore[attr-defined]
         return self._parse_sdk_response(response)
 
+    def create_preference(
+        self,
+        *,
+        items: list[dict[str, Any]],
+        back_urls: dict[str, str],
+        notification_url: str,
+        external_reference: str,
+    ) -> dict[str, Any]:
+        """Crea una preferencia de Checkout Pro en MercadoPago.
+
+        Retorna el response crudo de la API (contiene ``id`` e ``init_point``).
+        """
+        # auto_return solo funciona con back_urls HTTPS (exige URL pública).
+        # En localhost se omite — el usuario vuelve al sitio manualmente.
+        preference_data: dict[str, Any] = {
+            "items": items,
+            "back_urls": back_urls,
+            "notification_url": notification_url,
+            "external_reference": external_reference,
+        }
+        if back_urls.get("success", "").startswith("https://"):
+            preference_data["auto_return"] = "approved"
+        response: dict[str, Any] = self._sdk.preference().create(preference_data)  # type: ignore[attr-defined]
+        status_code = response.get("status")
+        if isinstance(status_code, int) and status_code >= 400:
+            raise BadGatewayError(MercadoPagoGateway._error_message(response))
+        result = response.get("response")
+        if not isinstance(result, dict):
+            raise BadGatewayError("Respuesta invalida de MercadoPago al crear preferencia.")
+        return result
+
     def get_payment(self, payment_id: str) -> MercadoPagoPaymentResult:
         response = self._sdk.payment().get(payment_id)  # type: ignore[attr-defined]
         return self._parse_sdk_response(response)

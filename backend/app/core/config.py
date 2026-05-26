@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     MERCADOPAGO_PUBLIC_KEY: str | None = None
     MERCADOPAGO_WEBHOOK_SECRET: str | None = None
     MERCADOPAGO_NOTIFICATION_URL: str | None = None
+    # URL base del frontend — se usa para construir back_urls en Checkout Pro.
+    # En producción, cambiar a la URL real (ej: https://mi-app.com).
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # ── Rate limiting ────────────────────────────────────────────────────────
     # String parseable por slowapi. No se usa como default_limits en este change.

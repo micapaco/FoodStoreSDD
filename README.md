@@ -112,7 +112,62 @@ http://127.0.0.1:4040
 
 ---
 
-## 4. 🎨 Frontend (React + Vite)
+## 4. 💳 Credenciales de MercadoPago (Checkout Pro)
+
+Para probar el flujo de pago con MercadoPago necesitás credenciales de sandbox. El sistema usa **cuentas de prueba** — una vendedora (backend) y una compradora (quien paga).
+
+### Paso 1 — Crear las cuentas de prueba
+
+1. Entrá a tu cuenta real de MercadoPago y andá al **panel de desarrolladores**:
+   `https://www.mercadopago.com.ar/developers/panel/app`
+2. En el menú lateral → **Cuentas de prueba** → creá dos cuentas:
+   - Una con rol **Vendedor**
+   - Una con rol **Comprador**
+3. Guardá el usuario y contraseña de cada una.
+
+### Paso 2 — Crear la aplicación con la cuenta vendedora
+
+1. Abrí una ventana **incógnito** y logueate en `mercadopago.com.ar` con la cuenta **vendedora**.
+2. Andá a `mercadopago.com.ar/developers/panel` y creá una nueva aplicación.
+   - Integracion: **Checkout Pro**
+3. Copiá las credenciales de esa aplicación:
+   - **Access Token** (`APP_USR-...`)
+   - **Public Key** (`APP_USR-...`)
+
+### Paso 3 — Configurar el webhook
+
+1. En la misma aplicación (cuenta vendedora), andá a **Webhooks**.
+2. Pegá la URL del webhook de ngrok: `https://<tu-ngrok>.ngrok-free.dev/api/v1/pagos/webhook`
+3. Seleccioná el evento **Pagos** y guardá.
+4. Copiá el **Webhook Secret** que aparece.
+
+### Paso 4 — Dónde poner cada credencial
+
+**`backend/.env`**:
+```env
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-...        # Access Token de la app del vendedor test
+MERCADOPAGO_PUBLIC_KEY=APP_USR-...          # Public Key de la app del vendedor test
+MERCADOPAGO_WEBHOOK_SECRET=...              # Secret del panel de Webhooks
+MERCADOPAGO_NOTIFICATION_URL=https://<tu-ngrok>.ngrok-free.dev/api/v1/pagos/webhook
+FRONTEND_URL=http://localhost:5173
+```
+
+**`frontend/.env`**:
+```env
+VITE_MERCADOPAGO_PUBLIC_KEY=APP_USR-...     # La misma Public Key del vendedor test
+```
+
+### Paso 5 — Cuenta compradora para probar
+
+Cuando MP te redirija al checkout, **no uses tu cuenta real**. Iniciá sesión con la cuenta **compradora** de prueba que creaste en el Paso 1.
+
+El panel de prueba en la app muestra el usuario y contraseña automáticamente en modo desarrollo.
+
+> ⚠️ Cada vez que reiniciés ngrok la URL cambia. Si cambia, actualizá `MERCADOPAGO_NOTIFICATION_URL` en `backend/.env`, guardá la nueva URL en el panel de Webhooks de MercadoPago y reiniciá el backend.
+
+---
+
+## 5. 🎨 Frontend (React + Vite)
 
 En una **tercera** terminal, ingresá a la carpeta del frontend:
 

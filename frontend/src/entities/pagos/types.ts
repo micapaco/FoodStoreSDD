@@ -49,3 +49,12 @@ export interface PedidoMercadoPagoResponse {
   pedido: PedidoRead
   pago: PagoRead
 }
+
+export interface CrearPreferenciaPayload {
+  pedido: CrearPedidoRequest
+}
+
+export interface PreferenciaResponse {
+  pedidoId: number
+  initPoint: string
+}
